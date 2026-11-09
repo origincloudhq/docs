@@ -1,0 +1,14 @@
+---
+/**
+ * Provider identification and privacy policy, in the footer of every page.
+ *
+ * Deliberately *not* gated on `analyticsEnabled`, unlike <PrivacySettings>.
+ * These were previously reachable only through the Klaro dialog, which
+ * meant a visitor who had already answered the consent banner never saw them
+ * again, and a build without analytics carried no legal links at all. They
+ * have to be on the page itself, on every page, with no JavaScript involved.
+ */
+import { IMPRINT, PRIVACY } from '../lib/legal'
+---
+<a href={IMPRINT}>Legal notice</a>
+<a href={PRIVACY}>Privacy policy</a>

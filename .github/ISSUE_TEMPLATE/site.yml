@@ -1,0 +1,16 @@
+name: Problem with the site
+description: Search, navigation, layout, accessibility or anything else about docs.origincloud.eu itself.
+title: "Site: "
+body:
+  - type: textarea
+    id: details
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what you saw.
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and device
+      placeholder: Firefox 133 on Linux

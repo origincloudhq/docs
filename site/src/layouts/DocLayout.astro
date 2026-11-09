@@ -1,0 +1,212 @@
+---
+import '../styles/tokens.css'
+import '../styles/docs.css'
+import Search from '../components/Search.astro'
+import Analytics from '../components/Analytics.astro'
+import AnalyticsNoScript from '../components/AnalyticsNoScript.astro'
+import PrivacySettings from '../components/PrivacySettings.astro'
+import LegalLinks from '../components/LegalLinks.astro'
+import NavTree from '../components/NavTree.astro'
+import Breadcrumbs from '../components/Breadcrumbs.astro'
+import { buildGuideTree, ancestorsOf, urlOf, type Doc } from '../lib/nav'
+import { EDIT_GUIDE, reportIssueUrl, sourcePath } from '../lib/source'
+
+interface Heading { depth: number; slug: string; text: string }
+const { entry, siblings, guides, headings = [] } = Astro.props as {
+  entry: Doc
+  siblings: Doc[]          // every page in this guide
+  guides: { name: string; label: string; url: string }[]
+  headings?: Heading[]
+}
+
+const d = entry.data
+const tree = buildGuideTree(siblings)
+const trail = ancestorsOf(entry, siblings)
+const guideName = entry.id.split('/')[0]
+const guideRoot = siblings.find((s) => s.data.parent === null)
+
+// `related` holds ids scoped to this guide.
+const byId = new Map(siblings.map((s) => [s.data.id, s]))
+const related = (d.related ?? []).map((id) => byId.get(id)).filter(Boolean) as Doc[]
+
+const toc = d.toc === false ? [] : headings.filter((h) => h.depth === 2 || h.depth === 3)
+const canonical = d.canonical ?? new URL(urlOf(entry), Astro.site ?? 'https://docs.origincloud.eu').href
+const pageTitle = d.seo_title ?? `${d.title} — Origin Cloud Docs`
+const eyebrow = d.eyebrow ?? `${guideRoot?.data.nav_title ?? guideName} / ${d.page_type}`
+
+// Every page links to how it is changed and to an issue about it. The page's
+// own address, not its canonical, goes into the issue: that is what the reader
+// was looking at. The source path is for maintainers, who change the page
+// there; everyone else follows CONTRIBUTING.md.
+const pageUrl = new URL(urlOf(entry), Astro.site ?? 'https://docs.origincloud.eu').href
+const source = sourcePath(entry.filePath)
+if (!source) throw new Error(`${entry.id}: the loader gave no file path`)
+---
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{pageTitle}</title>
+  <meta name="description" content={d.description} />
+  <link rel="canonical" href={canonical} />
+
+  <!-- SEO / social. Generated from collection frontmatter, which the schema
+       makes required — a page cannot ship without a description. -->
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content={pageTitle} />
+  <meta property="og:description" content={d.description} />
+  <meta property="og:url" content={canonical} />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700&family=Public+Sans:wght@400;500;620;650&family=JetBrains+Mono:wght@400;500&display=swap"
+  />
+
+  <Analytics />
+  {d.noindex && <meta name="robots" content="noindex, follow" />}
+</head>
+<body>
+  <AnalyticsNoScript />
+  <a class="skip-link" href="#content">Skip to content</a>
+
+  <header class="site-header">
+    <a class="brand" href="/docs/">
+      <span class="brand__mark">Origin Cloud</span>
+      <span class="brand__scope">Docs</span>
+    </a>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="https://www.origincloud.eu/">Site</a>
+      <a href="https://console.origincloud.eu/">Console</a>
+    </nav>
+    <Search />
+  </header>
+
+  <div class="shell">
+    <nav class="sidebar" aria-label="Documentation">
+      {/*
+        Collapsible on narrow screens only. With five pages the sidebar was a
+        short preamble; with a 23-page guide tree it buries the content below
+        the fold. Default `open`, so with no JavaScript the behaviour is
+        unchanged — the script closes it only on a narrow viewport.
+      */}
+      <details class="sidebar-box" open>
+        <summary class="sidebar-box__toggle">Browse this guide</summary>
+      <label class="guide-switch">
+        <span class="guide-switch__label">Guide</span>
+        <select onchange="location.href=this.value">
+          {guides.map((g) => (
+            <option value={g.url} selected={g.name === guideName}>{g.label}</option>
+          ))}
+        </select>
+      </label>
+      <NavTree nodes={tree} currentId={entry.id} />
+      </details>
+    </nav>
+
+    <script is:inline>
+      // Narrow screens only, and only when scripting is available: without
+      // this the <details> stays open, which is the previous behaviour.
+      try {
+        const box = document.querySelector('.sidebar-box')
+        if (box && window.matchMedia('(max-width: 52rem)').matches) box.open = false
+      } catch {}
+    </script>
+
+    <main class="main" id="content">
+      <Breadcrumbs trail={trail} current={entry} />
+
+      <div class="masthead grid-paper brackets">
+        <p class="masthead__eyebrow">{eyebrow}</p>
+        <h1>{d.title}</h1>
+        {d.availability && d.availability !== 'ga' && (
+          <p class="masthead__availability" data-availability={d.availability}>
+            {d.availability === 'preview' ? 'Preview — may change' : 'Deprecated'}
+          </p>
+        )}
+        {d.lead && <p class="masthead__lead">{d.lead}</p>}
+        {(d.specs ?? []).length > 0 && (
+          <div class="masthead__specs">
+            {(d.specs ?? []).map((s) => (
+              <span class="chip">
+                <span class="chip__label">{s.label}</span>
+                <span class="chip__value">{s.value}</span>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <article class="prose"><slot /></article>
+
+      {related.length > 0 && (
+        <aside class="related" aria-labelledby="related-h">
+          <h2 id="related-h" class="related__title">Related pages</h2>
+          <ul>
+            {related.map((r) => (
+              <li>
+                <a href={urlOf(r)}>{r.data.nav_title ?? r.data.title}</a>
+                <span class="related__desc">{r.data.description}</span>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      )}
+
+      <aside class="page-actions" aria-label="Improve this page">
+        <a href={EDIT_GUIDE}>Edit this page</a>
+        <a href={reportIssueUrl(pageUrl, d.title)}>Report an issue</a>
+        <span class="page-actions__source" title="Where maintainers change this page">Source: <code>{source}</code></span>
+      </aside>
+
+      <footer class="page-foot">
+        <span>
+          Origin Cloud — user documentation
+          {d.last_reviewed && (
+            <> · last reviewed {d.last_reviewed.toISOString().slice(0, 10)}</>
+          )}
+        </span>
+        <span class="page-foot__links">
+          <LegalLinks />
+          <PrivacySettings />
+        </span>
+      </footer>
+    </main>
+
+    <aside class="toc" aria-label="On this page">
+      <p class="toc__title">On this page</p>
+      <ol>
+        {toc.map((h) => (
+          <li data-depth={h.depth}><a href={`#${h.slug}`}>{h.text}</a></li>
+        ))}
+      </ol>
+    </aside>
+  </div>
+
+  <script>
+    // Highlight the TOC entry for the section currently on screen.
+    const links = new Map<string, HTMLAnchorElement>()
+    document.querySelectorAll<HTMLAnchorElement>('.toc a').forEach((a) =>
+      links.set(decodeURIComponent(a.hash.slice(1)), a)
+    )
+    const targets = [...links.keys()]
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => !!el)
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (!e.isIntersecting) return
+          links.forEach((a) => a.classList.remove('is-active'))
+          links.get(e.target.id)?.classList.add('is-active')
+        })
+      },
+      { rootMargin: '-80px 0px -70% 0px', threshold: 0 }
+    )
+    targets.forEach((t) => observer.observe(t))
+  </script>
+</body>
+</html>

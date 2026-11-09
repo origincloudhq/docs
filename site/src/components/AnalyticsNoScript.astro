@@ -1,0 +1,22 @@
+---
+/**
+ * The second half of the Google Tag Manager snippet: the <noscript> iframe,
+ * which must sit immediately after <body>.
+ *
+ * It is not there for users with JavaScript off — the container can do very
+ * little for them. It is there because tag scanners (Google's own tag
+ * coverage crawler, Tag Assistant, most third-party checkers) detect GTM by
+ * looking for this iframe in the raw HTML, without executing scripts. Without
+ * it a page can report as "not tagged" even though the container loads fine
+ * in a real browser.
+ *
+ * GTM containers only — a GT-/G- gtag.js tag has no noscript form.
+ */
+import { analyticsId, isTagManager, analyticsEnabled } from '../lib/analytics'
+
+const iframe =
+  '<iframe src="https://www.googletagmanager.com/ns.html?id=' +
+  analyticsId +
+  '" height="0" width="0" style="display:none;visibility:hidden"></iframe>'
+---
+{analyticsEnabled && isTagManager && <noscript set:html={iframe} />}

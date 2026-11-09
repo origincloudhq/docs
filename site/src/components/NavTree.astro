@@ -1,0 +1,47 @@
+---
+/**
+ * One level of a guide's sidebar, recursing into its children.
+ *
+ * The branch holding the current page is expanded and the rest are collapsed:
+ * a 23-page guide should not present all 23 at once. <details> does the
+ * collapsing, so it works before any JavaScript runs and for readers with none.
+ */
+import type { NavNode } from '../lib/nav'
+import { urlOf } from '../lib/nav'
+import Self from './NavTree.astro'
+
+const { nodes, currentId, depth = 0 } = Astro.props as {
+  nodes: NavNode[]
+  currentId: string
+  depth?: number
+}
+
+const holdsCurrent = (node: NavNode): boolean =>
+  node.entry.id === currentId || node.children.some(holdsCurrent)
+---
+<ul class="nav-list" data-depth={depth}>
+  {nodes.map((node) => {
+    const url = urlOf(node.entry)
+    const label = node.entry.data.nav_title ?? node.entry.data.title
+    const isCurrent = node.entry.id === currentId
+    return (
+      <li>
+        {node.children.length === 0 ? (
+          <a href={url} aria-current={isCurrent ? 'page' : undefined}>{label}</a>
+        ) : (
+          <details class="nav-group" open={holdsCurrent(node)}>
+            <summary>
+              <span class="nav-group__label">{label}</span>
+            </summary>
+            <a
+              class="nav-group__self"
+              href={url}
+              aria-current={isCurrent ? 'page' : undefined}
+            >Overview</a>
+            <Self nodes={node.children} currentId={currentId} depth={depth + 1} />
+          </details>
+        )}
+      </li>
+    )
+  })}
+</ul>

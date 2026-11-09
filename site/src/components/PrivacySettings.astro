@@ -1,0 +1,20 @@
+---
+/**
+ * Reopens the Klaro consent manager. Consent has to be withdrawable as easily
+ * as it was given, so this belongs in the footer of every page.
+ *
+ * Rendered only when analytics is actually active — in `astro dev` there is no
+ * Klaro to show, and a dead control is worse than none.
+ */
+import { analyticsEnabled } from '../lib/analytics'
+---
+{analyticsEnabled && (
+  <button type="button" class="privacy-link" data-klaro-show>Privacy settings</button>
+)}
+{analyticsEnabled && (
+  <script is:inline>
+    document.querySelectorAll('[data-klaro-show]').forEach((el) =>
+      el.addEventListener('click', () => window.klaro?.show())
+    )
+  </script>
+)}

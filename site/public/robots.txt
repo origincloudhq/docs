@@ -1,0 +1,5 @@
+# Public documentation — everything here is meant to be indexed.
+User-agent: *
+Allow: /
+
+Sitemap: https://docs.origincloud.eu/sitemap-index.xml

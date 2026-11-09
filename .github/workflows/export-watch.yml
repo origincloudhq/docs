@@ -1,0 +1,48 @@
+# Keeps one issue open while the export pull request isn't publishing: red on
+# its latest commit, or open for more than 24 hours. Closes it once the export
+# publishes again. scripts/export-watch.py has the rules.
+#
+# Runs after every CI run, so a red export is reported within minutes, and
+# hourly, so an export that stays open is reported once it is 24 hours old.
+# It only reads pull requests and checks and writes issues; it never checks
+# out or runs a pull request's code.
+name: Watch the docs export
+
+on:
+  workflow_run:
+    workflows: [ CI ]
+    types: [ completed ]
+  schedule:
+    - cron: '23 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+  checks: read
+
+concurrency:
+  group: export-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check the export pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/export-watch.py
+
+      # Without this the watch's own failure is silent, and a watch nobody
+      # is told about is no watch.
+      - name: Report that the watch itself is failing
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python3 scripts/export-watch.py report-failure "${RUN_URL}"

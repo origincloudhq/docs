@@ -1,0 +1,21 @@
+{
+  "name": "docs-site",
+  "type": "module",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build && node scripts/check-links.mjs && pagefind --site dist",
+    "preview": "astro preview",
+    "check-links": "node scripts/check-links.mjs"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^4.3.14",
+    "@astrojs/sitemap": "^3.7.3",
+    "astro": "^5.18.2",
+    "astro-expressive-code": "^0.41.7",
+    "pagefind": "^1.5.2",
+    "playwright": "^1.62.1",
+    "rehype-mermaid": "^3.0.0"
+  }
+}

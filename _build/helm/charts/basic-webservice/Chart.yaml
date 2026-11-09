@@ -1,0 +1,7 @@
+apiVersion: v2
+name: basic-webservice
+# A generic chart for one stateless web service. This site uses the
+# Deployment, Service, Ingress and autoscaler; every optional object
+# (runtime config, jobs, secrets, pull credential) is off in
+# _build/helm/values.controlplane.yaml.
+version: 1.1.0

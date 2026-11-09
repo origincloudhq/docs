@@ -1,0 +1,87 @@
+---
+/**
+ * Accessible tab group. Used for the GraphQL / CLI pairing that every
+ * Origin Cloud docs page needs.
+ *
+ * Progressive enhancement on purpose: the server renders every panel
+ * VISIBLE and stacked. The script below hides the inactive ones on load.
+ * So with JS disabled — or before hydration, or in a crawler that doesn't
+ * execute scripts — the reader still gets every example, just stacked
+ * rather than switchable. Nothing is behind a click for indexing either:
+ * Pagefind and search engines see all panels in the built HTML.
+ */
+interface Tab { id: string; label: string; note?: string }
+const { tabs, group = 'default' } = Astro.props as { tabs: Tab[]; group?: string }
+
+// Slot names must be static in Astro's template syntax, so the panel bodies
+// are rendered through the slots API instead of `<slot name={...} />`.
+const panels = await Promise.all(
+  tabs.map(async (t) => ({
+    ...t,
+    html: Astro.slots.has(t.id) ? await Astro.slots.render(t.id) : '',
+  }))
+)
+---
+
+<div class="tabs" data-tabs data-tab-group={group}>
+  <div class="tabs__list" role="tablist">
+    {tabs.map((t, i) => (
+      <button
+        class="tabs__tab"
+        role="tab"
+        type="button"
+        id={`tab-${group}-${t.id}`}
+        aria-controls={`panel-${group}-${t.id}`}
+        aria-selected={i === 0 ? 'true' : 'false'}
+        tabindex={i === 0 ? 0 : -1}
+        data-tab-id={t.id}
+      >
+        {t.label}
+        {t.note && <span class="tabs__tab-note">{t.note}</span>}
+      </button>
+    ))}
+  </div>
+  {panels.map((t) => (
+    <div
+      class="tabs__panel"
+      role="tabpanel"
+      id={`panel-${group}-${t.id}`}
+      aria-labelledby={`tab-${group}-${t.id}`}
+      data-panel-id={t.id}
+      tabindex="0"
+      set:html={t.html}
+    />
+  ))}
+</div>
+
+<script>
+  // Runs once per page; idempotent per group.
+  document.querySelectorAll<HTMLElement>('[data-tabs]').forEach((root) => {
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[role="tab"]')]
+    const panels = [...root.querySelectorAll<HTMLElement>('[role="tabpanel"]')]
+
+    const select = (id: string, focus = false) => {
+      tabs.forEach((t) => {
+        const on = t.dataset.tabId === id
+        t.setAttribute('aria-selected', String(on))
+        t.tabIndex = on ? 0 : -1
+        if (on && focus) t.focus()
+      })
+      panels.forEach((p) => { p.hidden = p.dataset.panelId !== id })
+    }
+
+    // Only now do panels start hiding — see the note above.
+    if (tabs[0]?.dataset.tabId) select(tabs[0].dataset.tabId)
+
+    tabs.forEach((tab, i) => {
+      tab.addEventListener('click', () => select(tab.dataset.tabId!))
+      tab.addEventListener('keydown', (e) => {
+        const dir = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0
+        if (!dir) return
+        e.preventDefault()
+        const next = tabs[(i + dir + tabs.length) % tabs.length]
+        select(next.dataset.tabId!, true)
+      })
+    })
+  })
+</script>

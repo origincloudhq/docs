@@ -1,0 +1,266 @@
+# Builds the site image on every push to main and deploys it to
+# docs.origincloud.eu, through the protected `release` environment.
+#
+# main only moves by merging a pull request that passed ci.yml (branch
+# protection), so what deploys here was built and checked first. An export
+# pull request merges itself, so a docs change at the source is live within
+# minutes and nobody approves a deploy: the `release` environment restricts
+# deployments to main and holds the cluster credential, it doesn't wait for a
+# reviewer.
+#
+# Pull requests, from forks or not, never run this workflow, so they never
+# reach the environment's secrets or the deploy runner.
+#
+# What the environment and the repository need: infra/README.md.
+name: Build & Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Existing image tag to deploy (sha-<gitsha>)"
+        required: true
+        type: string
+
+# One deploy at a time, none cancelled: a cancelled `helm upgrade --wait`
+# leaves the release pending and blocks the next one. A newer push waits and
+# deploys after.
+concurrency:
+  group: cd
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  APP_IMAGE: ghcr.io/${{ github.repository }}
+  APP_DOCKERFILE: _build/Dockerfile
+  CHART_PATH: _build/helm/charts/basic-webservice
+  VALUES_FILE: _build/helm/values.controlplane.yaml
+  RELEASE_NAME: origincloud-docs
+
+jobs:
+  build:
+    if: github.event_name == 'push'
+    name: Build & push image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      tag: ${{ steps.compute_tag.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Fork pull requests are scanned without the private list (no secrets),
+      # so main is scanned with it before anything from it is deployed.
+      - name: Scan the repository with the private list
+        env:
+          INTERNAL_NAMES_JSON: ${{ secrets.INTERNAL_NAMES_JSON }}
+        run: python3 scripts/scan.py repo
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image tag
+        id: compute_tag
+        run: echo "tag=sha-${GITHUB_SHA::7}" >> "${GITHUB_OUTPUT}"
+
+      - name: Build & push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ env.APP_DOCKERFILE }}
+          push: true
+          build-args: |
+            SITE_COMMIT=${{ github.sha }}
+          tags: |
+            ${{ env.APP_IMAGE }}:${{ steps.compute_tag.outputs.tag }}
+            ${{ env.APP_IMAGE }}:latest
+          cache-from: type=gha,scope=docs-image
+          cache-to: type=gha,mode=min,scope=docs-image
+
+  # The deploy runs on a self-hosted runner that can reach the cluster's API,
+  # named by the DEPLOY_RUNNER variable. An unset variable would leave the
+  # job waiting for a runner that never comes, so it is checked first.
+  preflight:
+    name: Check the deploy configuration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check DEPLOY_RUNNER is set
+        env:
+          DEPLOY_RUNNER: ${{ vars.DEPLOY_RUNNER }}
+        run: |
+          if [ -z "${DEPLOY_RUNNER}" ]; then
+            echo "::error::the repository variable DEPLOY_RUNNER is unset: it names the self-hosted runner label the deploy runs on. See infra/README.md."
+            exit 1
+          fi
+
+  deploy:
+    name: Deploy to docs.origincloud.eu
+    needs: [ build, preflight ]
+    if: always() && needs.preflight.result == 'success' && (github.event_name == 'workflow_dispatch' || needs.build.result == 'success')
+    runs-on: ${{ vars.DEPLOY_RUNNER }}
+    environment:
+      name: release
+      url: https://${{ vars.INGRESS_HOST || 'docs.origincloud.eu' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve image tag
+        id: tag
+        env:
+          DISPATCH_TAG: ${{ inputs.image_tag }}
+          BUILD_TAG: ${{ needs.build.outputs.tag }}
+        run: |
+          set -euo pipefail
+          TAG="${DISPATCH_TAG:-${BUILD_TAG:-}}"
+          : "${TAG:?No image tag available from the build job or the dispatch input}"
+          if [[ ! "${TAG}" =~ ^sha-[0-9a-f]{7,40}$ ]]; then
+            echo "::error::image tag must match sha-<gitsha>. Received: ${TAG}"
+            exit 1
+          fi
+          echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
+
+      - name: Configure kubeconfig
+        # The secret holds a base64-encoded kubeconfig. Passed through env:
+        # so the value never reaches the shell parser. Written into this
+        # job's temp directory, never the runner user's ~/.kube, and removed
+        # by the last step whatever happens: the runner persists.
+        env:
+          KUBECONFIG_B64: ${{ secrets.KUBECONFIG }}
+        run: |
+          set -euo pipefail
+          : "${KUBECONFIG_B64:?Missing KUBECONFIG secret in the release environment}"
+          file="${RUNNER_TEMP}/kubeconfig"
+          ( umask 077 && printf '%s' "${KUBECONFIG_B64}" | base64 --decode > "${file}" )
+          echo "KUBECONFIG=${file}" >> "${GITHUB_ENV}"
+
+      - name: Install kubectl
+        # Installed per job into a job-unique directory, never shared: on a
+        # persistent runner, one kubectl file that every job writes can be
+        # truncated by one job while another executes it.
+        run: |
+          set -euo pipefail
+          case "$(uname -m)" in
+            x86_64|amd64) ARCH=amd64 ;;
+            aarch64|arm64) ARCH=arm64 ;;
+            *) echo "::error::Unsupported architecture for kubectl: $(uname -m)"; exit 1 ;;
+          esac
+          KUBECTL_DIR="${RUNNER_TEMP}/kubectl-${GITHUB_RUN_ID}-${GITHUB_JOB}"
+          mkdir -p "${KUBECTL_DIR}"
+          VERSION="$(curl -fsSL https://dl.k8s.io/release/stable.txt)"
+          curl -fsSL "https://dl.k8s.io/release/${VERSION}/bin/linux/${ARCH}/kubectl" -o "${KUBECTL_DIR}/kubectl"
+          chmod +x "${KUBECTL_DIR}/kubectl"
+          echo "${KUBECTL_DIR}" >> "${GITHUB_PATH}"
+          "${KUBECTL_DIR}/kubectl" version --client=true
+          "${KUBECTL_DIR}/kubectl" config current-context
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Helm upgrade
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+          NAMESPACE: ${{ vars.NAMESPACE || 'origincloud-docs' }}
+          INGRESS_HOST: ${{ vars.INGRESS_HOST || 'docs.origincloud.eu' }}
+          # Optional. A public GHCR package needs no pull credential; set this
+          # secret only if the package is private.
+          GHCR_DOCKERCONFIGJSON: ${{ secrets.GHCR_DOCKERCONFIGJSON }}
+        run: |
+          set -euo pipefail
+
+          pull_secret_args=()
+          if [[ -n "${GHCR_DOCKERCONFIGJSON:-}" ]]; then
+            echo "GHCR_DOCKERCONFIGJSON is set: creating an image pull secret."
+            pull_secret_args=(
+              --set imagePullSecret.create=true
+              --set imagePullSecret.dockerconfigjson="${GHCR_DOCKERCONFIGJSON}"
+              --set imagePullSecrets[0].name=dockerconfigjson-github-com
+            )
+          else
+            echo "No GHCR_DOCKERCONFIGJSON: assuming a public GHCR package."
+          fi
+
+          helm upgrade --install --wait --timeout 10m \
+            -n "${NAMESPACE}" --create-namespace \
+            --values "${{ env.VALUES_FILE }}" \
+            --set image.repository="${{ env.APP_IMAGE }}" \
+            --set image.tag="${TAG}" \
+            --set-string ingress.hosts[0].host="${INGRESS_HOST}" \
+            --set-string ingress.tls[0].hosts[0]="${INGRESS_HOST}" \
+            "${pull_secret_args[@]}" \
+            "${{ env.RELEASE_NAME }}" "${{ env.CHART_PATH }}"
+
+      - name: Smoke test
+        env:
+          NAMESPACE: ${{ vars.NAMESPACE || 'origincloud-docs' }}
+        run: |
+          set -euo pipefail
+
+          kubectl -n "${NAMESPACE}" rollout status "deployment/${{ env.RELEASE_NAME }}" --timeout=180s
+
+          # A run-unique local port: a persistent runner may still hold an
+          # earlier run's port-forward.
+          LOCAL_PORT=$(( 20000 + (${{ github.run_id }} % 20000) ))
+          kubectl -n "${NAMESPACE}" port-forward "service/${{ env.RELEASE_NAME }}" "${LOCAL_PORT}:80" &
+          port_forward_pid="$!"
+          trap 'kill "${port_forward_pid}" >/dev/null 2>&1 || true' EXIT
+
+          out="${RUNNER_TEMP}/smoke"
+          mkdir -p "${out}"
+          ok=""
+          for _ in $(seq 1 30); do
+            if curl -fsS "http://127.0.0.1:${LOCAL_PORT}/docs/compute/" -o "${out}/guide.html"; then ok=1; break; fi
+            sleep 2
+          done
+          [[ -n "${ok}" ]] || { echo "::error::No successful response from the Compute guide"; exit 1; }
+
+          # The page rendered, not just answered: its title comes from the
+          # page's frontmatter and the navigation from the content tree.
+          grep -q "What is Origin Cloud Compute" "${out}/guide.html" || {
+            echo "::error::Compute guide served without its title: check the build stage"
+            exit 1
+          }
+          grep -q 'class="nav-list"' "${out}/guide.html" || {
+            echo "::error::Navigation did not render: the content tree may be missing from the image"
+            exit 1
+          }
+
+          # A page below a guide root, so a routing regression in the nested
+          # tree is caught too.
+          curl -fsS "http://127.0.0.1:${LOCAL_PORT}/docs/compute/instances/lifecycle/" -o "${out}/deep.html" || {
+            echo "::error::A page below the guide root did not respond"
+            exit 1
+          }
+          grep -q "Instance lifecycle" "${out}/deep.html" || {
+            echo "::error::Nested page served without its content"
+            exit 1
+          }
+
+          # And the content it serves is the content this commit holds. A
+          # dispatch may deploy an older image, which holds older content.
+          if [[ "${GITHUB_EVENT_NAME}" != "push" ]]; then exit 0; fi
+          want="$(python3 -c 'import json; print(json.load(open("docs/_export/version.json"))["commit"])')"
+          curl -fsS "http://127.0.0.1:${LOCAL_PORT}/version.json" -o "${out}/version.json"
+          got="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["content_commit"])' "${out}/version.json")"
+          if [[ "${got}" != "${want}" ]]; then
+            echo "::error::/version.json names ${got}; this commit's docs/ was exported from ${want}"
+            exit 1
+          fi
+          echo "Serving the docs exported from ${got}"
+
+      - name: Remove the kubeconfig
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/kubeconfig"

@@ -1,0 +1,6 @@
+# main requires a code owner's review (infra/README.md). Everything but the
+# content has an owner; docs/ has none, because it changes only through the
+# export, which was reviewed at the source and merges itself once the checks
+# pass.
+*       @mrcrgl
+/docs/

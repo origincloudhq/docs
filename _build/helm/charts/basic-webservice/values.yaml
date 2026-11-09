@@ -1,0 +1,28 @@
+# Chart defaults.
+#
+# Deliberately minimal: the chart takes its configuration from a
+# per-environment file (`_build/helm/values.controlplane.yaml`), and this
+# file does not try to duplicate it. It exists so the opt-in features have a
+# defined default,
+# because a template referencing an absent key fails to render at all
+# ("nil pointer evaluating interface {}.create") rather than treating it as
+# off.
+#
+# Both default to OFF, so an environment that does not ask for them behaves
+# exactly as before.
+
+# Runtime config.json (see templates/runtime-config.yaml).
+runtimeConfig:
+  create: false
+  # Defaults to "<release>-runtime-config" when empty.
+  name: ""
+  data: {}
+
+# Registry credential for pulling this app's own image (see
+# templates/image-pull-secret.yaml). Off for a public image, which needs
+# no credential. `dockerconfigjson` is supplied at deploy time from a
+# GitHub secret and is never committed.
+imagePullSecret:
+  create: false
+  name: dockerconfigjson-github-com
+  dockerconfigjson: ""

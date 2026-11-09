@@ -1,0 +1,17 @@
+# Keep the build context small, and — more importantly — keep the host's
+# node_modules out of it. `COPY site ./site` runs after `npm ci`, so without
+# this line the image's freshly installed dependencies are overwritten by
+# whatever the developer's machine happens to have, including binaries built
+# for a different architecture.
+.git
+.github
+scripts
+# Not all of _build: the runtime stage copies nginx.conf out of it.
+_build/helm
+infra
+*.md
+
+site/node_modules
+site/dist
+site/.astro
+site/.shots

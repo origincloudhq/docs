@@ -1,0 +1,130 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "basic-webservice.fullname" . }}
+  labels:
+    {{- include "basic-webservice.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "basic-webservice.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "basic-webservice.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "basic-webservice.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          {{- if .Values.image.command }}
+          command: [ "{{ .Values.image.command }}" ]
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.app.containerPort | default "80" }}
+          {{- if .Values.livenessProbe.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.livenessProbe.path | default "/" }}
+              port: {{ .Values.livenessProbe.port | default "80" }}
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            successThreshold: 1
+            failureThreshold: 2
+          {{- end }}
+          {{- if .Values.readinessProbe.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.readinessProbe.path | default "/" }}
+              port: {{ .Values.readinessProbe.port | default "80" }}
+            initialDelaySeconds: 3
+            periodSeconds: 2
+            successThreshold: 1
+            failureThreshold: 2
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- if or .Values.env_variables.enabled .Values.secrets.enabled .Values.extraEnv }}
+          env:
+          {{- if .Values.env_variables.enabled }}
+          {{- range $key, $val := .Values.env_variables.data }}
+            - name: {{ $key | quote }}
+              value: {{ $val | quote }}
+          {{- end }}
+          {{- end }}
+          {{- if .Values.secrets.enabled }}
+          {{- range $key, $val := .Values.secrets.data }}
+            - name: {{ $key | quote }}
+              valueFrom:
+                secretKeyRef:
+                  key: {{ $key | quote }}
+                  name: {{ include "basic-webservice.runtimeSecretName" $ }}
+          {{- end }}
+          {{- end }}
+          {{- range $entry := .Values.extraEnv }}
+            - name: {{ $entry.name | quote }}
+              value: {{ $entry.value | quote }}
+          {{- end }}
+          {{- end }}
+          {{- if and .Values.runtimeContract.enabled (or .Values.runtimeContract.configMapName .Values.runtimeContract.secretName) }}
+          envFrom:
+            {{- if .Values.runtimeContract.configMapName }}
+            - configMapRef:
+                name: {{ .Values.runtimeContract.configMapName | quote }}
+            {{- end }}
+            {{- if .Values.runtimeContract.secretName }}
+            - secretRef:
+                name: {{ .Values.runtimeContract.secretName | quote }}
+            {{- end }}
+          {{- end }}
+          {{- if or .Values.mounted_secrets.enabled .Values.extraVolumeMounts }}
+          volumeMounts:
+            {{- if .Values.mounted_secrets.enabled }}
+            - mountPath: "/app/.secrets"
+              name: "secrets"
+              readOnly: true
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- end }}
+      {{- if or .Values.mounted_secrets.enabled .Values.extraVolumes }}
+      volumes:
+        {{- if .Values.mounted_secrets.enabled }}
+        - name: "secrets"
+          secret:
+            secretName: {{ $.Release.Name }}-files
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

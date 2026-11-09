@@ -1,0 +1,108 @@
+---
+/**
+ * Klaro consent manager gating Google Analytics.
+ *
+ * The same setup as origincloud.eu's:
+ * the tag loads, but Google Consent Mode v2 defaults every storage type to
+ * *denied*, and nothing is granted until Klaro records an acceptance.
+ * Declining deletes the `_ga*` cookies.
+ *
+ * Two loaders, chosen by ID prefix, same contract as origincloud.eu:
+ *   G-…    GA4 measurement ID  -> gtag.js. The consent defaults are set
+ *          inline, before `config`, which is the order Google requires for
+ *          Consent Mode to apply to the very first hit.
+ *   GTM-…  Tag Manager container -> GTM snippet, and Klaro additionally
+ *          pushes `klaro-<service>-accepted` events for container triggers
+ *          to gate tags on.
+ *
+ * Production builds only, so `astro dev` shows no banner and never touches
+ * the analytics property.
+ */
+import { analyticsId, isTagManager, analyticsEnabled } from '../lib/analytics'
+// Shared with <LegalLinks> so the dialog and the footer cannot disagree.
+import { IMPRINT, PRIVACY } from '../lib/legal'
+---
+{analyticsEnabled && (
+  <>
+    {/* Consent defaults must be queued before the tag's first hit. */}
+    <script is:inline define:vars={{ analyticsId, isTagManager }}>
+      window.dataLayer = window.dataLayer || []
+      window.gtag = function () { dataLayer.push(arguments) }
+      gtag('consent', 'default', {
+        ad_storage: 'denied',
+        analytics_storage: 'denied',
+        ad_user_data: 'denied',
+        ad_personalization: 'denied',
+      })
+      gtag('set', 'ads_data_redaction', true)
+      if (!isTagManager) {
+        gtag('js', new Date())
+        gtag('config', analyticsId)
+      }
+    </script>
+
+    {isTagManager ? (
+      <script is:inline define:vars={{ analyticsId }}>
+        ;(function (w, d, s, l, i) {
+          w[l] = w[l] || []
+          w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' })
+          var f = d.getElementsByTagName(s)[0],
+            j = d.createElement(s),
+            dl = l != 'dataLayer' ? '&l=' + l : ''
+          j.async = true
+          j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl
+          f.parentNode.insertBefore(j, f)
+        })(window, document, 'script', 'dataLayer', analyticsId)
+      </script>
+    ) : (
+      <script async is:inline src={`https://www.googletagmanager.com/gtag/js?id=${analyticsId}`}></script>
+    )}
+
+    <script is:inline define:vars={{ PRIVACY, IMPRINT, isTagManager }}>
+      window.klaroConfig = {
+        version: 1,
+        elementID: 'klaro',
+        lang: 'en',
+        privacyPolicy: PRIVACY,
+        imprint: IMPRINT,
+        acceptAll: true,
+        translations: {
+          en: {
+            consentNotice: {
+              // Klaro's default notice copy is chatty and generic. This is the
+              // same claim stated plainly, and it is accurate: Consent Mode
+              // keeps analytics_storage denied, so no analytics cookie is
+              // written until the reader accepts.
+              description:
+                'We use Google Analytics to see which documentation pages get read. No analytics cookies are set unless you accept.',
+              learnMore: 'Choose what to allow',
+            },
+            consentModal: {
+              title: 'Privacy Settings',
+              description:
+                'We use cookies and similar technologies for analytics. You can grant or decline your consent.',
+            },
+            purposes: { analytics: { title: 'Analytics' } },
+            acceptAll: 'Accept all',
+            acceptSelected: 'Save selection',
+            decline: 'Decline',
+            ok: 'Accept',
+          },
+        },
+        services: [
+          {
+            name: 'google-analytics',
+            cookies: [/^_ga(_.*)?/],
+            purposes: ['analytics'],
+            onAccept: `
+              gtag('consent', 'update', { 'analytics_storage': 'granted' })
+              ${isTagManager ? `dataLayer.push({ event: 'klaro-google-analytics-accepted' })` : ``}
+            `,
+            onDecline: `gtag('consent', 'update', { 'analytics_storage': 'denied' })`,
+          },
+        ],
+      }
+    </script>
+    <script defer is:inline src="https://cdn.kiprotect.com/klaro/v0.7.18/klaro.js"></script>
+  </>
+)}

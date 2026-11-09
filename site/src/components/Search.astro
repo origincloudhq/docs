@@ -1,0 +1,102 @@
+---
+/**
+ * Search over the Pagefind index built by `npm run build`.
+ *
+ * Uses Pagefind's JS API rather than its bundled UI so results wear the
+ * blueprint shell like everything else. The index lives at /pagefind/ and only
+ * exists after a build — in `astro dev` the panel says so rather than failing
+ * silently.
+ */
+---
+<button class="search-btn" type="button" data-search-open aria-haspopup="dialog">
+  <span class="search-btn__label">Search</span>
+  <kbd class="search-btn__kbd">/</kbd>
+</button>
+
+<div class="search-modal" data-search-modal hidden>
+  <div class="search-modal__scrim" data-search-close></div>
+  <div class="search-modal__panel brackets" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <input
+      class="search-modal__input"
+      type="search"
+      placeholder="Search the docs…"
+      autocomplete="off"
+      spellcheck="false"
+      data-search-input
+    />
+    <div class="search-modal__results" data-search-results>
+      <p class="search-modal__hint">Type to search.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const modal = document.querySelector('[data-search-modal]') as HTMLElement | null
+  const input = document.querySelector('[data-search-input]') as HTMLInputElement | null
+  const results = document.querySelector('[data-search-results]') as HTMLElement | null
+
+  if (modal && input && results) {
+    const HINT = (t: string) => `<p class="search-modal__hint">${t}</p>`
+
+    // One shared promise, so a keystroke that lands while the index is still
+    // downloading waits for it instead of being silently dropped.
+    let loading: Promise<any> | null = null
+    const loadPagefind = () => {
+      if (!loading) {
+        loading = (async () => {
+          // Held in a variable so the bundler cannot statically resolve it:
+          // the index is produced by `pagefind` after `astro build`, so it
+          // does not exist at build time (nor at all during `astro dev`).
+          const indexUrl = '/pagefind/pagefind.js'
+          const pf = await import(/* @vite-ignore */ indexUrl)
+          await pf.options({ excerptLength: 25 })
+          return pf
+        })().catch(() => null)
+      }
+      return loading
+    }
+
+    const open = () => { modal.hidden = false; input.focus(); loadPagefind() }
+    const close = () => { modal.hidden = true; input.value = '' }
+
+    document.querySelector('[data-search-open]')?.addEventListener('click', open)
+    document.querySelectorAll('[data-search-close]').forEach((el) =>
+      el.addEventListener('click', close)
+    )
+
+    document.addEventListener('keydown', (e) => {
+      const typing = /^(INPUT|TEXTAREA)$/.test((e.target as HTMLElement)?.tagName ?? '')
+      if (e.key === 'Escape' && !modal.hidden) close()
+      else if (e.key === '/' && modal.hidden && !typing) { e.preventDefault(); open() }
+    })
+
+    let token = 0
+    const render = async () => {
+      const q = input.value.trim()
+      const mine = ++token
+      if (!q) { results.innerHTML = HINT('Type to search.'); return }
+
+      const pf = await loadPagefind()
+      if (mine !== token) return
+      if (!pf) {
+        results.innerHTML = HINT(
+          'No search index in dev. Run <code>npm run build</code>, then <code>npm run preview</code>.'
+        )
+        return
+      }
+
+      const search = await pf.search(q)
+      const top = await Promise.all(search.results.slice(0, 8).map((r: any) => r.data()))
+      if (mine !== token) return                  // a later keystroke already won
+      results.innerHTML = top.length
+        ? top.map((d: any) => `
+            <a class="search-hit" href="${d.url}">
+              <span class="search-hit__title">${d.meta?.title ?? d.url}</span>
+              <span class="search-hit__excerpt">${d.excerpt}</span>
+            </a>`).join('')
+        : HINT('Nothing matched that.')
+    }
+
+    input.addEventListener('input', render)
+  }
+</script>

@@ -1,0 +1,103 @@
+# docs.origincloud.eu: a static site, served by nginx from the image
+# .github/workflows/cd.yml builds. cd.yml sets image.repository, image.tag and
+# the ingress host; everything else is here.
+
+app:
+  name: origincloud-docs
+  # 10080, not 80: the chart's service.yaml hardcodes Service targetPort:
+  # 10080, so the container must listen there.
+  containerPort: 10080
+
+resources:
+  requests:
+    cpu: "10m"
+    memory: "32Mi"
+  limits:
+    cpu: "100m"
+    memory: "64Mi"
+
+image:
+  repository: ghcr.io/origincloudhq/docs
+
+preInstallJobs: []
+
+serviceAccount:
+  create: true
+
+autoscaling:
+  enabled: true
+  targetCPUUtilizationPercentage: 70
+  minReplicas: 1
+  maxReplicas: 2
+
+livenessProbe:
+  enabled: true
+  path: /
+  port: 10080
+
+readinessProbe:
+  enabled: true
+  path: /
+  port: 10080
+
+service:
+  type: NodePort
+  port: 80
+
+ingress:
+  enabled: true
+  # No ingress class annotation: the cluster's default IngressClass serves it.
+  annotations:
+    # A publicly trusted certificate from Let's Encrypt, through the
+    # cluster's `letsencrypt` ClusterIssuer.
+    cert-manager.io/cluster-issuer: letsencrypt
+  basicAuth:
+    enabled: false
+    realm: "Authentication required"
+    secret:
+      create: false
+      name: ""
+    username: ""
+    password: ""
+  tls:
+    - hosts:
+        - docs.origincloud.eu
+      secretName: docs-origincloud-eu-tls
+  hosts:
+    - host: docs.origincloud.eu
+      paths:
+        - path: "/"
+
+# Pure static site: no runtime config, no secrets, nothing to inject.
+env_variables:
+  enabled: false
+
+secrets:
+  enabled: false
+
+runtimeContract:
+  enabled: false
+  configMapName: ""
+  secretName: ""
+
+runtimeConfig:
+  create: false
+
+extraEnv: []
+
+mounted_secrets:
+  enabled: false
+
+extraVolumes: []
+extraVolumeMounts: []
+
+# Registry credential for pulling this repository's own image.
+#
+# Only rendered when cd.yml passes a value (the chart skips the object on an
+# empty string), so a public GHCR package needs no secret at all and a
+# private one is a GHCR_DOCKERCONFIGJSON secret away. `name` is referenced by
+# imagePullSecrets only when creation is on; cd.yml sets both together or
+# neither.
+imagePullSecret:
+  create: false
+  name: dockerconfigjson-github-com

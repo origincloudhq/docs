@@ -1,0 +1,101 @@
+# The checks every pull request must pass before it merges into main, and
+# therefore before anything is deployed. They are the required checks of
+# main's branch protection: `build` and `scan`.
+#
+# Export pull requests (from the branch export/docs-user) merge themselves
+# once both pass; a red one stays open and the site stays as it is
+# (export-watch.yml opens an issue when one stays red or unmerged).
+#
+# Pull requests from forks run these too, on GitHub-hosted runners with a
+# read-only token, so a fork can build and check but reach nothing. GitHub
+# gives a fork's run no secrets, so its scans skip the private list
+# (INTERNAL_NAMES_JSON) and say so in a notice. Everywhere else, the export
+# pull requests included, a missing list fails the scan.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+env:
+  # `fork` for a pull request from another repository, empty otherwise.
+  FORK: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'fork' || '' }}
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          # 20, as the image builds with (_build/Dockerfile): the site is pinned to Astro 5.
+          node-version: 20
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Install
+        working-directory: site
+        run: npm ci
+
+      # Mermaid diagrams are rendered to SVG at build time, in Chromium.
+      - name: Install Chromium for Mermaid
+        working-directory: site
+        run: npx playwright install --with-deps chromium
+
+      # astro build, then check-links over the source and the built site,
+      # then the search index. A broken link fails here.
+      - name: Build the site
+        working-directory: site
+        env:
+          SITE_COMMIT: ${{ github.sha }}
+        run: npm run build
+
+      - name: Check the site serves its version
+        run: |
+          set -euo pipefail
+          want="$(python3 -c 'import json; print(json.load(open("docs/_export/version.json"))["commit"])')"
+          got="$(python3 -c 'import json; print(json.load(open("site/dist/version.json"))["content_commit"])')"
+          if [ "${want}" != "${got}" ]; then
+            echo "::error::site/dist/version.json names ${got}, but docs/ was exported from ${want}"
+            exit 1
+          fi
+          echo "version.json: content ${got}"
+
+      # Secrets, internal hosts and addresses, issue links and the private
+      # list (see scripts/scan.py), in what the site would serve.
+      - name: Scan the built site
+        env:
+          INTERNAL_NAMES_JSON: ${{ secrets.INTERNAL_NAMES_JSON }}
+          SCAN_WITHOUT_PRIVATE_LIST: ${{ env.FORK }}
+        run: python3 scripts/scan.py site site/dist
+
+  scan:
+    name: scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # The scan's own behaviour first: a scan that can't fail verifies nothing.
+      - name: Test the scan and the export watch
+        run: |
+          python3 scripts/scan.test.py
+          python3 scripts/export-watch.test.py
+
+      - name: Scan the repository
+        env:
+          INTERNAL_NAMES_JSON: ${{ secrets.INTERNAL_NAMES_JSON }}
+          SCAN_WITHOUT_PRIVATE_LIST: ${{ env.FORK }}
+        run: python3 scripts/scan.py repo

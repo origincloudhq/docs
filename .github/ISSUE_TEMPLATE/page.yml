@@ -1,0 +1,32 @@
+name: Problem on a page
+description: Something on a docs page is wrong, unclear or missing.
+title: "Page: "
+body:
+  - type: input
+    id: page
+    attributes:
+      label: Page
+      description: The page's address. "Report an issue" on the page fills it in.
+      placeholder: https://docs.origincloud.eu/docs/compute/
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What's the problem?
+      options:
+        - It describes behaviour differently from what I see
+        - A step or command doesn't work
+        - It's unclear or hard to follow
+        - Something is missing
+        - A broken link, diagram or layout
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: What the page says, what you expected, and what you ran and saw. Remove tokens and account details.
+    validations:
+      required: true
