@@ -4,9 +4,7 @@
  * Shiki themes are resolved to real color values at build time, so unlike
  * every other stylesheet in this project this file cannot reference the
  * custom properties in tokens.css. The values below are therefore MIRRORED
- * from tokens.css (the vendored copy of origincloud-brand's blueprint.css),
- * not chosen here. Re-copy them when that file changes — same low-tech
- * vendoring pattern the brand skill prescribes for the tokens themselves.
+ * from tokens.css, not chosen here. Re-copy them when tokens.css changes.
  *
  * Role mapping. The brand reserves each hue: copper = action/signal, blue =
  * structural, sage/gold/coral = status. Syntax highlighting is a domain the
