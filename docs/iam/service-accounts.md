@@ -7,7 +7,7 @@ page_type: task
 parent: home
 nav_order: 50
 tags: [iam, service-accounts, cli, api]
-last_reviewed: 2026-11-07
+last_reviewed: 2026-11-10
 ---
 
 # Use service accounts
@@ -122,9 +122,49 @@ An organization can't be deleted while it has a service account that isn't delet
 
 4. Run `list-role-bindings --member serviceAccount:<service-account-id>` and check that it lists no binding.
 
+## Trust a CI provider's tokens
+
+A `WORKLOAD` service account can trust the OIDC tokens of an identity provider outside Origin Cloud, such as the token GitHub Actions gives every job. That trust is a federated credential on the account. It names exactly:
+
+- the token's issuer;
+- the audience it must be issued for, `https://sts.origincloudapis.eu` unless you name another;
+- the claims it must carry, each with exactly one value.
+
+Software holding a matching token exchanges it for the service account's access token, so no secret is stored where it runs.
+
+> **Not yet available:** exchanging a token for the service account's access token. You can create and manage federated credentials now; they take effect once the exchange is released.
+
+A federated credential is refused unless:
+
+- **At least one condition names an identity that never changes.** For GitHub Actions' issuer, `https://token.actions.githubusercontent.com`, that is `repository_id` or `repository_owner_id`. For any other issuer, it is `sub`. A repository's name alone isn't enough: a renamed repository, or a new one created under an old name, would inherit the trust.
+- **No value contains `*`.** Values are matched exactly, never as patterns.
+- **The service account is an active `WORKLOAD` one.** An `EXTERNAL` account authenticates with its own secret.
+
+Whoever matches a federated credential acts as the service account. So creating one needs `iam.service_account.create` and `iam.service_account.act_as` on the organization: the right to act as the account yourself. `roles/owner` holds both.
+
+To change a federated credential, create the new one and delete the old; it is never updated. Deleting the service account deletes its federated credentials.
+
+```sh
+curl -s -X POST \
+  "https://iam.origincloudapis.eu/v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>/federatedCredentials" \
+  -H "Authorization: Bearer $(origin id token)" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "displayName": "deploy from main",
+    "issuer": "https://token.actions.githubusercontent.com",
+    "conditions": {
+      "repository_id": "<repository-id>",
+      "ref": "refs/heads/main",
+      "environment": "production"
+    }
+  }'
+```
+
+`GET` on the same path lists them; add `?showDeleted=true` to include deleted ones. A `DELETE` of one's name deletes it.
+
 ## Using the API
 
-In the REST API, these are `CreateServiceAccount`, `ListServiceAccounts`, `GetServiceAccount` and `DeleteServiceAccount`; see the [IAM reference](reference/index.md#rest-api). The GraphQL mutations are `createServiceAccount` and `revokeServiceAccount`; the query is `serviceAccounts`, all in the `iam` namespace. Neither API returns a client secret after the create.
+In the REST API, these are `CreateServiceAccount`, `ListServiceAccounts`, `GetServiceAccount` and `DeleteServiceAccount`, and for federated credentials `CreateFederatedCredential`, `ListFederatedCredentials`, `GetFederatedCredential` and `DeleteFederatedCredential`; see the [IAM reference](reference/index.md#rest-api). The GraphQL mutations are `createServiceAccount` and `revokeServiceAccount`; the query is `serviceAccounts`, all in the `iam` namespace. Neither API returns a client secret after the create.
 
 The type is the service account's `type` field in both APIs: set it in the create to make a `WORKLOAD` service account, whose `clientId` and `clientSecret` are then empty in the REST API and null in GraphQL.
 
@@ -147,4 +187,4 @@ mutation {
 - [Built-in roles](roles.md)
 - [API access](../platform/access/api.md)
 - [`create-service-account`](reference/cli.md#create-service-account) and [`delete-service-account`](reference/cli.md#delete-service-account) commands
-- [Audit log](audit-log.md) – creation and revocation are recorded, and so is the removal of a revoked account's role assignments
+- [Audit log](audit-log.md) – creation and revocation are recorded, and so is the removal of a revoked account's role assignments; so are the creation and deletion of federated credentials

@@ -6,7 +6,7 @@ page_type: concept
 parent: home
 nav_order: 70
 tags: [iam, audit, api]
-last_reviewed: 2026-11-09
+last_reviewed: 2026-11-10
 ---
 
 # Audit log
@@ -15,7 +15,7 @@ The audit log records changes to access in your organization: who did what, to w
 
 ## What's recorded
 
-The audit log records these nine actions. Each one is recorded when the change succeeds.
+The audit log records these eleven actions. Each one is recorded when the change succeeds.
 
 | Action | Recorded when | Target |
 |---|---|---|
@@ -26,6 +26,8 @@ The audit log records these nine actions. Each one is recorded when the change s
 | `iam.org_invite.revoke` | A pending invite is canceled, or deleted with its organization | The invite ID |
 | `iam.service_account.create` | A service account is created | The service account's principal |
 | `iam.service_account.revoke` | A service account is revoked | The service account's principal |
+| `iam.federated_credential.create` | A federated credential is created on a service account | The federated credential's name; `details` holds its issuer, audience, conditions and service account |
+| `iam.federated_credential.delete` | A federated credential is deleted | The federated credential's name; `details` names its service account |
 | `compute.instance.service_account.attach` | An instance is launched as a service account, or updated to run as one (replacing one records a detach, then an attach) | The instance's URN; `details` names the service account |
 | `compute.instance.service_account.detach` | An instance's service account is removed or replaced | The instance's URN; `details` names the service account |
 
