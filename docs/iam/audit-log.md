@@ -15,7 +15,7 @@ The audit log records changes to access in your organization: who did what, to w
 
 ## What's recorded
 
-The audit log records these eleven actions. Each one is recorded when the change succeeds.
+The audit log records these twelve actions. Each one is recorded when the change succeeds.
 
 | Action | Recorded when | Target |
 |---|---|---|
@@ -28,10 +28,11 @@ The audit log records these eleven actions. Each one is recorded when the change
 | `iam.service_account.revoke` | A service account is revoked | The service account's principal |
 | `iam.federated_credential.create` | A federated credential is created on a service account | The federated credential's name; `details` holds its issuer, audience, conditions and service account |
 | `iam.federated_credential.delete` | A federated credential is deleted | The federated credential's name; `details` names its service account |
+| `iam.federated_credential.exchange` | A CI job's OIDC token is exchanged for the service account's access token through a federated credential; the actor is the service account | The federated credential's name; `details` holds the job token's issuer and subject, the run's claims (`run`), and the access token's id and expiry |
 | `compute.instance.service_account.attach` | An instance is launched as a service account, or updated to run as one (replacing one records a detach, then an attach) | The instance's URN; `details` names the service account |
 | `compute.instance.service_account.detach` | An instance's service account is removed or replaced | The instance's URN; `details` names the service account |
 
-The audit log doesn't record organization or project lifecycle changes, other resource changes such as launching an instance without a service account, or refused requests. Writing an entry never blocks the change itself: if an entry can't be written, the change still takes effect, so in rare cases an action is missing from the log. The two `compute.instance.service_account` actions are recorded with the change itself and reach the log within seconds; a change that is refused records nothing.
+The audit log doesn't record organization or project lifecycle changes, other resource changes such as launching an instance without a service account, or refused requests. Writing an entry never blocks the change itself: if an entry can't be written, the change still takes effect, so in rare cases an action is missing from the log. The two `compute.instance.service_account` actions are recorded with the change itself and reach the log within seconds; a change that is refused records nothing. An exchange through a federated credential is the other way round: no access token is issued unless its entry is written, and it reaches the log within seconds.
 
 ## Entry fields
 

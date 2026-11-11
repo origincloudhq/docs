@@ -8,7 +8,7 @@ parent: access
 nav_order: 10
 tags: [cli, getting-started]
 related: [reference-cli, access-api]
-last_reviewed: 2026-11-08
+last_reviewed: 2026-11-11
 ---
 
 # Use the CLI
@@ -212,7 +212,9 @@ Scripts and CI jobs, which can't log in interactively, use a service account ins
 | `ORIGINCLOUD_CLIENT_ID` and `ORIGINCLOUD_CLIENT_SECRET` | Authenticate as the service account with this client ID and secret. |
 | `ORIGINCLOUD_ACCESS_TOKEN` | Use this access token. |
 
-The `origin id` commands always use the login session, and the `origin config` commands call no service. For creating a service account and giving it access, see [Service accounts](../../iam/service-accounts.md).
+A CI job needs no secret at all. In a GitHub Actions job granted `permissions: id-token: write`, every command exchanges the job's OIDC token for the access token of the service account a federated credential trusts the job as, and renews it as it expires. That token comes after the variables above and before the login session; see [Authenticate from GitHub Actions without a secret](../../iam/github-actions.md). On an instance that runs as a service account, with no login session, every command uses that service account's credential from the instance's metadata service.
+
+`origin id token` prints the access token the commands use: the CI job's, else the login session's, else the instance's. The other `origin id` commands use the login session, and the `origin config` commands call no service. For creating a service account and giving it access, see [Service accounts](../../iam/service-accounts.md).
 
 ## Set a default project, zone and region
 
