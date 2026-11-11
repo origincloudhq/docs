@@ -49,8 +49,9 @@ A credential is never changed: to change one, create the new one and delete the 
 The STS accepts a job's token only if all of these hold:
 
 - the issuer's public keys verify its signature, and it's signed with RS256;
-- its issuer and audience are one federated credential's, and it hasn't expired;
+- its issuer and audience are one federated credential's, it hasn't expired, and its `nbf` (not before), if it has one, has passed;
 - exactly one federated credential finds all its conditions in it. A token that two credentials match is refused as ambiguous;
+- a pull request's job, a GitHub token whose `event_name` is `pull_request` or `pull_request_target`, matches only a credential that names that `event_name`. Trusting a repository never trusts its pull requests by itself;
 - that credential's service account is an active `WORKLOAD` account.
 
 The access token it issues lasts 15 minutes, or between one minute and one hour if the request asks. It names the federated credential it was exchanged through and the job's run. A refused exchange is answered `invalid_grant` without saying which check failed, so that it gives nothing away to someone guessing at a trust policy.

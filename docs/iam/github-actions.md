@@ -25,24 +25,25 @@ GitHub gives every Actions job that asks for it a short-lived OIDC token, signed
 Create a federated credential on the service account that names GitHub's issuer, the repository's id, and whatever else must hold for the job, such as its branch or its GitHub environment:
 
 ```sh
-curl -s -X POST \
-  "https://iam.origincloudapis.eu/v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>/federatedCredentials" \
-  -H "Authorization: Bearer $(origin id token --raw)" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "displayName": "deploy from main",
-    "issuer": "https://token.actions.githubusercontent.com",
-    "conditions": {
-      "repository_id": "<repository-id>",
-      "ref": "refs/heads/main",
-      "environment": "production"
-    }
-  }'
+origin iam create-federated-credential \
+  --organization <org-id> \
+  --service-account <service-account-id> \
+  --display-name "deploy from main" \
+  --issuer https://token.actions.githubusercontent.com \
+  --condition repository_id=<repository-id> \
+  --condition ref=refs/heads/main \
+  --condition environment=production
 ```
 
 Conditions are compared with the token's claims exactly, so choose them as narrowly as the job allows. A repository's name can change and be reused by another repository; its id can't, which is why `repository_id` or `repository_owner_id` is required. GitHub lists every claim of its tokens in [OpenID Connect in GitHub Actions](https://docs.github.com/en/actions/concepts/security/openid-connect).
 
 A job's token may match only one federated credential. Two credentials that both match the same job, for example one on `repository_id` alone and one on `repository_id` and `ref`, refuse the exchange as ambiguous.
+
+### Pull requests
+
+A job that a pull request runs, with `event_name` `pull_request` or `pull_request_target`, is never admitted by a credential that only trusts the repository. A `pull_request_target` job runs the base repository's workflow with the base branch as its `ref`, so it would otherwise match a credential on `ref: refs/heads/main` even when the pull request comes from a fork. To let pull requests' jobs act as a service account, create a separate credential that names the event with `--condition event_name=pull_request`, and give that service account only the roles a pull request may use.
+
+For a production deployment, name a GitHub environment in the credential (`--condition environment=production`) and protect that environment with required reviewers in the repository's settings. A job then gets a token for that environment only after a reviewer approves it.
 
 ## Run the job as the service account
 
