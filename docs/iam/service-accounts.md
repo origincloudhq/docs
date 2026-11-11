@@ -2,7 +2,7 @@
 id: service-accounts
 title: Use service accounts
 nav_title: Service accounts
-description: Create a service account for CI and scripts, exchange its client ID and secret for an access token, grant it roles, and delete it to revoke it.
+description: Create a service account for CI and scripts, exchange its client ID and secret for an access token, rotate the secret before it expires, and delete the account to revoke it.
 page_type: task
 parent: home
 nav_order: 50
@@ -15,6 +15,8 @@ last_reviewed: 2026-11-11
 A service account is a non-interactive credential for automation such as CI pipelines, scripts and infrastructure-as-code tools. It belongs to one organization and acts as its own principal: the member `serviceAccount:<service-account-id>` in the `origin iam` commands and the REST API, `service_account:<service-account-id>` in the GraphQL API. Its access is checked exactly like a user's: it can do what its role bindings allow, and nothing else.
 
 A service account authenticates with an OAuth 2.0 client ID and client secret, using the client credentials grant against the platform's identity provider. The resulting access token is sent to the API like a user's.
+
+A client secret expires: 90 days after it is issued unless you ask for a shorter or longer lifetime, and never more than 365 days. From its expiry on, the identity provider refuses it, and you [rotate the secret](#rotate-the-client-secret) to get a new one. For a CI pipeline, prefer a `WORKLOAD` service account that [trusts the CI provider's tokens](#trust-a-ci-providers-tokens): no secret is stored in the pipeline, so none can leak or expire.
 
 Every service account has a type, set when it's created. It never changes.
 
@@ -39,7 +41,9 @@ Every service account has a type, set when it's created. It never changes.
 
    The output contains the service account's resource name, `organizations/<org-id>/serviceAccounts/<service-account-id>`, its `member`, and the credential: `clientId` and `clientSecret`.
 
-   > **Important:** The client secret is shown only once. Store it in your secret manager now. No API returns it again; if you lose it, delete the service account and create a new one.
+   > **Important:** The client secret is shown only once. Store it in your secret manager now. No API returns it again; if you lose it, [rotate the secret](#rotate-the-client-secret) to get a new one.
+
+   The secret expires after 90 days. To ask for another lifetime, more than zero and at most 365 days, create the service account with the REST API's `CreateServiceAccount` and set `secretLifetime`, such as `"2592000s"` for 30 days. Its `secretExpireTime` says when the secret expires.
 
 2. Grant the service account the roles it needs. A new service account holds no roles and can't do anything until you bind one. Use the `member` from the previous step.
 
@@ -94,6 +98,40 @@ To call the [GraphQL API](../platform/access/api.md) as the service account, get
    ```
 
 3. Verify that the token is accepted: the response contains a `data` object rather than an authentication error.
+
+## Rotate the client secret
+
+Rotating issues a new client secret for an `EXTERNAL` service account and refuses the old one from that moment on. The new secret is accepted at once, also when the old one had already expired, and expires after its own lifetime: 90 days unless you ask for another, at most 365 days. An access token issued with the old secret stays valid until it expires, within five minutes. The service account keeps its ID, client ID and role bindings.
+
+There is no overlap: anything still using the old secret fails once you rotate. Rotate when you can update every place that holds the secret right away.
+
+Rotating needs `iam.service_account.create` on the organization, which `roles/owner` holds. The CLI has no command for it yet; call the REST API.
+
+1. Rotate the secret. The body may set `secretLifetime`; leave it out for 90 days.
+
+   ```sh
+   curl -s -X POST \
+     "https://iam.origincloudapis.eu/v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>:rotateSecret" \
+     -H "Authorization: Bearer $(origin id token --raw)" \
+     -H "Content-Type: application/json" \
+     -d '{"secretLifetime": "7776000s", "requestId": "<uuid>"}'
+   ```
+
+   The response is the service account with the new secret in `clientSecret` and its expiry in `secretExpireTime`. As at creation, the secret is in this response only.
+
+2. Store the new secret where the old one was, such as in your CI system's secret store.
+
+3. Verify that the new secret works: request an access token with it, as in [Get an access token](#get-an-access-token).
+
+A repeat of the request with the same `requestId` within 24 hours issues no secret and is refused with `CONFLICT`, because the new secret went to the first response only. Rotate again with a new `requestId` to get a working secret.
+
+### Secret expiry
+
+Each `EXTERNAL` service account shows when its secret expires in `secretExpireTime`, in `GetServiceAccount` and `ListServiceAccounts`. Within about a minute of that time, the secret stops being accepted: a request for an access token with it is refused. The service account itself is still `ACTIVE` and keeps its role bindings, and rotating the secret gives it a working one again. An access token issued before the expiry stays valid until it runs out, within five minutes.
+
+A secret issued before secrets expired got an expiry 90 days from when expiry was introduced, as if it was issued then. Check `secretExpireTime` and rotate before it.
+
+A `WORKLOAD` service account has no secret, so it has no `secretExpireTime` and can't be rotated.
 
 ## Revoke a service account
 
@@ -157,7 +195,7 @@ origin iam create-federated-credential \
 
 ## Using the API
 
-In the REST API, these are `CreateServiceAccount`, `ListServiceAccounts`, `GetServiceAccount` and `DeleteServiceAccount`, and for federated credentials `CreateFederatedCredential`, `ListFederatedCredentials`, `GetFederatedCredential` and `DeleteFederatedCredential`; see the [IAM reference](reference/index.md#rest-api). The GraphQL mutations are `createServiceAccount` and `revokeServiceAccount`; the query is `serviceAccounts`, all in the `iam` namespace. Neither API returns a client secret after the create.
+In the REST API, these are `CreateServiceAccount`, `ListServiceAccounts`, `GetServiceAccount`, `RotateServiceAccountSecret` and `DeleteServiceAccount`, and for federated credentials `CreateFederatedCredential`, `ListFederatedCredentials`, `GetFederatedCredential` and `DeleteFederatedCredential`; see the [IAM reference](reference/index.md#rest-api). The GraphQL mutations are `createServiceAccount` and `revokeServiceAccount`; the query is `serviceAccounts`, all in the `iam` namespace. Neither API returns a client secret after the create, except the REST API's `RotateServiceAccountSecret`, which returns the new one. The secret's expiry, `secretExpireTime`, and the create's `secretLifetime` are in the REST API only.
 
 The type is the service account's `type` field in both APIs: set it in the create to make a `WORKLOAD` service account, whose `clientId` and `clientSecret` are then empty in the REST API and null in GraphQL.
 
@@ -181,4 +219,4 @@ mutation {
 - [API access](../platform/access/api.md)
 - [`create-service-account`](reference/cli.md#create-service-account) and [`delete-service-account`](reference/cli.md#delete-service-account) commands
 - [Authenticate from GitHub Actions](github-actions.md)
-- [Audit log](audit-log.md) – creation and revocation are recorded, and so is the removal of a revoked account's role assignments; so are the creation and deletion of federated credentials, and every exchange through one
+- [Audit log](audit-log.md) – creation, secret rotation, a secret's expiry and revocation are recorded, and so is the removal of a revoked account's role assignments; so are the creation and deletion of federated credentials, and every exchange through one

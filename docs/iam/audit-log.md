@@ -6,7 +6,7 @@ page_type: concept
 parent: home
 nav_order: 70
 tags: [iam, audit, api]
-last_reviewed: 2026-11-10
+last_reviewed: 2026-11-11
 ---
 
 # Audit log
@@ -15,7 +15,7 @@ The audit log records changes to access in your organization: who did what, to w
 
 ## What's recorded
 
-The audit log records these twelve actions. Each one is recorded when the change succeeds.
+The audit log records these fourteen actions. Each one is recorded when the change succeeds.
 
 | Action | Recorded when | Target |
 |---|---|---|
@@ -26,6 +26,8 @@ The audit log records these twelve actions. Each one is recorded when the change
 | `iam.org_invite.revoke` | A pending invite is canceled, or deleted with its organization | The invite ID |
 | `iam.service_account.create` | A service account is created | The service account's principal |
 | `iam.service_account.revoke` | A service account is revoked | The service account's principal |
+| `iam.service_account.rotate_secret` | A service account's client secret is rotated | The service account's principal; `details` holds the new secret's expiry |
+| `iam.service_account.secret_expired` | A service account's client secret expired and the platform stopped accepting it; the actor is the platform (`platform` in the REST API) | The service account's principal; `details` holds the expiry |
 | `iam.federated_credential.create` | A federated credential is created on a service account | The federated credential's name; `details` holds its issuer, audience, conditions and service account |
 | `iam.federated_credential.delete` | A federated credential is deleted | The federated credential's name; `details` names its service account |
 | `iam.federated_credential.exchange` | A CI job's OIDC token is exchanged for the service account's access token through a federated credential; the actor is the service account | The federated credential's name; `details` holds the job token's issuer and subject, the run's claims (`run`), and the access token's id and expiry |
