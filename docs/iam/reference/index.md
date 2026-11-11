@@ -57,7 +57,7 @@ Role names write the catalog's slashes as dots, such as `roles/iam.editor` for `
 | `ListFederatedCredentials` | `GET /v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>/federatedCredentials` | A `WORKLOAD` service account's trust policies for CI providers' OIDC tokens. `showDeleted` includes deleted ones. |
 | `GetFederatedCredential` | `GET /v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>/federatedCredentials/<id>` | One federated credential, deleted or not. |
 | `CreateFederatedCredential` | `POST /v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>/federatedCredentials` | Trusts tokens of an issuer and audience that carry the given claims. Needs `iam.service_account.create` and `iam.service_account.act_as`. |
-| `DeleteFederatedCredential` | `DELETE /v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>/federatedCredentials/<id>` | Stops trusting them: no token is exchanged for it from then on. |
+| `DeleteFederatedCredential` | `DELETE /v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>/federatedCredentials/<id>` | Stops trusting them: no token is exchanged for it from then on, and those exchanged before are refused at their next call. |
 | `GetUser` | `GET /v1beta1/users/me` | Your own profile. |
 | `ListAuditLogEntries`, `GetAuditLogEntry` | `GET /v1beta1/organizations/<org-id>/auditLogEntries` | The audit log's recent entries, 90 days by default. See [Audit log](../audit-log.md#in-the-rest-api). |
 
