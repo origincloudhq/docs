@@ -68,7 +68,7 @@ GitHub Actions meets these. A self-hosted provider that can't be reached from th
 
 Every API call made with an exchanged token checks again that its federated credential and its service account still exist. Deleting either stops the tokens already exchanged through it at their next call, not when they expire.
 
-The [audit log](audit-log.md) records the creation and deletion of federated credentials, and every exchange, as `iam.federated_credential.exchange`. That entry has the service account as its actor and the credential as its target. It holds the job's repository, workflow, ref, commit and run, and the access token's id and expiry.
+The [audit log](audit-log.md) records the creation and deletion of federated credentials, and every exchange, as `iam.federated_credential.exchange`. That entry has the service account as its actor and the credential as its target. It holds the job's repository, workflow, ref, commit and run, and the access token's id and expiry. Each change the job then makes with that access token is recorded with the federated credential and the access token's id in its `details`, so it can be traced back to the run (see [Changes made by a CI job](audit-log.md#changes-made-by-a-ci-job)).
 
 ## Where the token comes from
 

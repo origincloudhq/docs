@@ -119,7 +119,7 @@ If `invalid_grant` persists, compare the job's claims with the federated credent
 
 ## Audit
 
-Every exchange is recorded in the organization's [audit log](audit-log.md) as `iam.federated_credential.exchange`, with the service account as the actor and the federated credential as the target. Its `details` hold the job token's issuer and subject, the run's repository, workflow, ref, commit and run id, and the access token's id and expiry.
+Every exchange is recorded in the organization's [audit log](audit-log.md) as `iam.federated_credential.exchange`, with the service account as the actor and the federated credential as the target. Its `details` hold the job token's issuer and subject, the run's repository, workflow, ref, commit and run id, and the access token's id and expiry. The entries of the changes the job makes with that access token name the federated credential and the access token's id under `details.federated`, which links them to the exchange and its run.
 
 ## Related
 

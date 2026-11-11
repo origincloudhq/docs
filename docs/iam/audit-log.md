@@ -50,7 +50,28 @@ Each entry has these fields.
 | `target` | What the action was applied to, as listed in the table above. |
 | `outcome` | `SUCCESS` for every recorded action. |
 | `occurredAt` | When the action happened, as an RFC 3339 timestamp. |
-| `details` | Action-specific context as a JSON string, for example the role URN that was assigned. For a user actor or target, it also holds the verified email address the account had when the change was made, as `actor_verified_email` and `target_verified_email`, when one was verified. |
+| `details` | Action-specific context as a JSON string, for example the role URN that was assigned. For a user actor or target, it also holds the verified email address the account had when the change was made, as `actor_verified_email` and `target_verified_email`, when one was verified. For a change made by a CI job, it also holds `federated` (see [Changes made by a CI job](#changes-made-by-a-ci-job)). |
+
+## Changes made by a CI job
+
+A CI job that signs in through a [federated credential](workload-identity-federation.md) acts as the credential's service account, so that service account is the `actor` of every change the job makes. To say which job made it, the entry of a change made with the access token the job exchanged its token for holds `federated` in `details`:
+
+| Key | Description |
+|---|---|
+| `credential` | The federated credential's name. |
+| `token_id` | The access token's ID. |
+
+The `iam.federated_credential.exchange` entry with the same `token_id` holds the job token's subject and the run's claims, such as the repository, workflow and run ID, so together the two entries name the run that made the change. Entries that follow from a change rather than record it don't carry `federated`: a role assigned when a pending invite is applied, and the revocations recorded when an organization is deleted. Neither do `iam.federated_credential.exchange` itself and `iam.service_account.secret_expired`, which the platform records.
+
+```json
+{
+  "role_urn": "roles/viewer",
+  "federated": {
+    "credential": "organizations/<org-id>/serviceAccounts/<service-account-id>/federatedCredentials/<credential-id>",
+    "token_id": "<token-id>"
+  }
+}
+```
 
 ## Who can read it
 
