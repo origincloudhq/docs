@@ -43,7 +43,7 @@ sequenceDiagram
    ```sh
    curl -s -X POST \
      "https://compute.origincloudapis.eu/v1beta1/projects/<project-id>/zones/eu-central1-az1/instances" \
-     -H "Authorization: Bearer $(origin id token)" \
+     -H "Authorization: Bearer $(origin id token --raw)" \
      -H "Content-Type: application/json" \
      -d '{
        "instanceType": "instanceTypes/gp1.core.2",
@@ -112,7 +112,7 @@ Update the instance with `serviceAccount` in the update mask: a resource name se
 ```sh
 curl -s -X PATCH \
   "https://compute.origincloudapis.eu/v1beta1/projects/<project-id>/zones/eu-central1-az1/instances/<instance-id>?updateMask=serviceAccount" \
-  -H "Authorization: Bearer $(origin id token)" \
+  -H "Authorization: Bearer $(origin id token --raw)" \
   -H "Content-Type: application/json" \
   -d '{"serviceAccount": "organizations/<org-id>/serviceAccounts/<service-account-id>"}'
 ```

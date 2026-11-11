@@ -40,7 +40,7 @@ A federated credential belongs to one `WORKLOAD` service account and names exact
 - **The audience:** the token must be issued for `https://sts.origincloudapis.eu`, unless the credential names another.
 - **Conditions:** from 1 to 20 claims the token must carry, each with exactly that value. Values are compared exactly, never as patterns.
 
-At least one condition must name an identity that never changes. For GitHub Actions, that's `repository_id` or `repository_owner_id`. For any other issuer, it's `sub`. A name alone isn't enough: a renamed repository, or a new one created under an old name, would inherit the trust. If a provider builds `sub` from names, such as a project path, add a condition on its numeric project or group id as well.
+At least one condition must name an identity that never changes. For GitHub Actions, that's `repository_id` or `repository_owner_id`. For GitLab.com (`https://gitlab.com`), it's `project_id` or `namespace_id`. For any other issuer, it's `sub`. A name alone isn't enough: a renamed repository or project, or a new one created under an old name, would inherit the trust. GitLab builds `sub` from the project's path, which is why it doesn't count there. If another provider builds `sub` from names, add a condition on its numeric project or group id as well.
 
 A credential is never changed: to change one, create the new one and delete the old. Deleting a service account deletes its federated credentials. Creating one needs `iam.service_account.create` and `iam.service_account.act_as`, because whoever matches it acts as the service account. See [Trust a CI provider's tokens](service-accounts.md#trust-a-ci-providers-tokens) for the request.
 
@@ -59,7 +59,7 @@ The STS finds an issuer's keys through OIDC discovery at `<issuer>/.well-known/o
 
 - its issuer serves that document over HTTPS, with a publicly trusted certificate, at a public address;
 - the document names the issuer exactly as its tokens do;
-- it signs tokens with RS256, and its key set states each key's algorithm (`"alg": "RS256"`).
+- it signs tokens with RS256. A key in its key set that names no algorithm is taken as RS256.
 
 GitHub Actions meets these. A self-hosted provider that can't be reached from the internet doesn't: the STS never fetches keys from a private address.
 
@@ -71,7 +71,7 @@ The [audit log](audit-log.md) records the creation and deletion of federated cre
 
 ## Where the token comes from
 
-In a GitHub Actions job granted `permissions: id-token: write`, the `origin` CLI and the Go, Rust and TypeScript SDKs find the job's token themselves, exchange it, and renew the access token before it expires. With another provider, they exchange the token in the file `ORIGINCLOUD_OIDC_TOKEN_FILE` names. Any other tool can call the STS itself; [Authenticate from GitHub Actions](github-actions.md#exchange-the-token-yourself) shows the request.
+In a GitHub Actions job granted `permissions: id-token: write`, the `origin` CLI and the Go, Rust and TypeScript SDKs find the job's token themselves, exchange it, and renew the access token before it expires. With another provider, such as GitLab CI, they exchange the token in the variable `ORIGINCLOUD_OIDC_TOKEN`, or in the file `ORIGINCLOUD_OIDC_TOKEN_FILE` names; see [Authenticate from GitLab CI and other CI providers](other-ci-providers.md). Any other tool can call the STS itself; [Authenticate from GitHub Actions](github-actions.md#exchange-the-token-yourself) shows the request.
 
 ## Related
 

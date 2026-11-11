@@ -44,7 +44,7 @@ Invite people by email in the console, list who has access, and remove a member'
 Non-interactive credentials for CI pipelines, scripts and infrastructure-as-code tools, with their own principal and roles. See [Service accounts](service-accounts.md).
 
 **No secrets in CI**  
-A GitHub Actions job exchanges its own OIDC token for a service account's access token, through a federated credential that trusts that repository's jobs. See [Workload identity federation](workload-identity-federation.md) and [Authenticate from GitHub Actions](github-actions.md).
+A GitHub Actions job exchanges its own OIDC token for a service account's access token, through a federated credential that trusts that repository's jobs. See [Workload identity federation](workload-identity-federation.md), [Authenticate from GitHub Actions](github-actions.md) and [GitLab CI and other CI providers](other-ci-providers.md).
 
 **Access checks**  
 Look up your own grants, list available permissions, and check whether a principal holds a permission on a resource. See [Check access](check-access.md).

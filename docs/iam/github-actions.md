@@ -27,7 +27,7 @@ Create a federated credential on the service account that names GitHub's issuer,
 ```sh
 curl -s -X POST \
   "https://iam.origincloudapis.eu/v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>/federatedCredentials" \
-  -H "Authorization: Bearer $(origin id token)" \
+  -H "Authorization: Bearer $(origin id token --raw)" \
   -H "Content-Type: application/json" \
   -d '{
     "displayName": "deploy from main",
@@ -122,6 +122,8 @@ Every exchange is recorded in the organization's [audit log](audit-log.md) as `i
 
 ## Related
 
+- [Workload identity federation](workload-identity-federation.md)
+- [Authenticate from GitLab CI and other CI providers](other-ci-providers.md)
 - [Use service accounts](service-accounts.md)
 - [Assign and revoke roles](assign-roles.md)
 - [Audit log](audit-log.md)
