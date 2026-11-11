@@ -119,6 +119,9 @@ METADATA = ipaddress.ip_address("169.254.169.254")
 # NAT64 prefixes, which are nobody's addresses but name IPv4 ones.
 IPV6_ALLOWED = [ipaddress.ip_network(n) for n in
                 ("2001:db8::/32", "::1/128", "fe80::/10", "::/128", "::ffff:0:0/96", "64:ff9b::/96")]
+# A GitHub Actions workflow command, `::add-mask::` or `::error file=a::`: its
+# name can be hex digits after a `::`, which reads as an IPv6 address.
+WORKFLOW_COMMAND = re.compile(r"(?<![\w:])::[a-z][a-z-]*(?: [^:\n]*)?::")
 
 ISSUE_LINKS = (
     (re.compile(r"\b[\w.-]+#\d+\b"), "an issue reference"),
@@ -220,7 +223,10 @@ def scan_text(rel: str, text: str, private: PrivateList | None, content: bool, p
             what = ipv4_finding(m.group(1), m.group(2), content)
             if what:
                 hits.append((what, m.group(0)))
+        commands = [c.span() for c in WORKFLOW_COMMAND.finditer(line)]
         for m in IPV6.finditer(line):
+            if any(start <= m.start() < end for start, end in commands):
+                continue
             what = ipv6_finding(m.group(1))
             if what:
                 hits.append((what, m.group(0)))

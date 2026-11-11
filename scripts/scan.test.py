@@ -103,6 +103,11 @@ CASES = [
      "an IPv6 address"),
     ("an IPv6 unique local address fails", "site/x.ts", "'fd12:3456:789a::1'\n", FINDING, "an IPv6 address"),
     ("a time or a MAC isn't IPv6", "site/x.ts", "'12:30:45'\n'52:54:00:12:34:56'\nstd::io\n", CLEAN, "0 finding"),
+    ("a GitHub workflow command isn't IPv6", "docs/g/a.md",
+     PAGE.format(body='Mask it: `echo "::add-mask::$token"`, or `echo "::add-mask key=a::$token"`.'),
+     CLEAN, "0 finding"),
+    ("an address after a workflow command still fails", "docs/g/a.md",
+     PAGE.format(body='`echo "::add-mask::$token"` then reach 2a01:4f8:aa::7.'), FINDING, "an IPv6 address"),
     # issue links
     ("a repository issue link fails", "docs/g/a.md", PAGE.format(body="See some-repo#123."), FINDING,
      "an issue reference"),
