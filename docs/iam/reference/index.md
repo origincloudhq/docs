@@ -7,7 +7,7 @@ page_type: reference
 parent: home
 nav_order: 80
 tags: [iam, reference, cli, api]
-last_reviewed: 2026-11-10
+last_reviewed: 2026-11-11
 ---
 
 # IAM reference
@@ -62,6 +62,16 @@ Role names write the catalog's slashes as dots, such as `roles/iam.editor` for `
 | `ListAuditLogEntries`, `GetAuditLogEntry` | `GET /v1beta1/organizations/<org-id>/auditLogEntries` | The audit log's recent entries, 90 days by default. See [Audit log](../audit-log.md#in-the-rest-api). |
 
 Invites and members are in the GraphQL API only.
+
+## Security token service
+
+The security token service answers at `https://sts.origincloudapis.eu`. It's a preview (`v1beta1`). It authenticates no caller: the token in the request is the proof. See [Workload identity federation](../workload-identity-federation.md) for what it checks.
+
+| Method | HTTP | Does |
+|---|---|---|
+| `AssumeServiceAccount` | `POST /v1beta1:assumeServiceAccount` | Exchanges an OIDC token (`token`) for the access token of the `WORKLOAD` service account one of whose federated credentials trusts it. `serviceAccount`, `organizations/<org-id>/serviceAccounts/<service-account-id>`, limits it to that account's credentials. `lifetime`, such as `"900s"`, from 60 seconds to an hour, sets the access token's lifetime. Answers `accessToken`, `expireTime`, `serviceAccount` and `federatedCredential`. A token no credential trusts is refused with `PERMISSION_DENIED` (403), without saying why. |
+
+The same exchange is an OAuth 2.0 token exchange request (RFC 8693) at `POST /v1/token`, for OAuth clients: the form fields `grant_type=urn:ietf:params:oauth:grant-type:token-exchange`, `subject_token` and `subject_token_type=urn:ietf:params:oauth:token-type:jwt`, optionally `requested_token_lifetime` in seconds. [Authenticate from GitHub Actions](../github-actions.md#exchange-the-token-yourself) shows it with curl.
 
 ## GraphQL queries
 
