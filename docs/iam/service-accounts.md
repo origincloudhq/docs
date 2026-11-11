@@ -143,22 +143,17 @@ Whoever matches a federated credential acts as the service account. So creating 
 To change a federated credential, create the new one and delete the old; it is never updated. Deleting the service account deletes its federated credentials. Deleting a federated credential also stops the access tokens already exchanged through it, at their next API call.
 
 ```sh
-curl -s -X POST \
-  "https://iam.origincloudapis.eu/v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>/federatedCredentials" \
-  -H "Authorization: Bearer $(origin id token --raw)" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "displayName": "deploy from main",
-    "issuer": "https://token.actions.githubusercontent.com",
-    "conditions": {
-      "repository_id": "<repository-id>",
-      "ref": "refs/heads/main",
-      "environment": "production"
-    }
-  }'
+origin iam create-federated-credential \
+  --organization <org-id> \
+  --service-account <service-account-id> \
+  --display-name "deploy from main" \
+  --issuer https://token.actions.githubusercontent.com \
+  --condition repository_id=<repository-id> \
+  --condition ref=refs/heads/main \
+  --condition environment=production
 ```
 
-`GET` on the same path lists them; add `?showDeleted=true` to include deleted ones. A `DELETE` of one's name deletes it.
+`origin iam list-federated-credentials --organization <org-id> --service-account <service-account-id>` lists them; add `--show-deleted true` to include deleted ones. `origin iam delete-federated-credential --federated-credential <name>` deletes one.
 
 ## Using the API
 

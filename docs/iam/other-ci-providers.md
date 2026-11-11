@@ -25,18 +25,13 @@ A CI provider that gives its jobs OIDC tokens can authenticate them as a `WORKLO
 Create a federated credential that names GitLab.com's issuer, the project's ID, and whatever else must hold for the job, such as its branch:
 
 ```sh
-curl -s -X POST \
-  "https://iam.origincloudapis.eu/v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>/federatedCredentials" \
-  -H "Authorization: Bearer $(origin id token --raw)" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "displayName": "deploy from main",
-    "issuer": "https://gitlab.com",
-    "conditions": {
-      "project_id": "<project-id>",
-      "ref": "main"
-    }
-  }'
+origin iam create-federated-credential \
+  --organization <org-id> \
+  --service-account <service-account-id> \
+  --display-name "deploy from main" \
+  --issuer https://gitlab.com \
+  --condition project_id=<project-id> \
+  --condition ref=main
 ```
 
 GitLab.com's credential must name `project_id` or `namespace_id`, the group's ID. GitLab builds a token's `sub` from the project's path, which a rename or a project re-created under the same name takes over, so `sub` alone is refused. The claim values are strings, as GitLab writes them. GitLab lists every claim of its tokens in [OpenID Connect (OIDC) authentication using ID tokens](https://docs.gitlab.com/ci/secrets/id_token_authentication/).
