@@ -13,6 +13,7 @@
  */
 import Brand from './Brand.astro'
 import Search from './Search.astro'
+import ThemeToggle from './ThemeToggle.astro'
 
 const SITE = 'https://www.origincloud.eu'
 const CONSOLE = 'https://console.origincloud.eu'
@@ -30,6 +31,7 @@ const links = [
     </nav>
     <div class="oc-header__actions">
       <Search />
+      <ThemeToggle />
       <a class="oc-header__link" href={CONSOLE}>Register</a>
       <a class="oc-btn oc-btn--primary" href={CONSOLE}>Open console</a>
     </div>
@@ -39,6 +41,7 @@ const links = [
         <nav aria-label="Main">
           {links.map((l) => <a href={l.href} aria-current={l.current ? 'page' : undefined}>{l.label}</a>)}
           <a href={CONSOLE}>Sign in</a>
+          <ThemeToggle variant="menu" />
         </nav>
       </div>
     </details>

@@ -17,10 +17,17 @@
   --text-w: 920px;
   --wide-w: 1120px;
   --measure: 68ch;
+  /* The code block's edge: invisible on the light page, where the Petrol
+     block stands out by itself, a hairline on the dark one. */
+  --code-border: var(--petrol-950);
 }
+[data-theme='dark'] { --code-border: var(--line-strong); }
 
 *, *::before, *::after { box-sizing: border-box; }
 
+/* Light by default (brand/tokens.css's :root); SiteHead sets data-theme
+   from the reader's choice or the system setting, and the kit's dark theme
+   takes over every role. */
 html {
   background: var(--surface-0);
   color-scheme: light;
@@ -35,6 +42,7 @@ body {
   font: var(--fw-regular) var(--fs-doc-body)/var(--lh-body) var(--sans);
   -webkit-font-smoothing: antialiased;
 }
+html[data-theme='dark'] { color-scheme: dark; }
 
 a { color: var(--blue); text-underline-offset: 0.2em; text-decoration-thickness: 1px; }
 a:hover { color: var(--copper); }
@@ -71,6 +79,35 @@ code, kbd, pre, samp { font-family: var(--mono); }
 .search-btn:hover { border-color: var(--text-muted); color: var(--text); }
 .search-btn__icon { flex: none; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
 .search-btn__label { margin-right: auto; }
+
+/* ---------------------------------------------------------- theme toggle */
+.theme-toggle {
+  display: grid; place-items: center;
+  width: 36px; height: 36px; padding: 0;
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.theme-toggle[hidden] { display: none; }
+.theme-toggle:hover { border-color: var(--text-muted); color: var(--text); }
+.theme-toggle__icon { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+/* The icon shows the theme a click switches to. */
+.theme-toggle__icon--light { display: none; }
+[data-theme='dark'] .theme-toggle__icon--light { display: block; }
+[data-theme='dark'] .theme-toggle__icon--dark { display: none; }
+/* The menu form: a row like the menu's links. */
+.theme-toggle-row {
+  appearance: none; background: none; border: 0;
+  padding: var(--s-3) 0; border-bottom: 1px solid var(--line);
+  font: inherit; font-size: 16px; text-align: left;
+  color: var(--text); cursor: pointer;
+}
+.theme-toggle-row[hidden] { display: none; }
+@media (max-width: 991px) {
+  .oc-header__actions .theme-toggle { display: none; }
+}
 .search-btn__kbd, kbd {
   font-size: 12px; line-height: 1.4;
   padding: 0 var(--s-1);

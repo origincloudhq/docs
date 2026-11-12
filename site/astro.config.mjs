@@ -7,6 +7,7 @@ import rehypeMermaid from 'rehype-mermaid'
 import { remarkStripTitle } from './src/lib/remark-strip-title.mjs'
 import { remarkDocLinks } from './src/lib/remark-doc-links.mjs'
 import { rehypeDocBlocks } from './src/lib/rehype-doc-blocks.mjs'
+import { mermaidThemeVariables, mermaidFontFamily } from './src/lib/mermaid-theme.mjs'
 import { brandCodeTheme, codeColors } from './src/styles/code-theme.mjs'
 
 export default defineConfig({
@@ -23,7 +24,8 @@ export default defineConfig({
       themes: [brandCodeTheme],
       styleOverrides: {
         borderRadius: '4px',             // --radius
-        borderColor: codeColors.background,
+        // Invisible on the light page, a hairline on the dark one (docs.css).
+        borderColor: 'var(--code-border)',
         codeFontFamily: 'var(--mono)',
         uiFontFamily: 'var(--sans)',
         codeFontSize: '13.5px',
@@ -75,42 +77,13 @@ export default defineConfig({
           // nor should they, since they are also read as plain Markdown on
           // GitHub. Theming belongs to whoever renders them, which is us.
           //
-          // Values mirror the light theme in brand/tokens.css: Mermaid resolves
-          // colours at render time and cannot read CSS custom properties, the
-          // same constraint code-theme.mjs documents. Petrol for structure,
-          // grey surfaces, no copper and no status colours.
+          // Rendered with the light theme's values; rehype-doc-blocks then ties
+          // every colour to the page's theme (src/lib/mermaid-theme.mjs).
           mermaidConfig: {
             theme: 'base',
-            themeVariables: {
-              darkMode: false,
-              background: '#FFFFFF',          // --surface-0
-              primaryColor: '#F2F4F5',        // --surface-2, node fill
-              primaryTextColor: '#002024',    // --text
-              primaryBorderColor: '#005C66',  // --blue, structural
-              secondaryColor: '#EEF9FB',      // --blue-soft
-              secondaryTextColor: '#002024',
-              secondaryBorderColor: '#005C66',
-              tertiaryColor: '#FFFFFF',
-              tertiaryTextColor: '#002024',
-              tertiaryBorderColor: '#CDD4D6', // --line-strong
-              lineColor: '#626D6F',           // --text-muted
-              textColor: '#002024',
-              labelColor: '#002024',
-              edgeLabelBackground: '#FFFFFF',
-              clusterBkg: '#F9FAFB',          // --ink
-              clusterBorder: '#CDD4D6',
-              noteBkgColor: '#EEF9FB',        // a note is info: --blue-soft
-              noteTextColor: '#002024',
-              noteBorderColor: '#005C66',
-              actorBkg: '#F2F4F5',
-              actorBorder: '#005C66',
-              actorTextColor: '#002024',
-              actorLineColor: '#A5AEB1',
-              signalColor: '#002024',
-              signalTextColor: '#002024',
-              fontFamily: '"Encode Sans", system-ui, sans-serif',
-              fontSize: '14px',
-            },
+            themeVariables: mermaidThemeVariables,
+            // Sequence diagrams take the top-level font, not themeVariables'.
+            fontFamily: mermaidFontFamily,
           },
         },
       ],

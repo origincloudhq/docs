@@ -23,6 +23,23 @@ const ogImage = new URL('/og.png', site).href
 ---
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+{/* Theme before the first paint: the reader's stored choice, else the
+    system setting, which it keeps following until the reader picks one.
+    Without JavaScript the page stays light (brand/tokens.css's :root). */}
+<script is:inline>
+  (() => {
+    const root = document.documentElement
+    const query = window.matchMedia('(prefers-color-scheme: dark)')
+    const stored = () => { try { return localStorage.getItem('oc-theme') } catch { return null } }
+    const apply = () => {
+      const s = stored()
+      root.dataset.theme = s === 'light' || s === 'dark' ? s : query.matches ? 'dark' : 'light'
+      document.dispatchEvent(new Event('oc-themechange'))
+    }
+    apply()
+    query.addEventListener('change', () => { if (!stored()) apply() })
+  })()
+</script>
 <title>{title}</title>
 <meta name="description" content={description} />
 {canonical && <link rel="canonical" href={canonical} />}
@@ -41,7 +58,8 @@ const ogImage = new URL('/og.png', site).href
 <link rel="icon" href="/favicon.ico" sizes="32x32" />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-<meta name="theme-color" content="#002E33" />
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#101314" media="(prefers-color-scheme: dark)" />
 
 <link rel="preload" href="/fonts/EncodeSans.ttf" as="font" type="font/ttf" crossorigin />
 <link rel="stylesheet" href="/fonts/fonts.css" />

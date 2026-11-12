@@ -52,7 +52,14 @@ Analytics tag on. Override the ID with `PUBLIC_ANALYTICS_ID`, which accepts a
 
 ## Choices worth knowing
 
-- **Light theme, dense layout**, as the brand kit's docs template
+- **Light and dark theme.** The page follows the reader's system setting
+  until they pick one with the header's switch (remembered in
+  `localStorage`); without JavaScript it is light. Both are the kit's own
+  themes. Diagrams are rendered once with the light values and their
+  colours then tied to the theme (`src/lib/mermaid-theme.mjs`); a new
+  diagram type may bring a colour that list does not know yet, so check
+  it in the dark theme.
+- **Dense layout**, as the brand kit's docs template
   (`guide/layout.html`): navigation 280 px, text up to 920 px, tables and
   code up to 1120 px, "On this page" 240 px, full width.
 - **Copper is the main action and the active item only** (the "Open console"

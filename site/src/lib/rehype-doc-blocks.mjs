@@ -2,12 +2,15 @@
  * Wrap the wide blocks of a page body in the containers the stylesheet lays
  * out: every <table> in `.table-scroll`, so a narrow screen scrolls the table
  * and not the page, and every build-time Mermaid diagram (an <svg> whose id
- * starts with `mermaid`) in `.mermaid-figure`, at the diagram's own width.
+ * starts with `mermaid`) in `.mermaid-figure`, at the diagram's own width,
+ * with its colours tied to the page theme (see mermaid-theme.mjs).
  *
  * Runs after rehype-mermaid, which replaces each diagram's <pre> with its SVG.
  * Only direct children of a parent are wrapped, once: a table already inside
  * `.table-scroll` is left alone.
  */
+import { themeDiagram } from './mermaid-theme.mjs'
+
 const wrap = (node, className) => ({
   type: 'element',
   tagName: 'div',
@@ -39,6 +42,7 @@ export function rehypeDocBlocks() {
         return wrap(child, 'table-scroll')
       }
       if (isMermaid(child) && !isWrapped(parent, 'mermaid-figure')) {
+        themeDiagram(child)
         return wrap(naturalSize(child), 'mermaid-figure')
       }
       visit(child)
