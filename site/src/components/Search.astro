@@ -3,19 +3,20 @@
  * Search over the Pagefind index built by `npm run build`.
  *
  * Uses Pagefind's JS API rather than its bundled UI so results wear the
- * blueprint shell like everything else. The index lives at /pagefind/ and only
+ * site's own styles like everything else. The index lives at /pagefind/ and only
  * exists after a build — in `astro dev` the panel says so rather than failing
  * silently.
  */
 ---
-<button class="search-btn" type="button" data-search-open aria-haspopup="dialog">
+<button class="search-btn" type="button" data-search-open aria-haspopup="dialog" aria-label="Search the docs (press /)">
+  <svg class="search-btn__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20 20"/></svg>
   <span class="search-btn__label">Search</span>
-  <kbd class="search-btn__kbd">/</kbd>
+  <kbd class="search-btn__kbd" aria-hidden="true">/</kbd>
 </button>
 
 <div class="search-modal" data-search-modal hidden>
   <div class="search-modal__scrim" data-search-close></div>
-  <div class="search-modal__panel brackets" role="dialog" aria-modal="true" aria-label="Search documentation">
+  <div class="search-modal__panel" role="dialog" aria-modal="true" aria-label="Search documentation">
     <input
       class="search-modal__input"
       type="search"

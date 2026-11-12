@@ -1,0 +1,20 @@
+/* Self-hosted brand fonts (SIL Open Font License, licences next to the files).
+   Copied from the brand kit's guide/fonts. No request to a font
+   service: the page loads these from its own origin.
+
+   Two consumers: every page links this file, and rehype-mermaid loads it into
+   the build-time browser so diagram labels are measured in the font the reader
+   sees them in. Keep the URLs relative for that reason. */
+@font-face {
+  font-family: "Encode Sans";
+  src: url(EncodeSans.ttf) format("truetype");
+  font-weight: 100 900;
+  font-stretch: 75% 125%;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url(JetBrainsMono.woff2) format("woff2");
+  font-weight: 100 800;
+  font-display: swap;
+}

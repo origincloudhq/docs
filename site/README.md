@@ -22,18 +22,19 @@ SVG at build time, not in the browser.
 |---|---|
 | Content | `src/content.config.ts` loads `../docs/**/*.md` with the frontmatter schema the source checks; an unknown key or an unpublished `availability` fails the build. |
 | Links | Pages link to each other by file path, as they read on GitHub; `src/lib/remark-doc-links.mjs` rewrites them to routes, and `scripts/check-links.mjs` fails the build on a broken link in the source or in `dist/`. |
-| Brand | `src/styles/tokens.css` holds the palette; `src/styles/docs.css` contains no hex codes. |
+| Brand | Brand System v2, vendored from the Origin Cloud brand kit: `src/styles/brand/` holds the kit's `tokens.css` and `components.css` (do not edit; re-copy from the kit), and header, footer, breadcrumbs, "On this page", chips and the guide grid use the kit's `oc-` markup. `src/styles/docs.css` holds only what the kit has no component for, and contains no hex codes. |
 | Code examples | `astro-expressive-code`, plus a `Tabs` component. |
-| Diagrams | `rehype-mermaid` with `strategy: 'inline-svg'`: build-time SVG, themed to the palette. No diagram JavaScript ships, and the diagram's text stays indexable. |
-| Search | Pagefind: a static index, no external service. |
+| Diagrams | `rehype-mermaid` with `strategy: 'inline-svg'`: build-time SVG, themed to the light palette and measured in Encode Sans (the build browser loads `public/fonts/fonts.css`). `src/lib/rehype-doc-blocks.mjs` keeps each diagram at its own width and wraps tables for sideways scrolling. No diagram JavaScript ships, and the diagram's text stays indexable. |
+| Search | Pagefind: a static index, no external service. Only each page's `<main>` is indexed (`data-pagefind-body`). |
 | SEO | Static HTML, canonical and Open Graph tags from frontmatter, a sitemap. |
 | Version | `src/pages/version.json.ts` serves `/version.json`: the source commit of the last export that changed a published page (`docs/_export/version.json`), and this repository's commit when the build is given `SITE_COMMIT`. |
 | Page actions | Every page links to "Edit this page" (CONTRIBUTING.md) and "Report an issue" (an issue form with the page's address filled in), and shows its source path; `src/lib/source.ts`. |
 
 ## Fonts
 
-Big Shoulders Display, Public Sans and JetBrains Mono, all under the SIL Open
-Font License, loaded from Google Fonts. No font file is committed.
+Encode Sans and JetBrains Mono, both under the SIL Open Font License, served
+from `public/fonts/` (licences next to the files). No request goes to a font
+service. Copied from the brand kit's `guide/fonts/`.
 
 ## Analytics and consent
 
@@ -51,8 +52,14 @@ Analytics tag on. Override the ID with `PUBLIC_ANALYTICS_ID`, which accepts a
 
 ## Choices worth knowing
 
-- **Typography follows the marketing register** (Big Shoulders / Public Sans /
-  JetBrains Mono): docs are public prose, not a dense operational UI.
+- **Light theme, dense layout**, as the brand kit's docs template
+  (`guide/layout.html`): navigation 280 px, text up to 920 px, tables and
+  code up to 1120 px, "On this page" 240 px, full width.
+- **Copper is the main action and the active item only** (the "Open console"
+  button, the current page, the selected tab). Code highlighting stays in
+  Petrol and grey (`src/styles/code-theme.mjs`), and status colours appear
+  only as a dot next to a label.
+- **Smartypants is off**: it turned `--flag` into an em dash.
 - **Tabs degrade without JavaScript.** Every panel renders visible and
   stacked; the script hides the inactive ones on load.
 - **Pinned to Astro 5**, because the build runs on Node 20 (`_build/Dockerfile`

@@ -1,11 +1,8 @@
 ---
-import '../styles/tokens.css'
-import '../styles/docs.css'
-import Search from '../components/Search.astro'
-import Analytics from '../components/Analytics.astro'
+import SiteHead from '../components/SiteHead.astro'
+import SiteHeader from '../components/SiteHeader.astro'
+import SiteFooter from '../components/SiteFooter.astro'
 import AnalyticsNoScript from '../components/AnalyticsNoScript.astro'
-import PrivacySettings from '../components/PrivacySettings.astro'
-import LegalLinks from '../components/LegalLinks.astro'
 import NavTree from '../components/NavTree.astro'
 import Breadcrumbs from '../components/Breadcrumbs.astro'
 import { buildGuideTree, ancestorsOf, urlOf, type Doc } from '../lib/nav'
@@ -31,7 +28,7 @@ const related = (d.related ?? []).map((id) => byId.get(id)).filter(Boolean) as D
 
 const toc = d.toc === false ? [] : headings.filter((h) => h.depth === 2 || h.depth === 3)
 const canonical = d.canonical ?? new URL(urlOf(entry), Astro.site ?? 'https://docs.origincloud.eu').href
-const pageTitle = d.seo_title ?? `${d.title} — Origin Cloud Docs`
+const pageTitle = d.seo_title ?? `${d.title} | Origin Cloud Docs`
 const eyebrow = d.eyebrow ?? `${guideRoot?.data.nav_title ?? guideName} / ${d.page_type}`
 
 // Every page links to how it is changed and to an issue about it. The page's
@@ -45,45 +42,15 @@ if (!source) throw new Error(`${entry.id}: the loader gave no file path`)
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{pageTitle}</title>
-  <meta name="description" content={d.description} />
-  <link rel="canonical" href={canonical} />
-
-  <!-- SEO / social. Generated from collection frontmatter, which the schema
-       makes required — a page cannot ship without a description. -->
-  <meta property="og:type" content="article" />
-  <meta property="og:title" content={pageTitle} />
-  <meta property="og:description" content={d.description} />
-  <meta property="og:url" content={canonical} />
-  <meta name="twitter:card" content="summary_large_image" />
-
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700&family=Public+Sans:wght@400;500;620;650&family=JetBrains+Mono:wght@400;500&display=swap"
-  />
-
-  <Analytics />
-  {d.noindex && <meta name="robots" content="noindex, follow" />}
+  {/* Description and canonical are required by the frontmatter schema, so a
+      page cannot ship without them. */}
+  <SiteHead title={pageTitle} description={d.description} canonical={canonical} noindex={d.noindex} />
 </head>
 <body>
   <AnalyticsNoScript />
   <a class="skip-link" href="#content">Skip to content</a>
 
-  <header class="site-header">
-    <a class="brand" href="/docs/">
-      <span class="brand__mark">Origin Cloud</span>
-      <span class="brand__scope">Docs</span>
-    </a>
-    <nav class="site-nav" aria-label="Primary">
-      <a href="https://www.origincloud.eu/">Site</a>
-      <a href="https://console.origincloud.eu/">Console</a>
-    </nav>
-    <Search />
-  </header>
+  <SiteHeader />
 
   <div class="shell">
     <nav class="sidebar" aria-label="Documentation">
@@ -112,35 +79,35 @@ if (!source) throw new Error(`${entry.id}: the loader gave no file path`)
       // this the <details> stays open, which is the previous behaviour.
       try {
         const box = document.querySelector('.sidebar-box')
-        if (box && window.matchMedia('(max-width: 52rem)').matches) box.open = false
+        if (box && window.matchMedia('(max-width: 767px)').matches) box.open = false
       } catch {}
     </script>
 
-    <main class="main" id="content">
+    {/* Only the page itself goes into the search index: without this, every
+        excerpt starts with the header's links and the tree. Pages without the
+        attribute (the landing page, the 404) are left out of the index. */}
+    <main class="main" id="content" data-pagefind-body>
       <Breadcrumbs trail={trail} current={entry} />
 
-      <div class="masthead grid-paper brackets">
-        <p class="masthead__eyebrow">{eyebrow}</p>
+      <div class="doc-head">
+        <p class="oc-eyebrow">{eyebrow}</p>
         <h1>{d.title}</h1>
         {d.availability && d.availability !== 'ga' && (
-          <p class="masthead__availability" data-availability={d.availability}>
-            {d.availability === 'preview' ? 'Preview — may change' : 'Deprecated'}
+          <p class="doc-head__availability" data-availability={d.availability}>
+            {d.availability === 'preview' ? 'Preview: may change' : 'Deprecated'}
           </p>
         )}
-        {d.lead && <p class="masthead__lead">{d.lead}</p>}
+        {d.lead && <p class="doc-head__lead">{d.lead}</p>}
         {(d.specs ?? []).length > 0 && (
-          <div class="masthead__specs">
+          <ul class="oc-chips doc-head__specs">
             {(d.specs ?? []).map((s) => (
-              <span class="chip">
-                <span class="chip__label">{s.label}</span>
-                <span class="chip__value">{s.value}</span>
-              </span>
+              <li class="oc-chip"><span class="chip__label">{s.label}</span> {s.value}</li>
             ))}
-          </div>
+          </ul>
         )}
       </div>
 
-      <article class="prose"><slot /></article>
+      <article class="doc-body"><slot /></article>
 
       {related.length > 0 && (
         <aside class="related" aria-labelledby="related-h">
@@ -156,28 +123,19 @@ if (!source) throw new Error(`${entry.id}: the loader gave no file path`)
         </aside>
       )}
 
-      <aside class="page-actions" aria-label="Improve this page">
+      <aside class="page-actions" aria-label="Improve this page" data-pagefind-ignore>
         <a href={EDIT_GUIDE}>Edit this page</a>
         <a href={reportIssueUrl(pageUrl, d.title)}>Report an issue</a>
         <span class="page-actions__source" title="Where maintainers change this page">Source: <code>{source}</code></span>
       </aside>
 
-      <footer class="page-foot">
-        <span>
-          Origin Cloud — user documentation
-          {d.last_reviewed && (
-            <> · last reviewed {d.last_reviewed.toISOString().slice(0, 10)}</>
-          )}
-        </span>
-        <span class="page-foot__links">
-          <LegalLinks />
-          <PrivacySettings />
-        </span>
-      </footer>
+      {d.last_reviewed && (
+        <p class="page-reviewed">Last reviewed {d.last_reviewed.toISOString().slice(0, 10)}</p>
+      )}
     </main>
 
-    <aside class="toc" aria-label="On this page">
-      <p class="toc__title">On this page</p>
+    <aside class="oc-toc toc" aria-label="On this page">
+      <p class="oc-toc__title">On this page</p>
       <ol>
         {toc.map((h) => (
           <li data-depth={h.depth}><a href={`#${h.slug}`}>{h.text}</a></li>
@@ -186,10 +144,12 @@ if (!source) throw new Error(`${entry.id}: the loader gave no file path`)
     </aside>
   </div>
 
+  <SiteFooter />
+
   <script>
     // Highlight the TOC entry for the section currently on screen.
     const links = new Map<string, HTMLAnchorElement>()
-    document.querySelectorAll<HTMLAnchorElement>('.toc a').forEach((a) =>
+    document.querySelectorAll<HTMLAnchorElement>('.oc-toc a').forEach((a) =>
       links.set(decodeURIComponent(a.hash.slice(1)), a)
     )
     const targets = [...links.keys()]
@@ -200,8 +160,8 @@ if (!source) throw new Error(`${entry.id}: the loader gave no file path`)
       (entries) => {
         entries.forEach((e) => {
           if (!e.isIntersecting) return
-          links.forEach((a) => a.classList.remove('is-active'))
-          links.get(e.target.id)?.classList.add('is-active')
+          links.forEach((a) => a.removeAttribute('aria-current'))
+          links.get(e.target.id)?.setAttribute('aria-current', 'true')
         })
       },
       { rootMargin: '-80px 0px -70% 0px', threshold: 0 }

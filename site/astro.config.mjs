@@ -6,7 +6,8 @@ import expressiveCode from 'astro-expressive-code'
 import rehypeMermaid from 'rehype-mermaid'
 import { remarkStripTitle } from './src/lib/remark-strip-title.mjs'
 import { remarkDocLinks } from './src/lib/remark-doc-links.mjs'
-import { blueprintCodeTheme } from './src/styles/code-theme.mjs'
+import { rehypeDocBlocks } from './src/lib/rehype-doc-blocks.mjs'
+import { brandCodeTheme, codeColors } from './src/styles/code-theme.mjs'
 
 export default defineConfig({
   site: 'https://docs.origincloud.eu',
@@ -14,25 +15,36 @@ export default defineConfig({
   integrations: [
     // Code blocks: syntax highlighting, window frames, line/text markers.
     // Themed from blueprint.css so code doesn't sit on a foreign palette.
+    // Code blocks: syntax highlighting, window frames, line/text markers.
+    // A Petrol 950 block on the light page, as in the brand kit's docs
+    // template. Frame colours come from the same mirrored values as the
+    // theme, because the block is dark whatever the page around it is.
     expressiveCode({
-      themes: [blueprintCodeTheme],
+      themes: [brandCodeTheme],
       styleOverrides: {
-        borderRadius: '0.25rem',        // brand: sharp, measured corners
-        borderColor: 'var(--line-strong)',
-        codeFontFamily: 'var(--font-mono)',
-        uiFontFamily: 'var(--font-mono)',
-        codeFontSize: '0.8125rem',
-        codeLineHeight: '1.7',
+        borderRadius: '4px',             // --radius
+        borderColor: codeColors.background,
+        codeFontFamily: 'var(--mono)',
+        uiFontFamily: 'var(--sans)',
+        codeFontSize: '13.5px',
+        codeLineHeight: '1.65',
+        codePaddingInline: '1.5rem',
         frames: {
           shadowColor: 'transparent',
-          editorTabBarBackground: 'var(--surface-0)',
-          editorActiveTabBackground: 'var(--surface-2)',
-          editorActiveTabIndicatorTopColor: 'var(--copper)',
-          editorActiveTabBorderColor: 'var(--line-strong)',
-          editorTabBarBorderBottomColor: 'var(--line-strong)',
-          terminalBackground: 'var(--surface-1)',
-          terminalTitlebarBackground: 'var(--surface-0)',
-          terminalTitlebarBorderBottomColor: 'var(--line-strong)',
+          editorTabBarBackground: codeColors.titlebar,
+          editorActiveTabBackground: codeColors.background,
+          editorActiveTabForeground: codeColors.text,
+          editorActiveTabIndicatorTopColor: codeColors.keyword,
+          editorActiveTabBorderColor: codeColors.background,
+          editorTabBarBorderBottomColor: codeColors.titlebar,
+          terminalBackground: codeColors.background,
+          terminalTitlebarBackground: codeColors.titlebar,
+          terminalTitlebarForeground: codeColors.muted,
+          terminalTitlebarDotsForeground: codeColors.muted,
+          terminalTitlebarBorderBottomColor: codeColors.titlebar,
+          inlineButtonForeground: codeColors.text,
+          inlineButtonBorder: codeColors.muted,
+          tooltipSuccessBackground: codeColors.border,
         },
       },
     }),
@@ -41,6 +53,10 @@ export default defineConfig({
   ],
 
   markdown: {
+    // Off: smartypants rewrites `--flag` outside code spans into an em dash,
+    // which turned CLI flags in headings into text a reader cannot copy, and
+    // curls the quotes in commands. The source pages say what they mean.
+    smartypants: false,
     remarkPlugins: [remarkStripTitle, remarkDocLinks],
     // Mermaid rendered to SVG at BUILD time via Playwright — the diagram
     // ships as markup, not as a client-side JS render. Keeps the page
@@ -50,38 +66,56 @@ export default defineConfig({
         rehypeMermaid,
         {
           strategy: 'inline-svg',
+          // Load the brand fonts into the build-time browser, so labels are
+          // measured in the font the reader sees them in. Without this the
+          // build host's fallback sets the box sizes and Encode Sans then
+          // overflows them.
+          css: new URL('./public/fonts/fonts.css', import.meta.url),
           // Pages are exported from the source repository and carry no theme directive —
           // nor should they, since they are also read as plain Markdown on
           // GitHub. Theming belongs to whoever renders them, which is us.
           //
-          // Values mirror tokens.css. Mermaid resolves colours at render time
-          // and cannot read CSS custom properties, the same constraint
-          // code-theme.mjs documents.
+          // Values mirror the light theme in brand/tokens.css: Mermaid resolves
+          // colours at render time and cannot read CSS custom properties, the
+          // same constraint code-theme.mjs documents. Petrol for structure,
+          // grey surfaces, no copper and no status colours.
           mermaidConfig: {
             theme: 'base',
             themeVariables: {
-              darkMode: true,
-              background: '#14171d',          // --surface-0
-              primaryColor: '#20242c',        // --surface-2, node fill
-              primaryTextColor: '#ede9e0',    // --text
-              primaryBorderColor: '#6fa3d6',  // --blue, structural
-              lineColor: '#6fa3d6',
-              secondaryColor: '#1a2430',
-              tertiaryColor: '#14171d',
-              fontFamily: 'monospace',        // the build host has no webfonts
-              fontSize: '13px',
-              textColor: '#ede9e0',
-              labelColor: '#ede9e0',
-              edgeLabelBackground: '#14171d',
-              clusterBkg: '#14171d',
-              clusterBorder: '#6fa3d647',
-              noteBkgColor: '#2a1c1b',
-              noteTextColor: '#d9584b',
-              noteBorderColor: '#d9584b',
+              darkMode: false,
+              background: '#FFFFFF',          // --surface-0
+              primaryColor: '#F2F4F5',        // --surface-2, node fill
+              primaryTextColor: '#002024',    // --text
+              primaryBorderColor: '#005C66',  // --blue, structural
+              secondaryColor: '#EEF9FB',      // --blue-soft
+              secondaryTextColor: '#002024',
+              secondaryBorderColor: '#005C66',
+              tertiaryColor: '#FFFFFF',
+              tertiaryTextColor: '#002024',
+              tertiaryBorderColor: '#CDD4D6', // --line-strong
+              lineColor: '#626D6F',           // --text-muted
+              textColor: '#002024',
+              labelColor: '#002024',
+              edgeLabelBackground: '#FFFFFF',
+              clusterBkg: '#F9FAFB',          // --ink
+              clusterBorder: '#CDD4D6',
+              noteBkgColor: '#EEF9FB',        // a note is info: --blue-soft
+              noteTextColor: '#002024',
+              noteBorderColor: '#005C66',
+              actorBkg: '#F2F4F5',
+              actorBorder: '#005C66',
+              actorTextColor: '#002024',
+              actorLineColor: '#A5AEB1',
+              signalColor: '#002024',
+              signalTextColor: '#002024',
+              fontFamily: '"Encode Sans", system-ui, sans-serif',
+              fontSize: '14px',
             },
           },
         },
       ],
+      // After Mermaid, so the diagrams it produced get their figure wrapper.
+      rehypeDocBlocks,
     ],
     syntaxHighlight: false, // Expressive Code owns this
   },

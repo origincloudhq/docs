@@ -3,7 +3,7 @@ import { urlOf, type Doc } from '../lib/nav'
 const { trail, current } = Astro.props as { trail: Doc[]; current: Doc }
 ---
 {trail.length > 0 && (
-  <nav class="crumbs" aria-label="Breadcrumb">
+  <nav class="oc-crumbs" aria-label="Breadcrumb">
     <ol>
       {trail.map((d) => (
         <li><a href={urlOf(d)}>{d.data.nav_title ?? d.data.title}</a></li>

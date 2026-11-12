@@ -1,7 +1,7 @@
 ---
 const { caption } = Astro.props as { caption?: string }
 ---
-<figure class="figure brackets">
+<figure class="figure">
   <slot />
   {caption && <figcaption class="figure__caption" set:html={caption} />}
 </figure>
