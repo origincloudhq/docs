@@ -7,7 +7,7 @@ page_type: task
 parent: home
 nav_order: 56
 tags: [iam, service-accounts, security, api]
-last_reviewed: 2026-11-11
+last_reviewed: 2026-11-12
 ---
 
 # Authenticate from GitLab CI and other CI providers without a secret
@@ -63,6 +63,8 @@ Any CI provider works whose issuer meets the [requirements](workload-identity-fe
 
 Give the job's token to the CLI or an SDK in `ORIGINCLOUD_OIDC_TOKEN`. If the token is written to a file that is replaced before it expires, as a Kubernetes projected service account token is, set `ORIGINCLOUD_OIDC_TOKEN_FILE` to the file's path instead: the file is read again at every exchange, so the access token is renewed for as long as the file is.
 
+To name the service account to assume, or to choose the access token's lifetime, exchange the token with `origin sts assume-service-account --oidc-token-file`; see [Get an access token for another tool](identity-provider-login.md#get-an-access-token-for-another-tool).
+
 ## When the exchange is refused
 
 A job no federated credential trusts fails with:
@@ -83,5 +85,6 @@ See [Authenticate from GitHub Actions](github-actions.md#when-the-exchange-is-re
 
 - [Workload identity federation](workload-identity-federation.md)
 - [Authenticate from GitHub Actions without a secret](github-actions.md)
+- [Log in as a service account with your identity provider's token](identity-provider-login.md)
 - [Use service accounts](service-accounts.md)
 - [Audit log](audit-log.md)
