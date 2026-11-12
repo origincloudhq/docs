@@ -7,7 +7,7 @@ page_type: concept
 parent: home
 nav_order: 52
 tags: [iam, service-accounts, security]
-last_reviewed: 2026-11-11
+last_reviewed: 2026-11-12
 ---
 
 # Workload identity federation
@@ -72,11 +72,12 @@ The [audit log](audit-log.md) records the creation and deletion of federated cre
 
 ## Where the token comes from
 
-In a GitHub Actions job granted `permissions: id-token: write`, the `origin` CLI and the Go, Rust and TypeScript SDKs find the job's token themselves, exchange it, and renew the access token before it expires. With another provider, such as GitLab CI, they exchange the token in the variable `ORIGINCLOUD_OIDC_TOKEN`, or in the file `ORIGINCLOUD_OIDC_TOKEN_FILE` names; see [Authenticate from GitLab CI and other CI providers](other-ci-providers.md). Any other tool can call the STS itself; [Authenticate from GitHub Actions](github-actions.md#exchange-the-token-yourself) shows the request.
+In a GitHub Actions job granted `permissions: id-token: write`, the `origin` CLI and the Go, Rust and TypeScript SDKs find the job's token themselves, exchange it, and renew the access token before it expires. With another provider, such as GitLab CI, they exchange the token in the variable `ORIGINCLOUD_OIDC_TOKEN`, or in the file `ORIGINCLOUD_OIDC_TOKEN_FILE` names; see [Authenticate from GitLab CI and other CI providers](other-ci-providers.md). Outside CI, `origin id login --oidc-token-file` logs the CLI in as a service account with a token from your own identity provider, and `origin sts assume-service-account` exchanges a token once; see [Log in as a service account with your identity provider's token](identity-provider-login.md). Any other tool can call the STS itself; [Authenticate from GitHub Actions](github-actions.md#exchange-the-token-yourself) shows the request.
 
 ## Related
 
 - [Authenticate from GitHub Actions without a secret](github-actions.md)
+- [Log in as a service account with your identity provider's token](identity-provider-login.md)
 - [Use service accounts](service-accounts.md)
 - [Access model](access-model.md)
 - [Audit log](audit-log.md)
