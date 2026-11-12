@@ -430,7 +430,7 @@ code, kbd, pre, samp { font-family: var(--mono); }
 @media (max-width: 1279px) {
   .shell { grid-template-columns: 260px minmax(0, 1fr); }
   .shell > .oc-toc { display: none; }
-  /* The kit's header carries five links, a text link and the main button;
+  /* The header carries its links, a text link and the main button;
      below 1280 px the search shrinks to its key so the bar still fits. */
   .search-btn { min-width: 0; gap: var(--s-2); }
   .search-btn__label { display: none; }
