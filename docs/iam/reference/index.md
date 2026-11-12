@@ -71,7 +71,7 @@ The security token service answers at `https://sts.origincloudapis.eu`. It's a p
 
 | Method | HTTP | Does |
 |---|---|---|
-| `AssumeServiceAccount` | `POST /v1beta1:assumeServiceAccount` | Exchanges an OIDC token (`token`) for the access token of the `WORKLOAD` service account one of whose federated credentials trusts it. `serviceAccount`, `organizations/<org-id>/serviceAccounts/<service-account-id>`, limits it to that account's credentials. `lifetime`, such as `"900s"`, from 60 seconds to an hour, sets the access token's lifetime. Answers `accessToken`, `expireTime`, `serviceAccount` and `federatedCredential`. A token no credential trusts is refused with `PERMISSION_DENIED` (403), without saying why. |
+| `AssumeServiceAccount` | `POST /v1beta1:assumeServiceAccount` | Exchanges an OIDC token (`oidcToken`) for the access token of the `WORKLOAD` service account one of whose federated credentials trusts it. `serviceAccount`, `organizations/<org-id>/serviceAccounts/<service-account-id>`, limits it to that account's credentials. `lifetime`, such as `"900s"`, from 60 seconds to an hour, sets the access token's lifetime. Answers `accessToken`, `expireTime`, `serviceAccount` and `federatedCredential`. A token no credential trusts is refused with `PERMISSION_DENIED` (403), without saying why. |
 
 The same exchange is an OAuth 2.0 token exchange request (RFC 8693) at `POST /v1/token`, for OAuth clients: the form fields `grant_type=urn:ietf:params:oauth:grant-type:token-exchange`, `subject_token` and `subject_token_type=urn:ietf:params:oauth:token-type:jwt`, optionally `requested_token_lifetime` in seconds. [Authenticate from GitHub Actions](../github-actions.md#exchange-the-token-yourself) shows it with curl.
 
