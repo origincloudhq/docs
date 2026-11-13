@@ -1,0 +1,24 @@
+---
+/**
+ * The compact footer from the brand kit (components/footer/compact.html):
+ * one row with the lockup, the legal links and the company line. The legal
+ * links and the consent control are this site's own components, so the footer
+ * cannot disagree with the consent dialog.
+ */
+import Brand from './Brand.astro'
+import LegalLinks from './LegalLinks.astro'
+import PrivacySettings from './PrivacySettings.astro'
+---
+<footer class="oc-footer oc-footer--compact">
+  <div class="oc-container oc-container--full">
+    <div class="oc-footer__row">
+      <Brand href="https://www.origincloud.eu/" size="sm" />
+      <nav aria-label="Footer">
+        <a href="/docs/">Documentation</a>
+        <LegalLinks />
+        <PrivacySettings />
+      </nav>
+      <span class="oc-footer__copy">&copy; {new Date().getFullYear()} Origin Cloud GmbH, Germany</span>
+    </div>
+  </div>
+</footer>

@@ -1,0 +1,19 @@
+---
+/**
+ * The service guides as an open grid, the brand kit's `products` pattern:
+ * no frames, a surface on hover only. Used by the docs landing page and the
+ * 404, which both send the reader into a guide.
+ */
+import type { Doc } from '../lib/nav'
+
+const { guides, headingLevel = 2 } = Astro.props as { guides: Doc[]; headingLevel?: 2 | 3 }
+const H = `h${headingLevel}`
+---
+<div class="oc-grid oc-products">
+  {guides.map((d) => (
+    <a class="oc-product oc-col-12 oc-col-sm-6 oc-col-lg-4" href={`/docs/${d.id.replace(/\/index$/, '')}/`}>
+      <H class="oc-product__title">{d.data.nav_title ?? d.data.title}</H>
+      <p class="oc-product__text">{d.data.description}</p>
+    </a>
+  ))}
+</div>

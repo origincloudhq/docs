@@ -1,15 +1,13 @@
 ---
 import { getCollection } from 'astro:content'
 import { guideRank } from '../../lib/nav'
-import '../../styles/tokens.css'
-import '../../styles/docs.css'
-import Search from '../../components/Search.astro'
-import Analytics from '../../components/Analytics.astro'
+import SiteHead from '../../components/SiteHead.astro'
+import SiteHeader from '../../components/SiteHeader.astro'
+import SiteFooter from '../../components/SiteFooter.astro'
+import GuideGrid from '../../components/GuideGrid.astro'
 import AnalyticsNoScript from '../../components/AnalyticsNoScript.astro'
-import PrivacySettings from '../../components/PrivacySettings.astro'
-import LegalLinks from '../../components/LegalLinks.astro'
 
-// One card per guide, from each guide's own root page, ordered by its
+// One entry per guide, from each guide's own root page, ordered by its
 // nav_order so the landing page and the guide switcher agree.
 const all = await getCollection('docs')
 const docs = all
@@ -23,103 +21,60 @@ const description =
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Origin Cloud Docs</title>
-  <meta name="description" content={description} />
-  <link rel="canonical" href={new URL('/docs/', site).href} />
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="Origin Cloud Docs" />
-  <meta property="og:description" content={description} />
-  <meta property="og:url" content={new URL('/docs/', site).href} />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700&family=Public+Sans:wght@400;500;620;650&family=JetBrains+Mono:wght@400;500&display=swap"
-  />
-
-  <Analytics />
+  <SiteHead title="Origin Cloud Docs" description={description} canonical={new URL('/docs/', site).href} ogType="website" />
 </head>
 <body>
   <AnalyticsNoScript />
   <a class="skip-link" href="#content">Skip to content</a>
 
-  <header class="site-header">
-    <a class="brand" href="/docs/">
-      <span class="brand__mark">Origin Cloud</span>
-      <span class="brand__scope">Docs</span>
-    </a>
-    <nav class="site-nav" aria-label="Primary">
-      <a href="https://www.origincloud.eu/">Site</a>
-      <a href="https://console.origincloud.eu/">Console</a>
-    </nav>
-    <Search />
-  </header>
+  <SiteHeader />
 
-  <main class="landing" id="content">
-    <div class="masthead grid-paper brackets">
-      <p class="masthead__eyebrow">User documentation</p>
-      <h1>Origin Cloud</h1>
-      <p class="masthead__lead">
-        What the platform can do, written for someone calling the GraphQL API or
-        the <code>origin</code> CLI — not for someone reading the source. One
-        guide per service, each covering the capabilities you can use and the
-        parts of the platform's own process you need in order to automate around it.
-      </p>
-      <div class="masthead__specs">
-        <span class="chip"><span class="chip__label">Interface</span><span class="chip__value">GraphQL · origin CLI</span></span>
-        <span class="chip"><span class="chip__label">Guides</span><span class="chip__value">{docs.length}</span></span>
-        <span class="chip"><span class="chip__label">Pages</span><span class="chip__value">{pageCount}</span></span>
-        <span class="chip"><span class="chip__label">Search</span><span class="chip__value">Press /</span></span>
+  <main id="content">
+    <section class="oc-section oc-section--docs">
+      <div class="oc-container oc-container--full landing">
+        <div class="doc-head">
+          <p class="oc-eyebrow">User documentation</p>
+          <h1>Origin Cloud documentation</h1>
+          <p class="doc-head__lead">
+            What the platform can do, written for someone calling the GraphQL API
+            or the <code>origin</code> CLI, not for someone reading the source. One
+            guide per service, each covering the capabilities you can use and the
+            parts of the platform's own process you need in order to automate
+            around it.
+          </p>
+          <ul class="oc-chips doc-head__specs">
+            <li class="oc-chip"><span class="chip__label">Interface</span> GraphQL · origin CLI</li>
+            <li class="oc-chip"><span class="chip__label">Guides</span> {docs.length}</li>
+            <li class="oc-chip"><span class="chip__label">Pages</span> {pageCount}</li>
+            <li class="oc-chip"><span class="chip__label">Search</span> Press /</li>
+          </ul>
+        </div>
+
+        <h2 class="landing__group">Service guides</h2>
+        <GuideGrid guides={docs} headingLevel={3} />
+
+        {/* The way back into the site. Someone reading the docs is mid-evaluation,
+            which is the moment "what does it cost" and "what else is there" get
+            asked, and the landing page would otherwise answer neither. */}
+        <h2 class="landing__group" id="offsite-heading">On origincloud.eu</h2>
+        <div class="oc-grid oc-products" aria-labelledby="offsite-heading">
+          <a class="oc-product oc-col-12 oc-col-sm-6 oc-col-lg-4" href="https://www.origincloud.eu/cloud-services/">
+            <h3 class="oc-product__title">All services</h3>
+            <p class="oc-product__text">What is live today, and what is planned.</p>
+          </a>
+          <a class="oc-product oc-col-12 oc-col-sm-6 oc-col-lg-4" href="https://www.origincloud.eu/compute/pricing/">
+            <h3 class="oc-product__title">Compute rates</h3>
+            <p class="oc-product__text">Published hourly, per instance type.</p>
+          </a>
+          <a class="oc-product oc-col-12 oc-col-sm-6 oc-col-lg-4" href="https://www.origincloud.eu/pvs/pricing/">
+            <h3 class="oc-product__title">Volume rates</h3>
+            <p class="oc-product__text">Published per provisioned GiB, per month.</p>
+          </a>
+        </div>
       </div>
-    </div>
-
-    <ul class="cards">
-      {docs.map((d, i) => (
-        <li>
-          <a class="card brackets" href={`/docs/${d.id.replace(/\/index$/, "")}/`}>
-            <span class="card__idx">{String(i + 1).padStart(2, '0')}</span>
-            <h2 class="card__title">{d.data.nav_title ?? d.data.title}</h2>
-            <p class="card__desc">{d.data.description}</p>
-          </a>
-        </li>
-      ))}
-    </ul>
-
-    {/* The way back into the site. Someone reading the docs is mid-evaluation,
-        which is the moment "what does it cost" and "what else is there" get
-        asked - and the landing page would otherwise answer neither. The service
-        guides already link to their own service page; this is for the entry
-        point, which did not. */}
-    <section class="offsite" aria-labelledby="offsite-heading">
-      <h2 class="offsite__heading" id="offsite-heading">On origincloud.eu</h2>
-      <ul class="offsite__links">
-        <li>
-          <a href="https://www.origincloud.eu/cloud-services/">
-            All services<span>What is live today, and what is planned</span>
-          </a>
-        </li>
-        <li>
-          <a href="https://www.origincloud.eu/compute/pricing/">
-            Compute rates<span>Published hourly, per instance type</span>
-          </a>
-        </li>
-        <li>
-          <a href="https://www.origincloud.eu/pvs/pricing/">
-            Volume rates<span>Published per provisioned GiB, per month</span>
-          </a>
-        </li>
-      </ul>
     </section>
-
-    <footer class="page-foot">
-      <span>Origin Cloud — user documentation</span>
-      <span class="page-foot__links">
-        <LegalLinks />
-        <PrivacySettings />
-      </span>
-    </footer>
   </main>
+
+  <SiteFooter />
 </body>
 </html>

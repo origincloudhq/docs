@@ -1,7 +1,13 @@
 ---
+/**
+ * A note in the page flow, the brand kit's `callout` component: info in
+ * --blue, everything else neutral. Never copper and never a status colour;
+ * the title says what kind of note it is. `warn` is kept as a prop name for
+ * existing callers and renders the neutral variant.
+ */
 const { tag = 'Note', variant = 'info' } = Astro.props as { tag?: string; variant?: 'info' | 'warn' }
 ---
-<aside class={`callout ${variant === 'warn' ? 'callout--warn' : ''}`}>
-  <div class="callout__tag">{tag}</div>
+<aside class:list={['oc-callout', 'callout', variant === 'warn' && 'oc-callout--neutral']}>
+  <p class="oc-callout__title">{tag}</p>
   <div class="callout__body"><slot /></div>
 </aside>

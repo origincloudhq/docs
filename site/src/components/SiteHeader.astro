@@ -1,0 +1,49 @@
+---
+/**
+ * The site header, ported from the brand kit's docs variant
+ * (components/header/docs.html): the same
+ * class names and structure, absolute links because the marketing site is a
+ * different origin. In the docs "Open console" is the main button.
+ *
+ * Deviations from the kit markup, both deliberate:
+ * - Services points at /cloud-services/, the path origincloud.eu serves today;
+ *   the kit's /services/ belongs to the marketing site's upcoming theme.
+ * - The search button sits with the actions, so it stays reachable below
+ *   992 px where the links fold into the menu.
+ */
+import Brand from './Brand.astro'
+import Search from './Search.astro'
+import ThemeToggle from './ThemeToggle.astro'
+
+const SITE = 'https://www.origincloud.eu'
+const CONSOLE = 'https://console.origincloud.eu'
+const links = [
+  { href: `${SITE}/cloud-services/`, label: 'Services' },
+  { href: `${SITE}/about/european-cloud/`, label: 'About' },
+  { href: '/docs/', label: 'Docs', current: true },
+]
+---
+<header class="oc-header">
+  <div class="oc-container oc-container--full oc-header__bar">
+    <Brand href={`${SITE}/`} />
+    <nav class="oc-header__nav" aria-label="Main">
+      {links.map((l) => <a href={l.href} aria-current={l.current ? 'page' : undefined}>{l.label}</a>)}
+    </nav>
+    <div class="oc-header__actions">
+      <Search />
+      <ThemeToggle />
+      <a class="oc-header__link" href={CONSOLE}>Register</a>
+      <a class="oc-btn oc-btn--primary" href={CONSOLE}>Open console</a>
+    </div>
+    <details class="oc-header__menu">
+      <summary aria-label="Menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary>
+      <div class="oc-header__panel">
+        <nav aria-label="Main">
+          {links.map((l) => <a href={l.href} aria-current={l.current ? 'page' : undefined}>{l.label}</a>)}
+          <a href={CONSOLE}>Sign in</a>
+          <ThemeToggle variant="menu" />
+        </nav>
+      </div>
+    </details>
+  </div>
+</header>

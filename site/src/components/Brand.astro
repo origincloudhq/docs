@@ -1,0 +1,14 @@
+---
+/**
+ * The Origin Cloud lockup: the pixel-cloud mark as inline SVG in currentColor
+ * plus the wordmark as live text. Markup ported unchanged from the brand kit's
+ * `brand` component (the brand kit's components/brand); the
+ * solid mark, because the lockup sits below the raster minimum of 32 px.
+ */
+const { href, label = 'Origin Cloud, home', size } = Astro.props as {
+  href: string
+  label?: string
+  size?: 'sm' | 'lg'
+}
+---
+<a class:list={['oc-brand', size && `oc-brand--${size}`]} href={href} aria-label={label}><svg class="oc-brand__mark" viewBox="0 0 96 48" aria-hidden="true" focusable="false"><path d="M48 0h6v6h-6zM54 0h6v6h-6zM60 0h6v6h-6zM66 0h6v6h-6zM36 6h6v6h-6zM42 6h6v6h-6zM48 6h6v6h-6zM54 6h6v6h-6zM60 6h6v6h-6zM66 6h6v6h-6zM72 6h6v6h-6zM78 6h6v6h-6zM30 12h6v6h-6zM36 12h6v6h-6zM42 12h6v6h-6zM48 12h6v6h-6zM54 12h6v6h-6zM60 12h6v6h-6zM66 12h6v6h-6zM72 12h6v6h-6zM78 12h6v6h-6zM84 12h6v6h-6zM6 18h6v6h-6zM12 18h6v6h-6zM18 18h6v6h-6zM30 18h6v6h-6zM36 18h6v6h-6zM42 18h6v6h-6zM48 18h6v6h-6zM54 18h6v6h-6zM60 18h6v6h-6zM66 18h6v6h-6zM72 18h6v6h-6zM78 18h6v6h-6zM84 18h6v6h-6zM0 24h6v6h-6zM6 24h6v6h-6zM12 24h6v6h-6zM18 24h6v6h-6zM24 24h6v6h-6zM30 24h6v6h-6zM36 24h6v6h-6zM42 24h6v6h-6zM48 24h6v6h-6zM54 24h6v6h-6zM60 24h6v6h-6zM66 24h6v6h-6zM72 24h6v6h-6zM78 24h6v6h-6zM84 24h6v6h-6zM90 24h6v6h-6zM0 30h6v6h-6zM6 30h6v6h-6zM12 30h6v6h-6zM18 30h6v6h-6zM24 30h6v6h-6zM30 30h6v6h-6zM36 30h6v6h-6zM42 30h6v6h-6zM48 30h6v6h-6zM54 30h6v6h-6zM60 30h6v6h-6zM66 30h6v6h-6zM72 30h6v6h-6zM78 30h6v6h-6zM84 30h6v6h-6zM90 30h6v6h-6zM0 36h6v6h-6zM6 36h6v6h-6zM12 36h6v6h-6zM18 36h6v6h-6zM24 36h6v6h-6zM30 36h6v6h-6zM36 36h6v6h-6zM42 36h6v6h-6zM48 36h6v6h-6zM54 36h6v6h-6zM60 36h6v6h-6zM66 36h6v6h-6zM72 36h6v6h-6zM78 36h6v6h-6zM84 36h6v6h-6zM90 36h6v6h-6zM6 42h6v6h-6zM12 42h6v6h-6zM18 42h6v6h-6zM24 42h6v6h-6zM30 42h6v6h-6zM36 42h6v6h-6zM42 42h6v6h-6zM48 42h6v6h-6zM54 42h6v6h-6zM60 42h6v6h-6zM66 42h6v6h-6zM72 42h6v6h-6zM78 42h6v6h-6zM84 42h6v6h-6z"/></svg><span class="oc-brand__word"><b>Origin</b> Cloud</span></a>
