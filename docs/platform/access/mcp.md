@@ -24,6 +24,7 @@ The `origin` CLI includes an MCP server, so an AI agent such as a coding assista
 
 ## Connect the agent
 
+For Claude Code, Codex, Cursor, Gemini CLI, GitHub Copilot and Claude Desktop, `origin mcp install` adds the server for you. See [Use Origin Cloud with coding agents](coding-agents.md). For any other MCP client, follow these steps.
 
 1. Add `origin mcp serve` to your MCP client as a local server. For example, in Claude Code:
 
