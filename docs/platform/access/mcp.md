@@ -23,6 +23,7 @@ The `origin` CLI includes an MCP server, so an AI agent such as a coding assista
 
 ## Connect the agent
 
+
 1. Add `origin mcp serve` to your MCP client as a local server. For example, in Claude Code:
 
    ```sh
