@@ -25,8 +25,8 @@ Every `origin` command accepts these options. Give `--config` and `--api` before
 |---|---|
 | `-c`, `--config <FILE>` | Path of the CLI configuration file to use instead of the default one. |
 | `-a`, `--api <URL>` | GraphQL API endpoint `origin id login` reads the signed-in user from, which applies their pending invitations. Default: `https://graph.origincloudapis.eu/graphql`. |
-| `-o`, `--output <FORMAT>` | Output format. Overrides ORIGINCLOUD_OUTPUT_FORMAT and the profile's `output-format`; without any of them, `table` on a terminal and `json` when the output goes to a pipe or a file. Possible values: - table: A list as a table, a resource as its fields, one per line - wide: A list as a table of every field that fits in a cell - json: The response as the API sends it, in JSON - name: The resource names alone, one per line. |
-| `--color <WHEN>` | When the `table`, `wide` and `name` formats use colour: `auto` on a terminal, unless NO_COLOR is set. Possible values: - auto: On a terminal, unless `NO_COLOR` is set (`CLICOLOR_FORCE` forces it) - always: Always, through a pipe too - never: Never. Default: `auto`. |
+| `-o`, `--output <FORMAT>` | Output format. Overrides ORIGINCLOUD_OUTPUT_FORMAT and the profile's `output-format`; without any of them, `table` on a terminal and `json` when the output goes to a pipe or a file.<br>Possible values:<br>`table`: A list as a table, a resource as its fields, one per line.<br>`wide`: A list as a table of every field that fits in a cell.<br>`json`: The response as the API sends it, in JSON.<br>`name`: The resource names alone, one per line. |
+| `--color <WHEN>` | When the `table`, `wide` and `name` formats use colour: `auto` on a terminal, unless NO_COLOR is set.<br>Possible values:<br>`auto`: On a terminal, unless `NO_COLOR` is set (`CLICOLOR_FORCE` forces it).<br>`always`: Always, through a pipe too.<br>`never`: Never.<br>Default: `auto`. |
 | `--no-pager` | Print `table` and `wide` output taller than the terminal as it is, instead of through ORIGINCLOUD_PAGER, PAGER or `less`. |
 
 `origin --version` prints the CLI's version. `origin --help`, `origin <group> --help` and `origin <group> <command> --help` print the help this page is generated from.
@@ -787,8 +787,8 @@ origin mcp install [OPTIONS]
 
 | Option | Required | Description |
 |---|---|---|
-| `--agent <AGENT>` | no | The coding agents, comma-separated; on a terminal without it, those found on this machine are offered. Possible values: - claude-code: Claude Code - codex: OpenAI Codex - cursor: Cursor - gemini-cli: Gemini CLI - github-copilot: GitHub Copilot (VS Code, Copilot CLI) - claude-desktop: Claude Desktop. |
-| `--scope <SCOPE>` | no | `user`, the agent's own configuration, for every project; or `project`, the project in the current directory, in a file that is usually committed with it. Possible values: - user: Every project of this user, in the agent's own configuration - project: The project in the current directory, in a file beside its code. Default: `user`. |
+| `--agent <AGENT>` | no | The coding agents, comma-separated; on a terminal without it, those found on this machine are offered.<br>Possible values:<br>`claude-code`: Claude Code.<br>`codex`: OpenAI Codex.<br>`cursor`: Cursor.<br>`gemini-cli`: Gemini CLI.<br>`github-copilot`: GitHub Copilot (VS Code, Copilot CLI).<br>`claude-desktop`: Claude Desktop. |
+| `--scope <SCOPE>` | no | `user`, the agent's own configuration, for every project; or `project`, the project in the current directory, in a file that is usually committed with it.<br>Possible values:<br>`user`: Every project of this user, in the agent's own configuration.<br>`project`: The project in the current directory, in a file beside its code.<br>Default: `user`. |
 | `--name <NAME>` | no | The name of the entry. Default: `origincloud`. |
 | `--toolsets <TOOLSET>` | no | The toolsets to expose, by service; every one when not given. Possible values: `billing`, `compute`, `dns`, `iam`, `location`, `network`, `observability`, `pvs`, `resourcemanager`, `support`. |
 | `--read-only` | no | Expose only the tools that change nothing: reads, and waiting for operations. |
@@ -805,6 +805,6 @@ origin mcp uninstall [OPTIONS]
 
 | Option | Required | Description |
 |---|---|---|
-| `--agent <AGENT>` | no | The coding agents, comma-separated; on a terminal without it, those found on this machine are offered. Possible values: - claude-code: Claude Code - codex: OpenAI Codex - cursor: Cursor - gemini-cli: Gemini CLI - github-copilot: GitHub Copilot (VS Code, Copilot CLI) - claude-desktop: Claude Desktop. |
-| `--scope <SCOPE>` | no | `user`, the agent's own configuration, for every project; or `project`, the project in the current directory, in a file that is usually committed with it. Possible values: - user: Every project of this user, in the agent's own configuration - project: The project in the current directory, in a file beside its code. Default: `user`. |
+| `--agent <AGENT>` | no | The coding agents, comma-separated; on a terminal without it, those found on this machine are offered.<br>Possible values:<br>`claude-code`: Claude Code.<br>`codex`: OpenAI Codex.<br>`cursor`: Cursor.<br>`gemini-cli`: Gemini CLI.<br>`github-copilot`: GitHub Copilot (VS Code, Copilot CLI).<br>`claude-desktop`: Claude Desktop. |
+| `--scope <SCOPE>` | no | `user`, the agent's own configuration, for every project; or `project`, the project in the current directory, in a file that is usually committed with it.<br>Possible values:<br>`user`: Every project of this user, in the agent's own configuration.<br>`project`: The project in the current directory, in a file beside its code.<br>Default: `user`. |
 | `--name <NAME>` | no | The name of the entry. Default: `origincloud`. |
