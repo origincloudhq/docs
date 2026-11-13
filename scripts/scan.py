@@ -214,9 +214,9 @@ def ipv6_finding(text: str) -> str | None:
 
 
 def scan_text(rel: str, text: str, private: PrivateList | None, content: bool, page: str | None,
-              stylesheet: bool = False) -> list[str]:
+              stylesheet: bool = False, first_line: int = 1) -> list[str]:
     found = []
-    for lineno, line in enumerate(text.splitlines(), 1):
+    for lineno, line in enumerate(text.splitlines(), first_line):
         hits: list[tuple[str, str]] = []
         for pattern, what, group in SECRETS:
             for m in pattern.finditer(line):
@@ -276,19 +276,53 @@ def scan_repo(root: Path, private: PrivateList | None) -> list[str]:
 
 BLOCK = re.compile(r"<(script|style)\b.*?</\1>|<(?!/?(?:span|code|a|em|strong|b|i)\b)[^>]+>", re.S | re.I)
 INLINE = re.compile(r"</?(?:span|code|a|em|strong|b|i)\b[^>]*>", re.I)
-TEXT_SUFFIXES = {".html", ".json", ".xml", ".txt", ".js", ".mjs", ".css", ".svg", ".webmanifest"}
+TEXT_SUFFIXES = {".html", ".md", ".json", ".xml", ".txt", ".js", ".mjs", ".css", ".svg", ".webmanifest"}
 
 
-def page_of(dist: Path, path: Path, content_root: Path) -> str | None:
-    """The content page a built docs page was rendered from, relative to docs/."""
-    rel = path.relative_to(dist).as_posix()
-    m = re.fullmatch(r"docs/(.+)/index\.html", rel)
+def page_of_route(route: str, content_root: Path) -> str | None:
+    """The content page, relative to docs/, of a built page's path such as docs/compute/index.html(.md)."""
+    m = re.fullmatch(r"docs/(.+)/index\.html(?:\.md)?", route)
     if not m:
         return None
     for candidate in (f"{m.group(1)}.md", f"{m.group(1)}/index.md"):
         if (content_root / candidate).is_file():
             return candidate
     return None
+
+
+def page_of(dist: Path, path: Path, content_root: Path) -> str | None:
+    """The content page a built docs page, or its Markdown version, was rendered from."""
+    return page_of_route(path.relative_to(dist).as_posix(), content_root)
+
+
+# llms.txt lists one page per line, and llms-full.txt holds many pages, each
+# opening with its title and a `Source:` line (site/src/lib/markdown.ts). Both
+# name a page by the URL of its Markdown version.
+LLMS_ITEM = re.compile(r"^- \[[^\]]*\]\(https?://[^/)]+/(docs/\S+/index\.html\.md)\)")
+LLMS_SOURCE = re.compile(r"^Source: https?://[^/\s]+/(docs/\S+/index\.html\.md)$")
+
+
+def sections(dist: Path, path: Path, raw: str, content_root: Path) -> list[tuple[int, str, str | None]]:
+    """The text of a built file in parts, each with its first line and the content page it is from.
+
+    A file made from one page is one part. llms.txt is a part per line, and
+    llms-full.txt a part per page, from the title above its `Source:` line."""
+    lines = raw.splitlines()
+    if path.name == "llms.txt":
+        return [(i + 1, line, page_of_route(m.group(1), content_root) if (m := LLMS_ITEM.match(line)) else None)
+                for i, line in enumerate(lines)]
+    if path.name != "llms-full.txt":
+        return [(1, raw, page_of(dist, path, content_root))]
+    starts: list[tuple[int, str | None]] = [(0, None)]
+    for i, line in enumerate(lines):
+        if m := LLMS_SOURCE.match(line):
+            title = i - 2 if i >= 2 and lines[i - 2].startswith("# ") and not lines[i - 1] else i
+            starts.append((title, page_of_route(m.group(1), content_root)))
+    parts = []
+    for (start, page), (end, _) in zip(starts, starts[1:] + [(len(lines), None)]):
+        if end > start:
+            parts.append((start + 1, "\n".join(lines[start:end]), page))
+    return parts
 
 
 def scan_site(root: Path, dist: Path, private: PrivateList | None) -> list[str]:
@@ -313,8 +347,9 @@ def scan_site(root: Path, dist: Path, private: PrivateList | None) -> list[str]:
             findings += scan_text(f"{rel} (attributes)", attrs, private, content=page is not None,
                                   page=page, stylesheet=True)
         else:
-            findings += scan_text(rel, raw, private, content=page is not None, page=page,
-                                  stylesheet=path.suffix in (".css", ".svg"))
+            for first_line, text, part_page in sections(dist, path, raw, root / CONTENT):
+                findings += scan_text(rel, text, private, content=part_page is not None, page=part_page,
+                                      stylesheet=path.suffix in (".css", ".svg"), first_line=first_line)
     return findings
 
 

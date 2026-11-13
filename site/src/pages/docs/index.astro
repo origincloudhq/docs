@@ -6,6 +6,9 @@ import SiteHeader from '../../components/SiteHeader.astro'
 import SiteFooter from '../../components/SiteFooter.astro'
 import GuideGrid from '../../components/GuideGrid.astro'
 import AnalyticsNoScript from '../../components/AnalyticsNoScript.astro'
+import MarkdownActions from '../../components/MarkdownActions.astro'
+import { LANDING_DESCRIPTION, LANDING_LEAD, LANDING_TITLE, OFFSITE } from '../../lib/landing'
+import { markdownPath } from '../../lib/markdown'
 
 // One entry per guide, from each guide's own root page, ordered by its
 // nav_order so the landing page and the guide switcher agree.
@@ -15,13 +18,14 @@ const docs = all
   .sort((a, b) => guideRank(a.id.split('/')[0]) - guideRank(b.id.split('/')[0]))
 const pageCount = all.length
 const site = Astro.site ?? 'https://docs.origincloud.eu'
-const description =
-  'User documentation for Origin Cloud: one guide per service, for anyone calling the API or the origin CLI.'
+const markdown = markdownPath('/docs/')
+// The lead's only markup is inline code: odd parts are between backticks.
+const lead = LANDING_LEAD.split('`')
 ---
 <!doctype html>
 <html lang="en">
 <head>
-  <SiteHead title="Origin Cloud Docs" description={description} canonical={new URL('/docs/', site).href} ogType="website" />
+  <SiteHead title="Origin Cloud Docs" description={LANDING_DESCRIPTION} canonical={new URL('/docs/', site).href} ogType="website" {markdown} />
 </head>
 <body>
   <AnalyticsNoScript />
@@ -33,14 +37,13 @@ const description =
     <section class="oc-section oc-section--docs">
       <div class="oc-container oc-container--full landing">
         <div class="doc-head">
-          <p class="oc-eyebrow">User documentation</p>
-          <h1>Origin Cloud documentation</h1>
+          <div class="doc-head__top">
+            <p class="oc-eyebrow">User documentation</p>
+            <MarkdownActions href={markdown} />
+          </div>
+          <h1>{LANDING_TITLE}</h1>
           <p class="doc-head__lead">
-            What the platform can do, written for someone calling the GraphQL API
-            or the <code>origin</code> CLI, not for someone reading the source. One
-            guide per service, each covering the capabilities you can use and the
-            parts of the platform's own process you need in order to automate
-            around it.
+            {lead.map((part, i) => (i % 2 ? <code>{part}</code> : part))}
           </p>
           <ul class="oc-chips doc-head__specs">
             <li class="oc-chip"><span class="chip__label">Interface</span> GraphQL · origin CLI</li>
@@ -53,23 +56,15 @@ const description =
         <h2 class="landing__group">Service guides</h2>
         <GuideGrid guides={docs} headingLevel={3} />
 
-        {/* The way back into the site. Someone reading the docs is mid-evaluation,
-            which is the moment "what does it cost" and "what else is there" get
-            asked, and the landing page would otherwise answer neither. */}
+        {/* The way back into the site (lib/landing.ts says why). */}
         <h2 class="landing__group" id="offsite-heading">On origincloud.eu</h2>
         <div class="oc-grid oc-products" aria-labelledby="offsite-heading">
-          <a class="oc-product oc-col-12 oc-col-sm-6 oc-col-lg-4" href="https://www.origincloud.eu/cloud-services/">
-            <h3 class="oc-product__title">All services</h3>
-            <p class="oc-product__text">What is live today, and what is planned.</p>
-          </a>
-          <a class="oc-product oc-col-12 oc-col-sm-6 oc-col-lg-4" href="https://www.origincloud.eu/compute/pricing/">
-            <h3 class="oc-product__title">Compute rates</h3>
-            <p class="oc-product__text">Published hourly, per instance type.</p>
-          </a>
-          <a class="oc-product oc-col-12 oc-col-sm-6 oc-col-lg-4" href="https://www.origincloud.eu/pvs/pricing/">
-            <h3 class="oc-product__title">Volume rates</h3>
-            <p class="oc-product__text">Published per provisioned GiB, per month.</p>
-          </a>
+          {OFFSITE.map((o) => (
+            <a class="oc-product oc-col-12 oc-col-sm-6 oc-col-lg-4" href={o.href}>
+              <h3 class="oc-product__title">{o.title}</h3>
+              <p class="oc-product__text">{o.text}</p>
+            </a>
+          ))}
         </div>
       </div>
     </section>

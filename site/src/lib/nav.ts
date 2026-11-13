@@ -85,6 +85,33 @@ export async function allGuides() {
   return guides
 }
 
+export interface Guide {
+  name: string
+  /** The guide's root page: the one without a parent. */
+  root: Doc
+  /** Every page of the guide in navigation order, the root first. */
+  pages: Doc[]
+}
+
+/** Every guide in reading order (GUIDE_ORDER), its pages in navigation order. */
+export async function guidesInOrder(): Promise<Guide[]> {
+  const flatten = (nodes: NavNode[]): Doc[] => nodes.flatMap((n) => [n.entry, ...flatten(n.children)])
+  return [...(await allGuides()).entries()]
+    .sort(([a], [b]) => guideRank(a) - guideRank(b) || a.localeCompare(b))
+    .map(([name, entries]) => {
+      const pages = flatten(buildGuideTree(entries))
+      const root = entries.find((e) => e.data.parent === null)
+      if (!root) throw new Error(`guide ${name}: no page without a parent`)
+      return { name, root, pages }
+    })
+}
+
+/** The label a page that isn't generally available carries under its title. */
+export const availabilityLabel = (entry: Doc): string | undefined =>
+  entry.data.availability === 'preview' ? 'Preview: may change'
+  : entry.data.availability === 'deprecated' ? 'Deprecated'
+  : undefined
+
 /** Breadcrumb from the guide root down to (but not including) `entry`. */
 export function ancestorsOf(entry: Doc, entries: Doc[]): Doc[] {
   const byLocalId = new Map(entries.map((e) => [e.data.id, e]))

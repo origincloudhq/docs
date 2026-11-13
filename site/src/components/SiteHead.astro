@@ -11,12 +11,14 @@ import '../styles/brand/components.css'
 import '../styles/docs.css'
 import Analytics from './Analytics.astro'
 
-const { title, description, canonical, ogType = 'article', noindex = false } = Astro.props as {
+const { title, description, canonical, ogType = 'article', noindex = false, markdown } = Astro.props as {
   title: string
   description: string
   canonical?: string
   ogType?: 'article' | 'website'
   noindex?: boolean
+  /** The path of the page's Markdown version (lib/markdown.ts). */
+  markdown?: string
 }
 const site = Astro.site ?? 'https://docs.origincloud.eu'
 const ogImage = new URL('/og.png', site).href
@@ -44,6 +46,7 @@ const ogImage = new URL('/og.png', site).href
 <meta name="description" content={description} />
 {canonical && <link rel="canonical" href={canonical} />}
 {noindex && <meta name="robots" content="noindex, follow" />}
+{markdown && <link rel="alternate" type="text/markdown" href={markdown} />}
 
 <meta property="og:type" content={ogType} />
 <meta property="og:site_name" content="Origin Cloud Docs" />

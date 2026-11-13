@@ -1,0 +1,36 @@
+---
+/**
+ * "View as Markdown" and "Copy page", for a reader who hands the page to an
+ * agent or an LLM: both use the page's Markdown version (lib/markdown.ts),
+ * which the head also announces. "Copy page" needs JavaScript and the
+ * clipboard, so it stays hidden without them; the link always works.
+ */
+const { href } = Astro.props as { href: string }
+---
+<div class="md-actions" data-pagefind-ignore>
+  <a class="md-actions__item" href={href} type="text/markdown">View as Markdown</a>
+  <button class="md-actions__item" type="button" data-copy-markdown={href} hidden>Copy page</button>
+</div>
+
+<script is:inline>
+  (() => {
+    if (!navigator.clipboard) return
+    document.querySelectorAll('[data-copy-markdown]').forEach((button) => {
+      button.hidden = false
+      const label = button.textContent
+      let timer
+      button.addEventListener('click', async () => {
+        try {
+          const res = await fetch(button.dataset.copyMarkdown)
+          if (!res.ok) throw new Error(String(res.status))
+          await navigator.clipboard.writeText(await res.text())
+          button.textContent = 'Copied'
+        } catch {
+          button.textContent = 'Copy failed'
+        }
+        clearTimeout(timer)
+        timer = setTimeout(() => { button.textContent = label }, 2000)
+      })
+    })
+  })()
+</script>

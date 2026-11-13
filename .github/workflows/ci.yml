@@ -55,7 +55,9 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       # astro build, then check-links over the source and the built site,
-      # then the search index. A broken link fails here.
+      # check-markdown over the pages' Markdown versions and llms*.txt, then
+      # the search index. A broken link, or a page without its Markdown
+      # version, fails here.
       - name: Build the site
         working-directory: site
         env:

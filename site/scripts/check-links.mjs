@@ -74,18 +74,23 @@ if (!exists(DIST)) {
 const pages = walkHtml(DIST)
 let renderedBroken = 0
 
+// A page's Markdown version (/docs/compute/index.html.md) is a file, not a
+// route; scripts/check-markdown.mjs checks what is in it.
+const MARKDOWN = /^\/docs\/(?:.+\/)?index\.html\.md$/
+
 for (const f of pages) {
   const html = readFileSync(f, 'utf8')
 
   // A relative .md href in the output means a link was never rewritten to a
   // route. An absolute one points at a file elsewhere, such as CONTRIBUTING.md.
   for (const [, href] of html.matchAll(/href="(?![a-z][a-z0-9+.-]*:)([^"]*\.md[^"]*)"/g)) {
+    if (MARKDOWN.test(href)) continue
     console.error(`  ${relative(DIST, f)}: unrewritten source link -> ${href}`)
     renderedBroken++
   }
 
   for (const href of new Set([...html.matchAll(/href="(\/docs\/[^"#]*)/g)].map((m) => m[1]))) {
-    if (!exists(join(DIST, href, 'index.html'))) {
+    if (!exists(MARKDOWN.test(href) ? join(DIST, href) : join(DIST, href, 'index.html'))) {
       console.error(`  ${relative(DIST, f)}: link to a page that was not built -> ${href}`)
       renderedBroken++
     }

@@ -178,6 +178,20 @@ def run_site(html, page):
         return scan(root, ["--private-list", str(listed), "site", str(root / "dist")], env_without_list())
 
 
+def run_site_files(files):
+    """scan.py site over a build of the content pages g/a.md and storage/volumes/import.md holding `files`."""
+    with tempfile.TemporaryDirectory() as d:
+        root = Path(d) / "r"
+        listed = repo(root, "docs/g/a.md", PAGE.format(body="x"))
+        (root / "docs/storage/volumes").mkdir(parents=True)
+        (root / "docs/storage/volumes/import.md").write_text(PAGE.format(body="x"))
+        for path, text in {"docs/g/a/index.html": "<p>x</p>", **files}.items():
+            built = root / "dist" / path
+            built.parent.mkdir(parents=True, exist_ok=True)
+            built.write_text(text)
+        return scan(root, ["--private-list", str(listed), "site", str(root / "dist")], env_without_list())
+
+
 SITE_CASES = [
     ("a built page is clean", "<p>Create a volume.</p>", "g/a.md", CLEAN),
     ("a name split by highlighting is found", "<code><span>zor</span><span>bix</span></code>", "g/a.md", FINDING),
@@ -188,6 +202,32 @@ SITE_CASES = [
     ("a private repository a template added is found", '<a href="https://example.com/acme-private-repo">x</a>',
      "g/a.md", FINDING),
     ("a colour in an attribute isn't an issue", '<rect fill="#666"/>', "g/a.md", CLEAN),
+]
+
+# The Markdown versions and the llms files, which name the page each part is from.
+SOURCE = "https://docs.example.org/docs/{}/index.html.md"
+ALLOWED = "Run `zorbix info disk.img` to check it."
+FULL = "# {title}\n\nSource: " + SOURCE + "\n\n{body}\n"
+MARKDOWN_CASES = [
+    ("an allowed name passes in its page's Markdown version",
+     {"docs/storage/volumes/import/index.html.md": ALLOWED}, CLEAN),
+    ("an allowed name fails in another page's Markdown version", {"docs/g/a/index.html.md": ALLOWED}, FINDING),
+    ("an example address passes in a Markdown version", {"docs/g/a/index.html.md": "Reach 10.0.1.5."}, CLEAN),
+    ("an allowed name passes in its page's part of llms-full.txt",
+     {"llms-full.txt": FULL.format("g/a", title="A", body="Reach 10.0.1.5.")
+      + "\n" + FULL.format("storage/volumes/import", title="Import", body=ALLOWED)}, CLEAN),
+    ("an allowed name fails in another page's part of llms-full.txt",
+     {"docs/g/llms-full.txt": FULL.format("storage/volumes/import", title="Import", body="x")
+      + "\n" + FULL.format("g/a", title="A", body=ALLOWED)}, FINDING),
+    ("the title above a Source line belongs to its page in llms-full.txt",
+     {"llms-full.txt": FULL.format("g/a", title="A", body="x")
+      + "\n" + FULL.format("storage/volumes/import", title=ALLOWED, body="x")}, CLEAN),
+    ("an example address fails before any page of llms-full.txt",
+     {"llms-full.txt": "Reach 10.0.1.5.\n\n" + FULL.format("g/a", title="A", body="x")}, FINDING),
+    ("an allowed name passes on its page's line of llms.txt",
+     {"llms.txt": "# Docs\n\n- [Import](" + SOURCE.format("storage/volumes/import") + "): " + ALLOWED + "\n"}, CLEAN),
+    ("an allowed name fails on another page's line of llms.txt",
+     {"llms.txt": "- [A](" + SOURCE.format("g/a") + "): " + ALLOWED + "\n"}, FINDING),
 ]
 
 # Without --private-list: (name, environment, exit, texts the output must hold, texts it must not).
@@ -220,6 +260,9 @@ def main():
         verdict(name, rc == (1 if want_finding else 0) and want_text in out, f"exit {rc}, output:\n{out}")
     for name, html, page, want_finding in SITE_CASES:
         rc, out = run_site(html, page)
+        verdict(name, rc == (1 if want_finding else 0), f"exit {rc}, output:\n{out}")
+    for name, files, want_finding in MARKDOWN_CASES:
+        rc, out = run_site_files(files)
         verdict(name, rc == (1 if want_finding else 0), f"exit {rc}, output:\n{out}")
     for name, env, want_rc, must, must_not in LIST_CASES:
         with tempfile.TemporaryDirectory() as d:
