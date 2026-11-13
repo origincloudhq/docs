@@ -13,7 +13,8 @@ import path from 'node:path'
  */
 const DOCS_ROOT = path.resolve('../docs')
 
-const toRoute = (absMdPath) => {
+/** The route of a page file under docs/, or null for a file outside it. */
+export const toRoute = (absMdPath) => {
   const rel = path.relative(DOCS_ROOT, absMdPath).replace(/\\/g, '/')
   if (rel.startsWith('..')) return null              // outside the tree; leave alone
   const stripped = rel.replace(/\.md$/, '').replace(/(^|\/)index$/, '')

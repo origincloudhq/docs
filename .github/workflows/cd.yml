@@ -249,6 +249,30 @@ jobs:
             exit 1
           }
 
+          # Its Markdown version, as UTF-8 Markdown (_build/nginx.conf), and
+          # llms.txt listing it.
+          type="$(curl -fsS "http://127.0.0.1:${LOCAL_PORT}/docs/compute/instances/lifecycle/index.html.md" \
+            -o "${out}/deep.md" -w '%{content_type}')" || {
+            echo "::error::The nested page's Markdown version did not respond"
+            exit 1
+          }
+          if [[ "${type}" != "text/markdown; charset=utf-8" ]]; then
+            echo "::error::The Markdown version is served as ${type}, not text/markdown; charset=utf-8"
+            exit 1
+          fi
+          grep -qx "# Instance lifecycle" "${out}/deep.md" || {
+            echo "::error::The Markdown version was served without its title"
+            exit 1
+          }
+          curl -fsS "http://127.0.0.1:${LOCAL_PORT}/llms.txt" -o "${out}/llms.txt" || {
+            echo "::error::/llms.txt did not respond"
+            exit 1
+          }
+          grep -q "/docs/compute/instances/lifecycle/index.html.md" "${out}/llms.txt" || {
+            echo "::error::/llms.txt doesn't list the nested page"
+            exit 1
+          }
+
           # And the content it serves is the content this commit holds. A
           # dispatch may deploy an older image, which holds older content.
           if [[ "${GITHUB_EVENT_NAME}" != "push" ]]; then exit 0; fi

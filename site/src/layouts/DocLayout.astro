@@ -5,7 +5,9 @@ import SiteFooter from '../components/SiteFooter.astro'
 import AnalyticsNoScript from '../components/AnalyticsNoScript.astro'
 import NavTree from '../components/NavTree.astro'
 import Breadcrumbs from '../components/Breadcrumbs.astro'
-import { buildGuideTree, ancestorsOf, urlOf, type Doc } from '../lib/nav'
+import MarkdownActions from '../components/MarkdownActions.astro'
+import { buildGuideTree, ancestorsOf, availabilityLabel, urlOf, type Doc } from '../lib/nav'
+import { markdownPath } from '../lib/markdown'
 import { EDIT_GUIDE, reportIssueUrl, sourcePath } from '../lib/source'
 
 interface Heading { depth: number; slug: string; text: string }
@@ -30,6 +32,8 @@ const toc = d.toc === false ? [] : headings.filter((h) => h.depth === 2 || h.dep
 const canonical = d.canonical ?? new URL(urlOf(entry), Astro.site ?? 'https://docs.origincloud.eu').href
 const pageTitle = d.seo_title ?? `${d.title} | Origin Cloud Docs`
 const eyebrow = d.eyebrow ?? `${guideRoot?.data.nav_title ?? guideName} / ${d.page_type}`
+const availability = availabilityLabel(entry)
+const markdown = markdownPath(urlOf(entry))
 
 // Every page links to how it is changed and to an issue about it. The page's
 // own address, not its canonical, goes into the issue: that is what the reader
@@ -44,7 +48,7 @@ if (!source) throw new Error(`${entry.id}: the loader gave no file path`)
 <head>
   {/* Description and canonical are required by the frontmatter schema, so a
       page cannot ship without them. */}
-  <SiteHead title={pageTitle} description={d.description} canonical={canonical} noindex={d.noindex} />
+  <SiteHead title={pageTitle} description={d.description} canonical={canonical} noindex={d.noindex} {markdown} />
 </head>
 <body>
   <AnalyticsNoScript />
@@ -90,12 +94,13 @@ if (!source) throw new Error(`${entry.id}: the loader gave no file path`)
       <Breadcrumbs trail={trail} current={entry} />
 
       <div class="doc-head">
-        <p class="oc-eyebrow">{eyebrow}</p>
+        <div class="doc-head__top">
+          <p class="oc-eyebrow">{eyebrow}</p>
+          <MarkdownActions href={markdown} />
+        </div>
         <h1>{d.title}</h1>
-        {d.availability && d.availability !== 'ga' && (
-          <p class="doc-head__availability" data-availability={d.availability}>
-            {d.availability === 'preview' ? 'Preview: may change' : 'Deprecated'}
-          </p>
+        {availability && (
+          <p class="doc-head__availability" data-availability={d.availability}>{availability}</p>
         )}
         {d.lead && <p class="doc-head__lead">{d.lead}</p>}
         {(d.specs ?? []).length > 0 && (

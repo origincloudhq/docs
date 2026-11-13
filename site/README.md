@@ -10,7 +10,7 @@ cd site
 npm ci
 npx playwright install chromium   # Mermaid is rendered at build time
 npm run dev      # http://localhost:4321/docs/
-npm run build    # astro build + check-links + Pagefind index, into dist/
+npm run build    # astro build + check-links + check-markdown + Pagefind index, into dist/
 ```
 
 `npm run build` needs Playwright's Chromium: Mermaid diagrams are rendered to
@@ -28,6 +28,7 @@ SVG at build time, not in the browser.
 | Search | Pagefind: a static index, no external service. Only each page's `<main>` is indexed (`data-pagefind-body`). |
 | SEO | Static HTML, canonical and Open Graph tags from frontmatter, a sitemap. |
 | Version | `src/pages/version.json.ts` serves `/version.json`: the source commit of the last export that changed a published page (`docs/_export/version.json`), and this repository's commit when the build is given `SITE_COMMIT`. |
+| Markdown | Every page also exists as Markdown at its URL plus `index.html.md` (`/docs/compute/index.html.md`), the llmstxt.org scheme origincloud.eu uses: the page as rendered, front matter reduced to title and description, links absolute to other pages' Markdown. The head announces it with `<link rel="alternate" type="text/markdown">`, and the page has "View as Markdown" and "Copy page". `/llms.txt` lists every page by guide in navigation order; `/llms-full.txt` holds them all in one file, `/docs/<guide>/llms-full.txt` one guide's. `src/lib/markdown.ts` makes them from the source at build time; `scripts/check-markdown.mjs` fails the build on a page without one, a broken link in one, or an llms file missing a page. nginx serves them as UTF-8, the Markdown versions and `llms-full.txt` with `X-Robots-Tag: noindex`. |
 | Page actions | Every page links to "Edit this page" (CONTRIBUTING.md) and "Report an issue" (an issue form with the page's address filled in), and shows its source path; `src/lib/source.ts`. |
 
 ## Fonts

@@ -278,6 +278,23 @@ code, kbd, pre, samp { font-family: var(--mono); }
 /* ------------------------------------------------------------ page head */
 .doc-head { margin-bottom: var(--s-6); }
 .doc-head .oc-eyebrow { margin-top: var(--s-2); }
+/* Eyebrow on the left, the Markdown actions on the right; they wrap below it
+   on a narrow screen. */
+.doc-head__top {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: var(--s-2) var(--s-4);
+}
+.md-actions { display: flex; gap: var(--s-2); margin-top: var(--s-2); }
+.md-actions__item {
+  appearance: none; background: transparent;
+  padding: var(--s-1) var(--s-3);
+  border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
+  font: inherit; font-size: var(--fs-small); line-height: 1.4;
+  color: var(--text-soft); text-decoration: none; white-space: nowrap; cursor: pointer;
+}
+.md-actions__item:hover { border-color: var(--text-muted); color: var(--text); }
+.md-actions__item:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.md-actions__item[hidden] { display: none; }
 .doc-head h1 {
   margin: var(--s-2) 0 var(--s-3);
   font: var(--fw-bold) var(--fs-doc-h1)/var(--lh-heading) var(--sans);
