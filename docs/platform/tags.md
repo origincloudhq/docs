@@ -6,7 +6,7 @@ page_type: concept
 parent: home
 nav_order: 35
 tags: [tags, networking, compute, storage]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-13
 ---
 
 # Tags
@@ -19,6 +19,7 @@ These resources take tags:
 - Compute: instances, key pairs, and the images you create in a project. Platform images don't. A key pair's `origin:name` tag is its name; remove it and the key pair shows the name it was imported under.
 - Storage: volumes and snapshots.
 - DNS: hosted zones. Record sets and VPC attachments don't.
+- KMS: keys, through the KMS API's `tags` field. A deleted key keeps its tags, which can't change until it is undeleted.
 
 ## Reserved keys
 
