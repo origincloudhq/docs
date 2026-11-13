@@ -6,7 +6,7 @@ page_type: concept
 parent: home
 nav_order: 70
 tags: [iam, audit, api]
-last_reviewed: 2026-11-11
+last_reviewed: 2026-11-13
 ---
 
 # Audit log
@@ -35,7 +35,7 @@ The audit log records these fourteen actions. Each one is recorded when the chan
 | `compute.instance.service_account.detach` | An instance's service account is removed or replaced | The instance's URN; `details` names the service account |
 
 
-The audit log doesn't record organization or project lifecycle changes, other resource changes such as launching an instance without a service account, or refused requests. Writing an entry never blocks the change itself: if an entry can't be written, the change still takes effect, so in rare cases an action is missing from the log. The two `compute.instance.service_account` actions are recorded with the change itself and reach the log within seconds; a change that is refused records nothing. An exchange through a federated credential is the other way round: no access token is issued unless its entry is written, and it reaches the log within seconds.
+The audit log doesn't record organization or project lifecycle changes, other resource changes such as launching an instance without a service account, or refused requests, except a KMS key's refused uses. Writing an entry never blocks the change itself: if an entry can't be written, the change still takes effect, so in rare cases an action is missing from the log. The two `compute.instance.service_account` actions are recorded with the change itself and reach the log within seconds; a change that is refused records nothing. An exchange through a federated credential is the other way round: no access token is issued unless its entry is written, and it reaches the log within seconds.
 
 ## Entry fields
 
@@ -49,7 +49,7 @@ Each entry has these fields.
 | `actor` | The principal that performed the action. |
 | `action` | The action key from the table above. |
 | `target` | What the action was applied to, as listed in the table above. |
-| `outcome` | `SUCCESS` for every recorded action. |
+| `outcome` | `SUCCESS` for an action that was made; `FAILED` for one that was attempted and refused, such as a KMS decrypt under the wrong encryption context, with the reason in `details`. |
 | `occurredAt` | When the action happened, as an RFC 3339 timestamp. |
 | `details` | Action-specific context as a JSON string, for example the role URN that was assigned. For a user actor or target, it also holds the verified email address the account had when the change was made, as `actor_verified_email` and `target_verified_email`, when one was verified. For a change made by a CI job, it also holds `federated` (see [Changes made by a CI job](#changes-made-by-a-ci-job)). |
 
