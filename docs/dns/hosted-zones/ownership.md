@@ -6,7 +6,7 @@ page_type: concept
 parent: hosted-zones
 nav_order: 10
 tags: [dns, security]
-last_reviewed: 2026-11-08
+last_reviewed: 2026-11-13
 ---
 
 # Domain ownership
@@ -39,7 +39,7 @@ A call within 30 seconds of the zone's last check answers with that check's outc
 
 The first zone of a domain to verify becomes `ACTIVE` and holds the domain; other zones of that domain stay pending. A pending zone that hasn't verified 7 days after its creation, at its `challenge.expireTime`, is deleted with its record sets. Verifying it after that is refused with `NOT_FOUND`.
 
-Once a zone is active, `challenge.verifyTime` shows when it verified, and you can remove the TXT record once the domain is delegated to the zone's name servers. Don't delegate it yet: Origin Cloud's name servers don't answer for customer zones yet, so the domain would stop resolving. Until they do, keep the TXT record at the domain's current DNS provider; it's what keeps the zone's hold on the domain.
+Once a zone is active, `challenge.verifyTime` shows when it verified. Once its domain is also delegated to the zone's name servers, you can remove the TXT record: the delegation keeps the zone's hold on the domain from then on. Until the domain is delegated, keep the TXT record at its current DNS provider.
 
 ## Daily checks and suspension
 

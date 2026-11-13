@@ -7,7 +7,7 @@ page_type: troubleshooting
 parent: home
 nav_order: 60
 tags: [dns, troubleshooting]
-last_reviewed: 2026-11-08
+last_reviewed: 2026-11-13
 ---
 
 # Troubleshoot DNS
@@ -28,7 +28,7 @@ With `NAME_HELD`, the token answers, but another zone already holds the domain.
 **Resolution:**
 
 1. Check what the domain's current DNS answers: `dig +short TXT _origin-challenge.<your-domain>`. It must print the zone's `challenge.token`.
-2. If the domain is delegated to the zone's name servers already, delegate it back to the DNS provider that holds the TXT record and verify the zone. Origin Cloud's name servers don't answer for customer zones yet, so leave the domain there for now; see [Delegate the domain](../hosted-zones/create-public.md#delegate-the-domain).
+2. If the domain is delegated to the zone's name servers already, delegate it back to the DNS provider that holds the TXT record and verify the zone. Delegate the domain to the zone's name servers again once the zone is `ACTIVE`; see [Delegate the domain](../hosted-zones/create-public.md#delegate-the-domain).
 3. Verify the zone again once the record answers, with `origin dns verify-hosted-zone --hosted-zone <zone-id>`. A verify within 30 seconds of the zone's last check answers with that check's outcome, so wait half a minute after publishing the record.
 4. For `NAME_HELD`, find the zone that holds the domain, in each of your own projects with `origin dns list-hosted-zones --project <project-id> --dns-name <your-domain>`, and delete it if you don't need it. If it isn't yours, the domain stays held while it's delegated to Origin Cloud's name servers or carries that zone's token. Delegate it to a DNS provider you control without that token: after several daily checks the other zone is suspended and the domain is free for yours to verify. See [Daily checks and suspension](../hosted-zones/ownership.md#daily-checks-and-suspension).
 
@@ -42,7 +42,7 @@ A pending zone is deleted at its `challenge.expireTime`, 7 days after its creati
 
 **Resolution:**
 
-1. Publish the zone's `challenge.token` at `challenge.dnsName` where the domain is served now. Don't delegate the domain to the zone's `nameServers` instead: Origin Cloud's name servers don't answer for customer zones yet.
+1. Publish the zone's `challenge.token` at `challenge.dnsName` where the domain is served now.
 2. Verify the zone with `origin dns verify-hosted-zone --hosted-zone <zone-id>`. It becomes `ACTIVE` again, with its record sets, provided no other zone verified the domain in the meantime; otherwise `lastCheck` is `NAME_HELD`.
 
 ## An attachment is refused

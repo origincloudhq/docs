@@ -7,7 +7,7 @@ page_type: overview
 parent: null
 nav_order: 0
 tags: [overview, dns, networking]
-last_reviewed: 2026-11-08
+last_reviewed: 2026-11-13
 availability: preview
 ---
 
@@ -15,7 +15,7 @@ availability: preview
 
 DNS answers the names of your own domains. You create a hosted zone for a domain, such as `example.com`, and fill it with record sets: the addresses, mail exchangers, text and other records its names answer with. A public zone is answered on the internet by Origin Cloud's name servers. A private zone is answered only inside the VPCs you attach it to.
 
-> **Note:** DNS is a preview. Private zones resolve inside the VPCs they're attached to. Origin Cloud's name servers don't answer for customer zones yet, so a public zone isn't answered on the internet. You can create and verify public zones and manage their record sets, but don't delegate a domain to Origin Cloud.
+> **Note:** DNS is a preview (`v1beta1`): names and fields may still change.
 
 The following diagram shows how the parts relate.
 

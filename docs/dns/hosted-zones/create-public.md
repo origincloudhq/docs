@@ -2,30 +2,28 @@
 id: hosted-zones-create-public
 title: Create a public zone and verify it
 nav_title: Create a public zone
-description: Create a public hosted zone for your domain, prove you control the domain with a TXT record, and add the zone's record sets.
+description: Create a public hosted zone for your domain, prove you control it with a TXT record, add its record sets, and delegate the domain to the zone's name servers.
 page_type: task
 parent: hosted-zones
 nav_order: 20
 tags: [dns, cli]
-last_reviewed: 2026-11-08
+last_reviewed: 2026-11-13
 ---
 
 # Create a public zone and verify it
 
-Create a public zone for your domain, prove you control the domain, and add the zone's record sets.
-
-
-> **Note:** Origin Cloud's name servers don't answer for customer zones yet, so a public zone isn't answered on the internet. You can create and verify a zone and add its record sets; don't delegate the domain.
+Create a public zone for your domain, prove you control the domain, and add the zone's record sets. Then point the domain at the zone's name servers, and Origin Cloud answers for it on the internet.
 
 The following diagram shows the steps and where each one happens.
 
 ```mermaid
 flowchart LR
   accTitle: Setting up a public zone
-  accDescr: Create the public zone, publish its token as a TXT record at the domain's current DNS provider, verify the zone, and add record sets.
+  accDescr: Create the public zone, publish its token as a TXT record at the domain's current DNS provider, verify the zone, add record sets, and delegate the domain to the zone's name servers at its registrar.
   create[Create the zone] --> txt[Publish the TXT record at your current DNS]
   txt --> verify[Verify the zone]
   verify --> records[Add record sets]
+  records --> delegate[Delegate the domain at your registrar]
 ```
 
 ## Before you begin
@@ -105,8 +103,20 @@ Create the zone's record sets. Copy every record your domain needs from its curr
 
 ## Delegate the domain
 
-> **Important:** Don't change your domain's delegation at your registrar yet. Origin Cloud's name servers don't answer for customer zones yet, so a domain delegated to them stops resolving. Until they do, keep the domain at its current DNS provider, and keep the `_origin-challenge` TXT record there: it's what keeps your zone's hold on the domain.
+> **Important:** Delegate the domain only once the zone is `ACTIVE` and holds every record set the domain needs. Origin Cloud's name servers don't answer for a pending zone, so a domain delegated to one stops resolving.
 
+To delegate the domain:
+
+1. At your domain's registrar, replace the domain's name servers with the zone's `nameServers`, all of them.
+2. Check the delegation once the registrar has published it:
+
+   ```sh
+   dig +short NS example.com
+   ```
+
+The zone's records are answered on the internet once Origin Cloud's public name servers serve the zone. Resolvers that cached the old name servers keep using them until their TTL runs out.
+
+Once the domain is delegated, you can remove the `_origin-challenge` TXT record. The zone keeps its domain as long as the delegation stays. See [Daily checks and suspension](ownership.md#daily-checks-and-suspension).
 
 ## Related
 
