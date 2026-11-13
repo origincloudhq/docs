@@ -34,6 +34,7 @@ The audit log records these fourteen actions. Each one is recorded when the chan
 | `compute.instance.service_account.attach` | An instance is launched as a service account, or updated to run as one (replacing one records a detach, then an attach) | The instance's URN; `details` names the service account |
 | `compute.instance.service_account.detach` | An instance's service account is removed or replaced | The instance's URN; `details` names the service account |
 
+
 The audit log doesn't record organization or project lifecycle changes, other resource changes such as launching an instance without a service account, or refused requests. Writing an entry never blocks the change itself: if an entry can't be written, the change still takes effect, so in rare cases an action is missing from the log. The two `compute.instance.service_account` actions are recorded with the change itself and reach the log within seconds; a change that is refused records nothing. An exchange through a federated credential is the other way round: no access token is issued unless its entry is written, and it reaches the log within seconds.
 
 ## Entry fields

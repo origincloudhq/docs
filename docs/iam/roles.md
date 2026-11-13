@@ -6,7 +6,7 @@ page_type: reference
 parent: home
 nav_order: 20
 tags: [iam, roles, reference]
-last_reviewed: 2026-11-06
+last_reviewed: 2026-11-13
 ---
 
 # Built-in roles
@@ -14,7 +14,7 @@ last_reviewed: 2026-11-06
 <!-- Source of truth: the built-in role and permission catalog in the IAM service.
      Check every table against `origin iam list-roles` when roles change. -->
 
-Origin Cloud has eight built-in roles. You can't create your own. Each section lists the role's ID, the URN the GraphQL API takes, where you can assign it, and every permission it grants. The `origin iam` commands and the REST API name a role by its ID with the slashes after `roles/` written as dots, such as `roles/iam.editor` for `roles/iam/editor`. Permission keys have the form `<service>.<resource>.<action>`; the tables group them by `<service>.<resource>`. For how roles, scopes and permissions work together, see [Access model](access-model.md).
+Origin Cloud has twelve built-in roles. You can't create your own. Each section lists the role's ID, the URN the GraphQL API takes, where you can assign it, and every permission it grants. The `origin iam` commands and the REST API name a role by its ID with the slashes after `roles/` written as dots, such as `roles/iam.editor` for `roles/iam/editor`. Permission keys have the form `<service>.<resource>.<action>`; the tables group them by `<service>.<resource>`. For how roles, scopes and permissions work together, see [Access model](access-model.md).
 
 | ID | Name | For |
 |---|---|---|
@@ -23,6 +23,10 @@ Origin Cloud has eight built-in roles. You can't create your own. Each section l
 | [`roles/iam/editor`](#rolesiameditor) | IAM Editor | Assigning and revoking roles within its own permissions |
 | [`roles/iam/service-account-user`](#rolesiamservice-account-user) | Service Account User | Launching instances that run as the organization's service accounts |
 | [`roles/dns/editor`](#rolesdnseditor) | DNS Editor | Managing the record sets of a project's hosted zones |
+| [`roles/kms/admin`](#roleskmsadmin) | KMS Admin | Managing a project's KMS keys, without using them |
+| [`roles/kms/viewer`](#roleskmsviewer) | KMS Viewer | Reading a project's KMS keys and public keys |
+| [`roles/kms/encrypter-decrypter`](#roleskmsencrypter-decrypter) | KMS Encrypter/Decrypter | Encrypting and decrypting with a project's KMS keys |
+| [`roles/kms/signer`](#roleskmssigner) | KMS Signer | Signing with a project's KMS keys |
 | [`roles/billing/administrator`](#rolesbillingadministrator) | Billing Account Administrator | Full control of billing accounts |
 | [`roles/billing/user`](#rolesbillinguser) | Billing Account User | Billing accounts without deleting them |
 | [`roles/billing/viewer`](#rolesbillingviewer) | Billing Account Viewer | Read-only access to billing accounts |
@@ -53,6 +57,7 @@ Full control of the organization's projects, resources and access. Owner doesn't
 | `iam.permission` | `query` |
 | `iam.role` | `get`, `list`, `update`, `create`, `delete`, `assign`, `revoke` |
 | `iam.service_account` | `list`, `create`, `revoke`, `act_as` |
+| `kms.key` | `get`, `list`, `create`, `update`, `delete`, `rotate`, `encrypt`, `decrypt`, `generate_data_key`, `sign`, `get_public_key` |
 | `network.acl` | `get`, `list`, `create`, `update`, `delete` |
 | `network.dns_policy` | `get`, `list`, `create`, `update`, `set_default`, `delete`, `attach` |
 | `network.floating_ip` | `get`, `list`, `create`, `attach`, `detach`, `delete` |
@@ -92,6 +97,7 @@ Read-only access: every `get` and `list` permission that Owner holds. A Viewer c
 | `iam.member` | `list` |
 | `iam.role` | `get`, `list` |
 | `iam.service_account` | `list` |
+| `kms.key` | `get`, `list` |
 | `network.acl` | `get`, `list` |
 | `network.dns_policy` | `get`, `list` |
 | `network.floating_ip` | `get`, `list` |
@@ -143,6 +149,50 @@ For a program that keeps a project's DNS records in step, such as Kubernetes' ex
 | `dns.record_set` | `get`, `list`, `create`, `update`, `delete` |
 | `dns.hosted_zone` | `get`, `list` |
 | `dns.vpc_attachment` | `get`, `list` |
+
+## roles/kms/admin
+
+Manages a project's KMS keys: creates, reads, enables, disables, rotates, deletes and undeletes them, and reads their public keys. A KMS Admin can't encrypt, decrypt or sign with a key, so managing keys stays apart from reading the data they protect.
+
+**URN:** `urn:origin:cloud:iam::::builtin/role/roles/kms/admin`
+**Scope:** org-wide or one project.
+
+| Resource | Actions |
+|---|---|
+| `kms.key` | `get`, `list`, `create`, `update`, `delete`, `rotate`, `get_public_key` |
+
+## roles/kms/viewer
+
+Reads a project's KMS keys and their public keys.
+
+**URN:** `urn:origin:cloud:iam::::builtin/role/roles/kms/viewer`
+**Scope:** org-wide or one project.
+
+| Resource | Actions |
+|---|---|
+| `kms.key` | `get`, `list`, `get_public_key` |
+
+## roles/kms/encrypter-decrypter
+
+For a program that encrypts and decrypts its data with a project's KMS keys, directly or with data keys. It can't read, list or change the keys.
+
+**URN:** `urn:origin:cloud:iam::::builtin/role/roles/kms/encrypter-decrypter`
+**Scope:** org-wide or one project.
+
+| Resource | Actions |
+|---|---|
+| `kms.key` | `encrypt`, `decrypt`, `generate_data_key` |
+
+## roles/kms/signer
+
+For a program that signs with a project's KMS signing keys, and reads their public keys to hand to verifiers. It can't read, list or change the keys.
+
+**URN:** `urn:origin:cloud:iam::::builtin/role/roles/kms/signer`
+**Scope:** org-wide or one project.
+
+| Resource | Actions |
+|---|---|
+| `kms.key` | `sign`, `get_public_key` |
 
 ## roles/billing/administrator
 
