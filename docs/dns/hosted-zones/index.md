@@ -6,14 +6,12 @@ page_type: concept
 parent: home
 nav_order: 10
 tags: [dns, networking]
-last_reviewed: 2026-11-08
+last_reviewed: 2026-11-13
 ---
 
 # Hosted zones
 
 A hosted zone is a domain the platform answers for, such as `example.com`, together with every name below it, such as `www.example.com`. It belongs to a project, and to no region. You choose its domain, its `dnsName`, and whether it's public or private, its `visibility`, when you create it; neither changes afterwards.
-
-> **Note:** Origin Cloud's name servers don't answer for customer zones yet, so a public zone isn't answered on the internet. You can create and verify zones and manage their record sets now. Private zones resolve inside the VPCs they're attached to.
 
 ## Public and private zones
 
@@ -41,7 +39,7 @@ A private zone is `ACTIVE` from the start and stays so. How a public zone moves 
 
 ## Name servers and delegation
 
-A public zone's `nameServers` lists the name servers to delegate its domain to: set them as the domain's NS records at its registrar. They're fixed when the zone is created. Don't delegate a domain to them yet: they don't answer for customer zones yet, so the domain would stop resolving. The NS and SOA records at the zone's apex are the platform's, written from these name servers; they aren't record sets you manage. A private zone has no name servers.
+A public zone's `nameServers` lists the name servers to delegate its domain to: set them as the domain's NS records at its registrar. They're fixed when the zone is created. Delegate the domain only once the zone is `ACTIVE`: the name servers don't answer for a pending or suspended zone, so the domain would stop resolving. The NS and SOA records at the zone's apex are the platform's, written from these name servers; they aren't record sets you manage. A private zone has no name servers.
 
 ## When changes are answered
 
