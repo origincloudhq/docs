@@ -6,7 +6,7 @@ page_type: concept
 parent: home
 nav_order: 10
 tags: [dns, networking]
-last_reviewed: 2026-11-13
+last_reviewed: 2026-11-14
 ---
 
 # Hosted zones
@@ -23,7 +23,7 @@ A hosted zone is a domain the platform answers for, such as `example.com`, toget
 | Domain | At least two labels, such as `example.com`, at most 235 characters | May be one label, such as `corp` |
 | Same domain twice | Only one zone holds a domain at a time, platform-wide | Different VPCs may carry different zones of the same domain |
 
-Neither kind may be one of the platform's own domains or a name below one. A private zone's domain isn't `internal` or a name below it: that domain answers each instance's own hostname. See [DNS in a VPC](../../network/dns/index.md).
+Neither kind may be one of the platform's own domains or a name below one. A public zone's domain isn't a special-use domain or below one, as none is delegated on the internet: `test`, `localhost`, `invalid`, `example`, `local`, `onion`, `alt`, `internal` and `home.arpa`. A private zone's domain isn't `internal` or a name below it: that domain answers each instance's own hostname. See [DNS in a VPC](../../network/dns/index.md).
 
 A domain is written without the final dot, and answered in lowercase.
 
@@ -31,7 +31,7 @@ A domain is written without the final dot, and answered in lowercase.
 
 | State | Meaning |
 |---|---|
-| `PENDING_VERIFICATION` | A public zone that hasn't proved control of its domain yet. It isn't answered and holds no domain. |
+| `PENDING_VERIFICATION` | A public zone that hasn't proved control of its domain yet. It holds no domain, and its record sets aren't answered. |
 | `ACTIVE` | Answered. A public zone in this state holds its domain. |
 | `SUSPENDED` | A public zone that lost control of its domain. It isn't answered, keeps its record sets, and its domain is free for another zone. |
 
@@ -39,7 +39,7 @@ A private zone is `ACTIVE` from the start and stays so. How a public zone moves 
 
 ## Name servers and delegation
 
-A public zone's `nameServers` lists the name servers to delegate its domain to: set them as the domain's NS records at its registrar. They're the zone's own, no other zone's, and fixed when the zone is created, so delegating the domain to them also proves you control it; see [Domain ownership](ownership.md). The name servers don't answer for a pending or suspended zone: delegate a domain in use only once its zone is `ACTIVE`, or it stops resolving. The NS and SOA records at the zone's apex are the platform's, written from these name servers; they aren't record sets you manage. A private zone has no name servers.
+A public zone's `nameServers` lists the name servers to delegate its domain to: set them as the domain's NS records at its registrar. They're the zone's own, no other zone's, and fixed when the zone is created, so delegating the domain to them also proves you control it; see [Domain ownership](ownership.md). The name servers answer nothing for a suspended zone, and for a pending one its SOA and NS records at most, so a registry that checks name servers before accepting a delegation finds them answering. They never answer a pending zone's record sets: delegate a domain in use only once its zone is `ACTIVE`, or it stops resolving. The NS and SOA records at the zone's apex are the platform's, written from these name servers; they aren't record sets you manage. A private zone has no name servers.
 
 ## When changes are answered
 

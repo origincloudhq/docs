@@ -6,7 +6,7 @@ page_type: concept
 parent: home
 nav_order: 10
 tags: [iam, roles, security]
-last_reviewed: 2026-11-04
+last_reviewed: 2026-11-13
 ---
 
 # Access model
@@ -15,16 +15,19 @@ Access in Origin Cloud is granted by role assignments. A role assignment gives o
 
 ## Principals
 
-A principal is whoever or whatever is granted access: a user or a service account. The `origin iam` commands and the REST API call it a member and write a user by email; the GraphQL API writes a user by ID.
+A principal is whoever or whatever is granted access: a user, a service account, or a service agent of the platform. The `origin iam` commands and the REST API call it a member and write a user by email; the GraphQL API writes a user by ID.
 
 | Principal | CLI and REST API | GraphQL API |
 |---|---|---|
 | User | `user:<email>`, the verified email address of the user's account | `user:<user-id>` |
 | Service account | `serviceAccount:<service-account-id>` | `service_account:<service-account-id>` |
+| Service agent | `serviceAgent:<name>`, such as `serviceAgent:compute` | `serviceAgent:<name>` |
 
 A binding made for an email address holds on to the account, not the address: it follows a later change of address and is always shown with the account's current one. A user whose address isn't verified is shown as `userId:<user-id>`, and one whose account is gone as `deleted:user:<user-id>`. Your own user ID and member are in [`origin iam get-user --user me`](reference/cli.md#get-user); a service account's ID is in its resource name, from [`list-service-accounts`](reference/cli.md#list-service-accounts).
 
 Both IDs are UUIDs. A user ID belongs to the person's account and is the same in every organization they're a member of.
+
+A service agent is the identity one of the platform's own services acts as in your organization. It's the platform's, not your organization's: you can bind it a role its service needs, or remove that binding, but nobody outside the platform can act as it. See [Service agents](service-agents.md).
 
 ## Roles
 
@@ -52,7 +55,7 @@ The role applies only to resources inside that one project. It doesn't apply to 
 
 All IAM operations, such as inviting members, assigning roles and creating service accounts, act on the organization. A project-scoped assignment therefore never allows them, even for `roles/owner`. To let someone manage access, assign the role org-wide. The billing roles must always be assigned org-wide; see [Billing access](../platform/billing/billing-access.md).
 
-Whoever creates an organization receives `roles/owner` and `roles/billing/administrator` org-wide. Anyone else holds only the roles you assign to them.
+Whoever creates an organization receives `roles/owner` and `roles/billing/administrator` org-wide, and compute's service agent receives `roles/kms/grant-delegate` org-wide ([Service agents](service-agents.md)). Anyone else holds only the roles you assign to them.
 
 ## Who can assign a role
 

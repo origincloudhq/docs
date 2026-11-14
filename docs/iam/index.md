@@ -7,7 +7,7 @@ page_type: overview
 parent: null
 nav_order: 0
 tags: [overview, iam, roles]
-last_reviewed: 2026-11-12
+last_reviewed: 2026-11-13
 ---
 
 # What is Origin Cloud IAM?
@@ -27,7 +27,7 @@ flowchart LR
   perm -->|allow actions on| res[Resources]
 ```
 
-A principal is a user or a service account. A role assignment gives a principal one role, either org-wide or for a single project. The role is a fixed set of permissions, and each permission allows one action, such as `compute.instance.launch`, on resources inside the assignment's scope. For the details, see [Access model](access-model.md).
+A principal is a user, a service account, or a service agent: the identity one of the platform's own services acts as in your organization. A role assignment gives a principal one role, either org-wide or for a single project. The role is a fixed set of permissions, and each permission allows one action, such as `compute.instance.launch`, on resources inside the assignment's scope. For the details, see [Access model](access-model.md).
 
 ## Features
 
@@ -39,6 +39,9 @@ Grant a role to a user or service account org-wide or for one project, and revok
 
 **Organization members**  
 Invite people by email in the console, list who has access, and remove a member's access in one step. See [Manage organization members](manage-members.md).
+
+**Service agents**  
+The platform's own services, such as compute, act in your organization as service agents. You see their role bindings and can remove them, but can't act as them. See [Service agents](service-agents.md).
 
 **Service accounts**  
 Non-interactive credentials for CI pipelines, scripts and infrastructure-as-code tools, with their own principal and roles. See [Service accounts](service-accounts.md).

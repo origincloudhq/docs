@@ -35,7 +35,7 @@ The IAM REST API answers at `https://iam.origincloudapis.eu`. It's a preview (`v
 - `CreateRoleBinding`, `DeleteRoleBinding`, `CreateServiceAccount` and `RotateServiceAccountSecret` take an optional `requestId`, a UUID. A retry with the same `requestId` within 24 hours changes nothing. A role binding retry returns what the first request did; a `CreateServiceAccount` or `RotateServiceAccountSecret` retry is refused, because the client secret was in the first response only (see the table). The same `requestId` with a different request is refused with `CONFLICT`.
 - A duration, such as `secretLifetime`, is written in seconds with an `s` suffix, such as `"7776000s"` for 90 days.
 
-In the REST API, a role binding names its member by email: `user:<email>` for the enabled user whose account has that verified email address, or `serviceAccount:<id>` for one of the organization's own service accounts. The binding stays with the account, so it follows a later change of address.
+In the REST API, a role binding names its member by email: `user:<email>` for the enabled user whose account has that verified email address, `serviceAccount:<id>` for one of the organization's own service accounts, or `serviceAgent:<name>` for a [service agent](../service-agents.md) of the platform, bound in any organization but only to a role its service needs. The binding stays with the account, so it follows a later change of address.
 
 - Binding an address that no account has verified is refused with `NOT_FOUND`.
 - Binding an address that more than one account has verified is refused with `CONFLICT`.

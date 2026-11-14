@@ -6,7 +6,7 @@ page_type: reference
 parent: reference
 nav_order: 30
 tags: [dns, quotas, reference]
-last_reviewed: 2026-11-08
+last_reviewed: 2026-11-14
 ---
 
 # DNS limits
@@ -24,7 +24,7 @@ A project budget, where one is set, caps a single project below the organization
 
 | Limit | Value |
 |---|---|
-| Public zone domain | At least two labels, at most 235 characters |
+| Public zone domain | At least two labels, at most 235 characters; not a special-use domain (`test`, `localhost`, `invalid`, `example`, `local`, `onion`, `alt`, `internal`, `home.arpa`) or below one |
 | Private zone domain | At least one label; not `internal` or a name below it |
 | Domains no zone can take | The platform's own domains and names below them |
 | Zones holding one public domain | One active zone, platform-wide; any number pending |

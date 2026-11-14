@@ -6,7 +6,7 @@ page_type: concept
 parent: hosted-zones
 nav_order: 10
 tags: [dns, security]
-last_reviewed: 2026-11-13
+last_reviewed: 2026-11-14
 ---
 
 # Domain ownership
@@ -24,7 +24,7 @@ Each public zone has name servers of its own, listed in its `nameServers`, such 
 
 This is the way to go for a new domain: set the zone's `nameServers` when you register it, or right after creating the zone, and the zone verifies with no TXT record. A delegation to another zone's name servers, or to `ns1.origincloud.eu` and its siblings without a label, proves nothing. If you create the zone again, delegate the domain to the new zone's `nameServers`.
 
-Origin Cloud doesn't answer for a pending zone, so a domain delegated to one doesn't resolve until the zone is `ACTIVE`. For a domain that is in use, prove control with the challenge first and delegate afterwards; see [Create a public zone and verify it](create-public.md).
+For a pending zone, Origin Cloud answers its SOA and NS records at most, never its record sets, so a domain delegated to one doesn't resolve until the zone is `ACTIVE`. A resolver that asked for a name meanwhile keeps its "no such name" answer for up to 15 minutes after the zone becomes active. For a domain that is in use, prove control with the challenge first and delegate afterwards; see [Create a public zone and verify it](create-public.md).
 
 ## The ownership challenge
 
