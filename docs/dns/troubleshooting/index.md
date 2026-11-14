@@ -16,21 +16,23 @@ last_reviewed: 2026-11-13
 
 **Symptom:** A public zone stays `PENDING_VERIFICATION`, and verifying it answers with `challenge.lastCheck` `NOT_FOUND` or `NAME_HELD`.
 
-**Cause:** With `NOT_FOUND`, the token doesn't answer at `_origin-challenge.<your-domain>` at the domain's current name servers. Common reasons:
+**Cause:** With `NOT_FOUND`, the domain's registry doesn't delegate it to the zone's name servers, and the token doesn't answer at `_origin-challenge.<your-domain>` at the domain's current name servers. Common reasons:
 
+- The domain is delegated to other Origin Cloud name servers than the zone's `nameServers`: those of a deleted or another zone, or `ns1.origincloud.eu` and its siblings without the zone's label.
+- The registry hasn't published a delegation you just changed yet.
+- The registry refused the delegation: some, such as `.de`'s, check that the name servers answer for the domain first, and Origin Cloud's don't answer for a pending zone. Prove control with the TXT record at another DNS provider instead; see [Prove control of a new domain](../hosted-zones/create-public.md#prove-control-of-a-new-domain).
 - The TXT record was created somewhere the domain isn't served from now, such as in the pending zone itself, or at a DNS provider the registrar doesn't delegate to.
-- The domain is already delegated to the zone's name servers. They don't answer for a pending zone, and the challenge is never checked there, so the token can't be found.
 - The record's name or value differs from `challenge.dnsName` and `challenge.token`, for example with the domain appended twice by a DNS provider that adds it to every name.
 - The record is new, and the domain's name servers don't serve it yet.
 
-With `NAME_HELD`, the token answers, but another zone already holds the domain.
+With `NAME_HELD`, the zone proved control, but another zone already holds the domain.
 
 **Resolution:**
 
-1. Check what the domain's current DNS answers: `dig +short TXT _origin-challenge.<your-domain>`. It must print the zone's `challenge.token`.
-2. If the domain is delegated to the zone's name servers already, delegate it back to the DNS provider that holds the TXT record and verify the zone. Delegate the domain to the zone's name servers again once the zone is `ACTIVE`; see [Delegate the domain](../hosted-zones/create-public.md#delegate-the-domain).
-3. Verify the zone again once the record answers, with `origin dns verify-hosted-zone --hosted-zone <zone-id>`. A verify within 30 seconds of the zone's last check answers with that check's outcome, so wait half a minute after publishing the record.
-4. For `NAME_HELD`, find the zone that holds the domain, in each of your own projects with `origin dns list-hosted-zones --project <project-id> --dns-name <your-domain>`, and delete it if you don't need it. If it isn't yours, the domain stays held while it's delegated to Origin Cloud's name servers or carries that zone's token. Delegate it to a DNS provider you control without that token: after several daily checks the other zone is suspended and the domain is free for yours to verify. See [Daily checks and suspension](../hosted-zones/ownership.md#daily-checks-and-suspension).
+1. If the domain is delegated to Origin Cloud, check its delegation where it's held: at a server of its top-level domain for a registered domain, such as `dig NS <your-domain> @a.gtld-servers.net +noall +authority` for a `.com` domain, or at the parent domain's DNS for a subdomain. It must print the zone's `nameServers`; if it prints others, set the zone's `nameServers` at the registrar.
+2. Otherwise, check what the domain's current DNS answers: `dig +short TXT _origin-challenge.<your-domain>`. It must print the zone's `challenge.token`.
+3. Verify the zone again once the delegation or the record answers, with `origin dns verify-hosted-zone --hosted-zone <zone-id>`. A verify within 30 seconds of the zone's last check answers with that check's outcome, so wait half a minute after publishing the record.
+4. For `NAME_HELD`, find the zone that holds the domain, in each of your own projects with `origin dns list-hosted-zones --project <project-id> --dns-name <your-domain>`, and delete it if you don't need it. If it isn't yours, the domain stays held while it's delegated to that zone's name servers or carries that zone's token. Delegate it to your own zone's `nameServers`, or to a DNS provider you control without that token: after several daily checks the other zone is suspended and the domain is free for yours to verify. See [Daily checks and suspension](../hosted-zones/ownership.md#daily-checks-and-suspension).
 
 A pending zone is deleted at its `challenge.expireTime`, 7 days after its creation. If that has passed, create the zone again; it gets a new token.
 
@@ -38,11 +40,11 @@ A pending zone is deleted at its `challenge.expireTime`, 7 days after its creati
 
 **Symptom:** A public zone is `SUSPENDED`, with `challenge.suspensionReason` `CHALLENGE_LOST`.
 
-**Cause:** Several daily checks in a row found the domain delegated to other name servers, and those name servers didn't answer with the zone's token. This happens when the domain is moved to another DNS provider, or when its delegation changes at the registrar.
+**Cause:** Several daily checks in a row found the domain delegated to other name servers than the zone's, and those name servers didn't answer with the zone's token. This happens when the domain is moved to another DNS provider, delegated to another zone's name servers, or when its delegation changes at the registrar.
 
 **Resolution:**
 
-1. Publish the zone's `challenge.token` at `challenge.dnsName` where the domain is served now.
+1. Delegate the domain to the zone's `nameServers` again, or publish the zone's `challenge.token` at `challenge.dnsName` where the domain is served now.
 2. Verify the zone with `origin dns verify-hosted-zone --hosted-zone <zone-id>`. It becomes `ACTIVE` again, with its record sets, provided no other zone verified the domain in the meantime; otherwise `lastCheck` is `NAME_HELD`.
 
 ## An attachment is refused

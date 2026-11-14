@@ -2,7 +2,7 @@
 id: hosted-zones-create-public
 title: Create a public zone and verify it
 nav_title: Create a public zone
-description: Create a public hosted zone for your domain, prove you control it with a TXT record, add its record sets, and delegate the domain to the zone's name servers.
+description: Create a public hosted zone for your domain, prove you control it by delegating the domain or with a TXT record, and add its record sets.
 page_type: task
 parent: hosted-zones
 nav_order: 20
@@ -12,15 +12,24 @@ last_reviewed: 2026-11-13
 
 # Create a public zone and verify it
 
-Create a public zone for your domain, prove you control the domain, and add the zone's record sets. Then point the domain at the zone's name servers, and Origin Cloud answers for it on the internet.
+Create a public zone for your domain, prove you control the domain, and add the zone's record sets. Once the domain is delegated to the zone's name servers, Origin Cloud answers for it on the internet.
 
-The following diagram shows the steps and where each one happens.
+How you prove control depends on whether the domain is in use:
+
+- **A new domain, or one nothing depends on yet:** delegate it to the zone's name servers at its registrar. The delegation is the proof.
+- **A domain in use:** publish the zone's token as a TXT record at its current DNS provider, verify the zone, add its record sets, and delegate the domain last, so it keeps resolving throughout.
+
+The following diagram shows both paths.
 
 ```mermaid
 flowchart LR
   accTitle: Setting up a public zone
-  accDescr: Create the public zone, publish its token as a TXT record at the domain's current DNS provider, verify the zone, add record sets, and delegate the domain to the zone's name servers at its registrar.
-  create[Create the zone] --> txt[Publish the TXT record at your current DNS]
+  accDescr: Create the public zone. For a new domain, delegate it to the zone's name servers at its registrar, verify the zone and add record sets. For a domain in use, publish the zone's token as a TXT record at its current DNS provider, verify the zone, add record sets, and delegate the domain last.
+  create[Create the zone] --> new{Domain in use?}
+  new -- no --> delegateFirst[Delegate the domain at your registrar]
+  delegateFirst --> verifyNew[Verify the zone]
+  verifyNew --> recordsNew[Add record sets]
+  new -- yes --> txt[Publish the TXT record at your current DNS]
   txt --> verify[Verify the zone]
   verify --> records[Add record sets]
   records --> delegate[Delegate the domain at your registrar]
@@ -28,7 +37,7 @@ flowchart LR
 
 ## Before you begin
 
-- A domain you control, and access to its current DNS records.
+- A domain you control: access to its name servers at the registrar, or to its current DNS records.
 - The `origin` CLI, logged in, with a default project or `--project` on each command. See [Use the CLI](../../platform/access/cli.md).
 - A valid billing setup for the project. See [Add a payment method](../../platform/billing/payment-method.md).
 
@@ -51,7 +60,7 @@ flowchart LR
    urn          urn:origin:cloud:dns::<org-id>:my-project:hz-Oqu2Vgc2nt6
    dnsName      example.com
    visibility   PUBLIC
-   nameServers  ns1.origincloud.eu, ns2.origincloud.eu, ns3.origincloud.eu
+   nameServers  k7q2m9x4p1za.ns1.origincloud.eu, k7q2m9x4p1za.ns2.origincloud.eu, k7q2m9x4p1za.ns3.origincloud.eu
    creator      user:<user-id>
    createTime   2026-11-08T09:18:04.510953Z (0s ago)
    challenge
@@ -64,7 +73,34 @@ flowchart LR
 
 The zone is `PENDING_VERIFICATION`: it isn't answered yet. It's deleted at `challenge.expireTime` unless it verifies first. `origin dns get-hosted-zone --hosted-zone <zone-id>` shows it again, and `origin dns list-hosted-zones` lists the project's zones.
 
-## Prove you control the domain
+The zone's `nameServers` are its own: no other zone has them. See [Domain ownership](ownership.md#delegation-to-the-zones-name-servers).
+
+## Prove control of a new domain
+
+For a domain that doesn't resolve yet, or whose resolution can wait until the zone is `ACTIVE`:
+
+1. At the domain's registrar, set the domain's name servers to the zone's `nameServers`, all of them, exactly as listed. You can do this while you register the domain, once the zone exists.
+2. Check that the registry publishes the delegation:
+
+   ```sh
+   dig NS example.com @a.gtld-servers.net +noall +authority
+   ```
+
+   Ask a server of the zone that holds the delegation: the domain's top-level domain for a registered domain (`dig +short NS com` lists them for `.com`), or the parent domain's DNS for a subdomain. It must print the zone's `nameServers`.
+
+3. Verify the zone:
+
+   ```sh
+   origin dns verify-hosted-zone --hosted-zone <zone-id>
+   ```
+
+   `ACTIVE` with `lastCheck` `OK` means the zone holds the domain, and Origin Cloud answers for it. `NOT_FOUND` means the registry doesn't delegate the domain to the zone's name servers yet: registries publish changes within minutes to hours. Verify again later, or let the platform's own checks pick it up.
+
+Then [add the zone's record sets](#add-record-sets). There's nothing left to delegate.
+
+> **Note:** Some registries check a domain's name servers before they accept a delegation, `.de` (DENIC) among them. Origin Cloud's name servers don't answer for a pending zone, so such a registry refuses the delegation. For a domain under such a registry, prove control with the TXT record instead: host the domain at another DNS provider first, then delegate it once the zone is `ACTIVE`.
+
+## Prove control of a domain in use
 
 1. At the DNS provider that hosts the domain now, create a TXT record named as `challenge.dnsName`, `_origin-challenge.example.com`, whose value is `challenge.token`.
 
@@ -103,11 +139,13 @@ Create the zone's record sets. Copy every record your domain needs from its curr
 
 ## Delegate the domain
 
-> **Important:** Delegate the domain only once the zone is `ACTIVE` and holds every record set the domain needs. Origin Cloud's name servers don't answer for a pending zone, so a domain delegated to one stops resolving.
+For a domain you proved control of with the TXT record.
+
+> **Important:** Delegate a domain in use only once the zone is `ACTIVE` and holds every record set the domain needs. Origin Cloud's name servers don't answer for a pending zone, so a domain delegated to one stops resolving.
 
 To delegate the domain:
 
-1. At your domain's registrar, replace the domain's name servers with the zone's `nameServers`, all of them.
+1. At your domain's registrar, replace the domain's name servers with the zone's `nameServers`, all of them, exactly as listed. Origin Cloud's name servers also answer under other names, such as `ns1.origincloud.eu` without the zone's label, but a domain delegated to those doesn't prove control: the zone's daily checks fail, and after several it's suspended.
 2. Check the delegation once the registrar has published it:
 
    ```sh
