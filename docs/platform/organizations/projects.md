@@ -6,7 +6,7 @@ page_type: task
 parent: organizations
 nav_order: 30
 tags: [projects, organizations, cli]
-last_reviewed: 2026-11-05
+last_reviewed: 2026-11-14
 ---
 
 # Manage projects
@@ -97,8 +97,10 @@ Deleting a project is refused while it still owns any of these resources. Nothin
 - A NAT gateway or a Floating IP.
 - A VPC, including the project's default VPC.
 - A DNS policy other than the project's default one.
+- A hosted zone.
+- A KMS key of yours that isn't `DELETED`. A key the platform manages doesn't block: it's deleted with the project.
 
-1. Delete every resource in the project: terminate its instances, delete its images, key pairs, volumes and snapshots, delete its NAT gateways, release its Floating IPs, delete its VPCs, and delete its DNS policies except the default one.
+1. Delete every resource in the project: terminate its instances, delete its images, key pairs, volumes and snapshots, delete its NAT gateways, release its Floating IPs, delete its VPCs, delete its DNS policies except the default one, delete its [hosted zones](../../dns/hosted-zones/delete.md), and [delete its KMS keys](../../kms/disable-delete.md#delete-a-key).
 2. Delete the project. Deleting can't be undone, so the command needs `--yes`:
 
    ```sh
@@ -110,6 +112,8 @@ Deleting a project is refused while it still owns any of these resources. Nothin
 If a resource remains, the request fails with `CONFLICT`, naming every kind of resource the project still owns, in the order to remove them. See [`CONFLICT`](../reference/errors.md#conflict).
 
 Deleting a project also removes its default DNS policy, the quota budgets you set on it, and every role assignment scoped to it, for every member and service account. Org-wide role assignments are unaffected. See [Role assignments and scopes](../../iam/access-model.md#role-assignments-and-scopes).
+
+The project's deletion also deletes each KMS key the platform manages in it, such as the volumes key: the key becomes `DELETED`, with a `purgeTime` 30 days later, when its material is destroyed. See [Keys the platform manages](../../kms/keys.md#keys-the-platform-manages).
 
 ## Delete an organization
 
