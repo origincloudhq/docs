@@ -37,10 +37,7 @@ const lead = LANDING_LEAD.split('`')
     <section class="oc-section oc-section--docs">
       <div class="oc-container oc-container--full landing">
         <div class="doc-head">
-          <div class="doc-head__top">
-            <p class="oc-eyebrow">User documentation</p>
-            <MarkdownActions href={markdown} />
-          </div>
+          <p class="oc-eyebrow">User documentation</p>
           <h1>{LANDING_TITLE}</h1>
           <p class="doc-head__lead">
             {lead.map((part, i) => (i % 2 ? <code>{part}</code> : part))}
@@ -65,6 +62,10 @@ const lead = LANDING_LEAD.split('`')
               <p class="oc-product__text">{o.text}</p>
             </a>
           ))}
+        </div>
+
+        <div class="page-actions landing__actions">
+          <MarkdownActions href={markdown} variant="row" />
         </div>
       </div>
     </section>

@@ -278,23 +278,6 @@ code, kbd, pre, samp { font-family: var(--mono); }
 /* ------------------------------------------------------------ page head */
 .doc-head { margin-bottom: var(--s-6); }
 .doc-head .oc-eyebrow { margin-top: var(--s-2); }
-/* Eyebrow on the left, the Markdown actions on the right; they wrap below it
-   on a narrow screen. */
-.doc-head__top {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
-  gap: var(--s-2) var(--s-4);
-}
-.md-actions { display: flex; gap: var(--s-2); margin-top: var(--s-2); }
-.md-actions__item {
-  appearance: none; background: transparent;
-  padding: var(--s-1) var(--s-3);
-  border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
-  font: inherit; font-size: var(--fs-small); line-height: 1.4;
-  color: var(--text-soft); text-decoration: none; white-space: nowrap; cursor: pointer;
-}
-.md-actions__item:hover { border-color: var(--text-muted); color: var(--text); }
-.md-actions__item:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
-.md-actions__item[hidden] { display: none; }
 .doc-head h1 {
   margin: var(--s-2) 0 var(--s-3);
   font: var(--fw-bold) var(--fs-doc-h1)/var(--lh-heading) var(--sans);
@@ -464,6 +447,31 @@ code, kbd, pre, samp { font-family: var(--mono); }
 }
 .page-actions__source { margin-left: auto; }
 .page-actions__source code { font-size: 13px; }
+/* "View as Markdown" and "Copy page" (MarkdownActions.astro): quiet links,
+   under "On this page" where the rail is shown, else with the actions above. */
+.md-actions { display: contents; }
+/* The button looks like the link next to it. */
+.md-actions__copy {
+  appearance: none; background: none; border: 0; padding: 0;
+  font: inherit; color: var(--blue); cursor: pointer;
+  text-decoration: underline; text-underline-offset: 0.2em; text-decoration-thickness: 1px;
+}
+.md-actions__copy:hover { color: var(--copper); }
+.md-actions__copy:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.md-actions__copy[hidden] { display: none; }
+.md-actions--rail {
+  display: flex; flex-direction: column; align-items: flex-start; gap: var(--s-2);
+  margin-top: var(--s-5); padding-top: var(--s-4);
+  border-top: 1px solid var(--line);
+}
+/* In the rail, both read like the entries above them. */
+.oc-toc .md-actions--rail a, .oc-toc .md-actions--rail .md-actions__copy {
+  display: block; margin: 0; padding: 0; border: 0;
+  color: var(--text-soft); text-decoration: none; text-align: left;
+}
+.oc-toc .md-actions--rail a:hover, .oc-toc .md-actions--rail .md-actions__copy:hover { color: var(--text); }
+.shell .page-actions .md-actions--row { display: none; }
+.landing__actions { margin-top: var(--s-7); }
 .page-reviewed { margin: var(--s-3) 0 0; font-size: var(--fs-small); color: var(--text-muted); }
 
 /* ------------------------------------------------------------- footer */
@@ -484,6 +492,7 @@ code, kbd, pre, samp { font-family: var(--mono); }
 @media (max-width: 1279px) {
   .shell { grid-template-columns: 260px minmax(0, 1fr); }
   .shell > .oc-toc { display: none; }
+  .shell .page-actions .md-actions--row { display: contents; }
   /* The header carries its links, a text link and the main button;
      below 1280 px the search shrinks to its key so the bar still fits. */
   .search-btn { min-width: 0; gap: var(--s-2); }

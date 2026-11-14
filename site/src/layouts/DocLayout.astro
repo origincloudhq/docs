@@ -94,10 +94,7 @@ if (!source) throw new Error(`${entry.id}: the loader gave no file path`)
       <Breadcrumbs trail={trail} current={entry} />
 
       <div class="doc-head">
-        <div class="doc-head__top">
-          <p class="oc-eyebrow">{eyebrow}</p>
-          <MarkdownActions href={markdown} />
-        </div>
+        <p class="oc-eyebrow">{eyebrow}</p>
         <h1>{d.title}</h1>
         {availability && (
           <p class="doc-head__availability" data-availability={d.availability}>{availability}</p>
@@ -131,6 +128,7 @@ if (!source) throw new Error(`${entry.id}: the loader gave no file path`)
       <aside class="page-actions" aria-label="Improve this page" data-pagefind-ignore>
         <a href={EDIT_GUIDE}>Edit this page</a>
         <a href={reportIssueUrl(pageUrl, d.title)}>Report an issue</a>
+        <MarkdownActions href={markdown} variant="row" />
         <span class="page-actions__source" title="Where maintainers change this page">Source: <code>{source}</code></span>
       </aside>
 
@@ -146,6 +144,7 @@ if (!source) throw new Error(`${entry.id}: the loader gave no file path`)
           <li data-depth={h.depth}><a href={`#${h.slug}`}>{h.text}</a></li>
         ))}
       </ol>
+      <MarkdownActions href={markdown} variant="rail" />
     </aside>
   </div>
 

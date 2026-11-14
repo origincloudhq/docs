@@ -4,18 +4,24 @@
  * agent or an LLM: both use the page's Markdown version (lib/markdown.ts),
  * which the head also announces. "Copy page" needs JavaScript and the
  * clipboard, so it stays hidden without them; the link always works.
+ *
+ * A secondary action, so it stays out of the page head: `rail` sits under
+ * "On this page", `row` joins the page actions at the end of the page, where
+ * a layout without the rail shows it (docs.css decides which one is visible).
  */
-const { href } = Astro.props as { href: string }
+const { href, variant = 'row' } = Astro.props as { href: string; variant?: 'rail' | 'row' }
 ---
-<div class="md-actions" data-pagefind-ignore>
-  <a class="md-actions__item" href={href} type="text/markdown">View as Markdown</a>
-  <button class="md-actions__item" type="button" data-copy-markdown={href} hidden>Copy page</button>
+<div class={`md-actions md-actions--${variant}`} data-pagefind-ignore>
+  <a href={href} type="text/markdown">View as Markdown</a>
+  <button class="md-actions__copy" type="button" data-copy-markdown={href} hidden>Copy page</button>
 </div>
 
+{/* Rendered once per instance; the guard binds the buttons only once. */}
 <script is:inline>
   (() => {
-    if (!navigator.clipboard) return
-    document.querySelectorAll('[data-copy-markdown]').forEach((button) => {
+    if (window.__ocCopyMarkdown || !navigator.clipboard) return
+    window.__ocCopyMarkdown = true
+    const bind = () => document.querySelectorAll('[data-copy-markdown]').forEach((button) => {
       button.hidden = false
       const label = button.textContent
       let timer
@@ -32,5 +38,7 @@ const { href } = Astro.props as { href: string }
         timer = setTimeout(() => { button.textContent = label }, 2000)
       })
     })
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind)
+    else bind()
   })()
 </script>
