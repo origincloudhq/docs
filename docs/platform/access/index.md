@@ -60,6 +60,7 @@ The CLI covers organizations and projects with their quotas, billing, compute, s
 - [Install and use the CLI](cli.md)
 - [Call the GraphQL API](api.md)
 - [Connect an AI agent](mcp.md)
+- [Connect an MCP client by URL, with nothing installed](hosted-mcp.md)
 - [Set up a coding agent with one command](coding-agents.md)
 - [Create a service account for automation](../../iam/service-accounts.md)
 

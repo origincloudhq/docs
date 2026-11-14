@@ -15,6 +15,7 @@ last_reviewed: 2026-11-04
 
 The `origin` CLI includes an MCP server, so an AI agent such as a coding assistant can work with your Origin Cloud resources. The agent calls the API as you, through your CLI login, and tools that delete or permanently change something are marked for your MCP client to confirm with you.
 
+To connect a client by URL instead, with nothing installed, see [Connect an MCP client to Origin Cloud](hosted-mcp.md).
 
 ## Before you begin
 
