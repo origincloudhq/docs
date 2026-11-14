@@ -6,7 +6,7 @@ page_type: concept
 parent: home
 nav_order: 15
 tags: [iam, roles, security]
-last_reviewed: 2026-11-13
+last_reviewed: 2026-11-14
 ---
 
 # Service agents
@@ -15,7 +15,7 @@ A service agent is the identity one of the platform's own services acts as in yo
 
 ## The service agents
 
-| Member | Service | Bound in a new organization |
+| Member | Service | Bound in every organization |
 |---|---|---|
 | `serviceAgent:compute` | Compute. It makes the KMS grants that let a host decrypt a volume's key while the volume is attached to an instance on that host. | [`roles/kms/grant-delegate`](roles.md#roleskmsgrant-delegate), org-wide |
 | `serviceAgent:storage` | Storage, for the volumes key the platform manages in each project. | Nothing |
@@ -35,7 +35,7 @@ flowchart LR
   grant -->|lets the host| decrypt[Decrypt the volume's key]
 ```
 
-Every organization is created with compute's binding of `roles/kms/grant-delegate`. You can [delete it](assign-roles.md) like any other binding, if you hold the role's permissions yourself. Compute then makes no new grants on your organization's keys, and the grants it already made run out within an hour. To let compute grant again, create the binding again.
+Every organization holds compute's binding of `roles/kms/grant-delegate`, made by the platform once: a new organization holds it from its creation. You can [delete it](assign-roles.md) like any other binding, if you hold the role's permissions yourself. Compute then makes no new grants on your organization's keys, and the grants it already made run out within an hour. The platform doesn't make the binding again: to let compute grant again, create it yourself.
 
 A service agent can hold only the roles its service needs: compute only `roles/kms/grant-delegate`, storage none. A binding of any other role to a service agent is refused with `BAD_REQUEST`, so a service agent never becomes a way to do what your own bindings don't allow.
 

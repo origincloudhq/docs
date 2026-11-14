@@ -2,17 +2,17 @@
 id: billing-rest-api
 title: Billing REST API
 nav_title: REST API
-description: The billing REST API's methods for billing accounts, project billing, payment methods, spend limits and cost reports, with the permission each needs.
+description: The billing REST API's methods for billing accounts, project billing, payment methods, spend limits, cost reports and legal documents, with the permission each needs.
 page_type: reference
 parent: billing
 nav_order: 30
 tags: [billing, api, reference]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-14
 ---
 
 # Billing REST API
 
-The billing REST API answers at `https://billing.origincloudapis.eu`, the host the [price list](../../pricing/index.md) is on. It's a preview (`v1beta1`): names and fields may still change. Every request carries an access token, as for the GraphQL API; see [Use the GraphQL API](../access/api.md#authenticate).
+The billing REST API answers at `https://billing.origincloudapis.eu`, the host the [price list](../../pricing/index.md) is on. It's a preview (`v1beta1`): names and fields may still change. Every request carries an access token, as for the GraphQL API, except the price list's and the legal documents'; see [Use the GraphQL API](../access/api.md#authenticate).
 
 - A change's response carries an `Origin-Consistency-Token` header. Send it back with your next reads and they show the change; see [Read what you just changed](../access/api.md#read-what-you-just-changed).
 - `CreateBillingAccount` takes an optional `requestId`, a UUID. A retry with the same `requestId` within 24 hours returns the account the first request created instead of creating another. The same `requestId` with a different request is refused with `CONFLICT`.
@@ -41,6 +41,9 @@ Billing accounts need the billing permissions, which the Owner role doesn't incl
 | `QueryProjectUsage` | `GET /v1beta1/projects/<project-id>:queryUsage?startTime=<time>&endTime=<time>` | The project's metered usage records that overlap the period. Needs `admin.usage.list`. |
 | `GetPriceList` | `GET /v1/pricing` | The public price list. Needs no access token, and keeps its own field names and path; see [Price list API](../../pricing/reference/price-list-api.md). |
 | `ListBillingCountries`, `GetBillingCountry` | `GET /v1beta1/billingCountries`, `GET /v1beta1/billingCountries/<code>` | The countries a billing address may be in, and which need a VAT identification number. Needs no permission. |
+| `ListLegalDocuments`, `GetLegalDocument` | `GET /v1beta1/legalDocuments`, `GET /v1beta1/legalDocuments/<document>` | The published legal documents (`terms`, `dpa`, `sla`, `aup`, `subprocessors`, `toms`, `privacy`, `switching`, `shared-responsibility`), each with the version in force today (`currentVersion`) and the latest one published (`latestVersion`), and whether customers accept it (`acceptanceRequired`). Needs no access token. |
+| `ListLegalDocumentVersions`, `GetLegalDocumentVersion` | `GET /v1beta1/legalDocuments/<document>/versions`, `GET /v1beta1/legalDocuments/<document>/versions/<version>` | A document's published versions, the latest first: `effectiveDate`, `changeClass` (`MATERIAL`, `NOTICE` or `EDITORIAL`), `changeSummary`, the text as `markdown` and `html`, its `sha256`, and its fixed web address `uri`. A published version never changes. Needs no access token. |
+| `DownloadLegalDocumentVersion` | `GET /v1beta1/legalDocuments/<document>/versions/<version>:download` | The version as a PDF, the file itself rather than JSON; the version's `pdfUri`. Needs no access token. |
 
 A billing account's `paymentMethod.state` is `MISSING`, `VERIFIED` or `NOT_REQUIRED`, the REST names of the GraphQL API's `NONE`, `VERIFIED` and `NOT_REQUIRED`; see [Add a payment method](payment-method.md#when-a-payment-method-is-needed). In the REST API a billing address names its country as `regionCode`.
 
