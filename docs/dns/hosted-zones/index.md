@@ -39,7 +39,7 @@ A private zone is `ACTIVE` from the start and stays so. How a public zone moves 
 
 ## Name servers and delegation
 
-A public zone's `nameServers` lists the name servers to delegate its domain to: set them as the domain's NS records at its registrar. They're fixed when the zone is created. Delegate the domain only once the zone is `ACTIVE`: the name servers don't answer for a pending or suspended zone, so the domain would stop resolving. The NS and SOA records at the zone's apex are the platform's, written from these name servers; they aren't record sets you manage. A private zone has no name servers.
+A public zone's `nameServers` lists the name servers to delegate its domain to: set them as the domain's NS records at its registrar. They're the zone's own, no other zone's, and fixed when the zone is created, so delegating the domain to them also proves you control it; see [Domain ownership](ownership.md). The name servers don't answer for a pending or suspended zone: delegate a domain in use only once its zone is `ACTIVE`, or it stops resolving. The NS and SOA records at the zone's apex are the platform's, written from these name servers; they aren't record sets you manage. A private zone has no name servers.
 
 ## When changes are answered
 

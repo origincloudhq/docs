@@ -93,7 +93,7 @@ Paths are relative to `https://dns.origincloudapis.eu/v1beta1/`.
 | `dnsName` | The domain, without the final dot. Fixed at creation. |
 | `visibility` | `PUBLIC` or `PRIVATE`. Fixed at creation. |
 | `state` | `PENDING_VERIFICATION`, `ACTIVE` or `SUSPENDED`. See [Hosted zones](../hosted-zones/index.md#states). |
-| `nameServers` | A public zone's name servers to delegate to. Empty for a private zone. |
+| `nameServers` | A public zone's own name servers to delegate to; a delegation to them proves control of the domain. Empty for a private zone. |
 | `challenge` | A public zone's ownership challenge: `dnsName`, `token`, `expireTime`, `verifyTime`, `suspendTime`, `suspensionReason`, and `lastCheck` in a verify response. Unset for a private zone. See [Domain ownership](../hosted-zones/ownership.md). |
 | `createTime` | When the zone was created. |
 | `creator` | Who created it, such as `user:<id>` or `service_account:<id>`. |
