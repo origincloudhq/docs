@@ -201,7 +201,7 @@ For a program that signs with a project's KMS signing keys, and reads their publ
 
 ## roles/kms/grant-delegate
 
-For the platform's services that let a host use a project's KMS keys, such as the one that attaches your volumes: it makes, renews, reads and deletes grants, each letting one host decrypt for one encryption context for at most an hour. It can't use a key itself, nor read or change the keys.
+For the platform's services that let a host use a project's KMS keys. Every new organization binds it org-wide to compute's service agent, `serviceAgent:compute`, which attaches your volumes, and only a service agent's binding of it does anything; see [Service agents](service-agents.md). It makes, renews, reads and deletes grants, each letting one host decrypt for one encryption context for at most an hour. It can't use a key itself, nor read or change the keys.
 
 **URN:** `urn:origin:cloud:iam::::builtin/role/roles/kms/grant-delegate`
 **Scope:** org-wide or one project.

@@ -7,7 +7,7 @@ page_type: troubleshooting
 parent: home
 nav_order: 60
 tags: [dns, troubleshooting]
-last_reviewed: 2026-11-13
+last_reviewed: 2026-11-14
 ---
 
 # Troubleshoot DNS
@@ -20,7 +20,7 @@ last_reviewed: 2026-11-13
 
 - The domain is delegated to other Origin Cloud name servers than the zone's `nameServers`: those of a deleted or another zone, or `ns1.origincloud.eu` and its siblings without the zone's label.
 - The registry hasn't published a delegation you just changed yet.
-- The registry refused the delegation: some, such as `.de`'s, check that the name servers answer for the domain first, and Origin Cloud's don't answer for a pending zone. Prove control with the TXT record at another DNS provider instead; see [Prove control of a new domain](../hosted-zones/create-public.md#prove-control-of-a-new-domain).
+- The registry refused the delegation: some, such as `.de`'s, check that the name servers answer for the domain with exactly the NS records delegated to. A pending zone's name servers answer them only while it's the only pending zone of the domain and no active zone is at, above or below it; while another zone of the domain is pending too, delete it if it's yours, or prove control with the TXT record instead. See [Prove control of a new domain](../hosted-zones/create-public.md#prove-control-of-a-new-domain).
 - The TXT record was created somewhere the domain isn't served from now, such as in the pending zone itself, or at a DNS provider the registrar doesn't delegate to.
 - The record's name or value differs from `challenge.dnsName` and `challenge.token`, for example with the domain appended twice by a DNS provider that adds it to every name.
 - The record is new, and the domain's name servers don't serve it yet.

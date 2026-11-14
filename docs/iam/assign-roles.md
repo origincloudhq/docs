@@ -17,7 +17,7 @@ Assign a role to give a user or service account access, and revoke it to take th
 
 - An org-wide `roles/owner` or `roles/iam/editor` assignment, and every permission of the role you assign or revoke at the scope of the binding. For example, an Owner needs `roles/billing/administrator` as well to assign a billing role. See [Who can assign a role](access-model.md#who-can-assign-a-role).
 - Your organization ID (`<org-id>`) and, for a project-scoped binding, the project ID (`<project-id>`).
-- The member: `user:<email>`, the verified email address of the person's account, or `serviceAccount:<service-account-id>`. See [Principals](access-model.md#principals).
+- The member: `user:<email>`, the verified email address of the person's account, `serviceAccount:<service-account-id>`, or a platform service agent such as `serviceAgent:compute`, which can hold only the roles its service needs. See [Principals](access-model.md#principals) and [Service agents](service-agents.md).
 
 ## Assign a role
 

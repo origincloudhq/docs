@@ -19,7 +19,7 @@ The audit log records these fourteen actions. Each one is recorded when the chan
 
 | Action | Recorded when | Target |
 |---|---|---|
-| `iam.role.assign` | A role is assigned, including when an invite grants a role to an existing account | The principal |
+| `iam.role.assign` | A role is assigned, including when an invite grants a role to an existing account, and when a new organization binds a service agent (actor `platform`) | The principal |
 | `iam.role.revoke` | A role is revoked, including when its organization is deleted | The principal |
 | `iam.member.remove` | A member is removed, or a revoked service account's role assignments are removed (one entry in each organization it held roles in) | The principal |
 | `iam.org_invite.create` | A pending invite is stored for an email address without an account | The email address |
@@ -136,7 +136,7 @@ The IAM REST API serves the audit log too, as a preview (`v1beta1`) that may sti
 It differs from the GraphQL query in three ways:
 
 - It serves a recent window of the log: 90 days by default, which the platform can set longer. Each response says where the window starts in `windowStartTime`, and an older entry is answered with `NOT_FOUND`. The GraphQL query serves the whole log.
-- The actor and the target are written as members, as they were when the change was made: `user:<email>` with the verified address the account had then, `userId:<user-id>` when none was recorded, `serviceAccount:<id>`, or `platform` for a change the platform made itself. A later change of address doesn't change an entry.
+- The actor and the target are written as members, as they were when the change was made: `user:<email>` with the verified address the account had then, `userId:<user-id>` when none was recorded, `serviceAccount:<id>`, `serviceAgent:<name>` for a platform service agent acting in your organization ([Service agents](service-agents.md)), or `platform` for a change the platform made itself. A later change of address doesn't change an entry.
 - A role in `details` has its role name, such as `roles/iam.editor`, not its URN.
 
 ## Related

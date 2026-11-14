@@ -7,7 +7,7 @@ page_type: task
 parent: hosted-zones
 nav_order: 20
 tags: [dns, cli]
-last_reviewed: 2026-11-13
+last_reviewed: 2026-11-14
 ---
 
 # Create a public zone and verify it
@@ -98,7 +98,7 @@ For a domain that doesn't resolve yet, or whose resolution can wait until the zo
 
 Then [add the zone's record sets](#add-record-sets). There's nothing left to delegate.
 
-> **Note:** Some registries check a domain's name servers before they accept a delegation, `.de` (DENIC) among them. Origin Cloud's name servers don't answer for a pending zone, so such a registry refuses the delegation. For a domain under such a registry, prove control with the TXT record instead: host the domain at another DNS provider first, then delegate it once the zone is `ACTIVE`.
+> **Note:** Some registries check a domain's name servers before they accept a delegation, `.de` (DENIC) among them: the name servers must answer for the domain with exactly the NS records you delegate to. A pending zone's name servers answer its SOA and NS records for that check, as long as it's the only pending zone of the domain and no active zone is at, above or below its domain, your own included. While another zone of the same domain is pending too, they answer nothing for it, and the registry refuses the delegation: delete your other zone, prove control with the TXT record instead, or wait until the other zone expires.
 
 ## Prove control of a domain in use
 
@@ -141,7 +141,7 @@ Create the zone's record sets. Copy every record your domain needs from its curr
 
 For a domain you proved control of with the TXT record.
 
-> **Important:** Delegate a domain in use only once the zone is `ACTIVE` and holds every record set the domain needs. Origin Cloud's name servers don't answer for a pending zone, so a domain delegated to one stops resolving.
+> **Important:** Delegate a domain in use only once the zone is `ACTIVE` and holds every record set the domain needs. For a pending zone, Origin Cloud's name servers answer its SOA and NS records at most, never its record sets, so a domain delegated to one stops resolving.
 
 To delegate the domain:
 
