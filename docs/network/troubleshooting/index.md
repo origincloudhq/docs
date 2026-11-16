@@ -7,7 +7,7 @@ page_type: troubleshooting
 parent: home
 nav_order: 60
 tags: [networking, troubleshooting]
-last_reviewed: 2026-11-05
+last_reviewed: 2026-11-15
 ---
 
 # Troubleshoot Network
@@ -20,7 +20,7 @@ last_reviewed: 2026-11-05
 
 **Resolution:** Check each item in order:
 
-1. The VPC has an Internet Gateway: `origin network list-internet-gateways --vpc <vpc-id>`, or the VPC's `internetGateway` field. See [Create and delete an Internet Gateway](../internet-access/internet-gateways.md).
+1. The VPC has an Internet Gateway: `origin network list-internet-gateways --vpc //network.origincloudapis.eu/projects/<project>/regions/<region>/vpcs/<vpc-id>`, or the VPC's `internetGateway` field. See [Create and delete an Internet Gateway](../internet-access/internet-gateways.md).
 2. The instance has a way out. Either its network interface has a Floating IP (`origin network list-floating-ips` shows which interface each address reaches as `networkInterface`), or its subnet's route table has a `0.0.0.0/0` route to a NAT gateway. Without one of these, it has no internet access. See [Floating IPs](../internet-access/floating-ips.md) and [NAT gateways](../internet-access/nat-gateways.md).
 3. The subnet has a route table, and it has a `0.0.0.0/0` route to the Internet Gateway or to a NAT gateway. Check the subnet's `routeTable` with `get-subnet`, and the table's routes with `list-routes --route-table <route-table-id>`. An empty `routeTable` means the subnet has no route table, so no internet access in either direction; associate one with `create-route-table-association`. Another subnet's table doesn't open this one. Creating an Internet Gateway for a VPC you created adds no route. See [Route tables](../internet-access/route-tables.md).
 4. If the subnet has a network ACL, it has egress rules that allow the traffic to the internet, including replies to inbound connections. See [Network ACLs](../traffic-control/network-acls.md).

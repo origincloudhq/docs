@@ -7,7 +7,7 @@ parent: instances
 nav_order: 60
 tags: [compute, instances, cli, api]
 related: [instances-instance-types, instances-lifecycle, reference-cli]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Launch an instance
@@ -53,7 +53,7 @@ flowchart LR
    origin compute list-images --zone eu-central1-az1
    ```
 
-   To launch the current image of a family instead, note the family's id from `origin compute list-image-families`, and use `--image-family <family-id>` in place of `--image` in the launch below. See [Image families](../images/image-families.md).
+   To launch the current image of a family instead, note the family's `name` from `origin compute list-image-families`, and use `--image-family //compute.origincloudapis.eu/<family-name>` in place of `--image` in the launch below. See [Image families](../images/image-families.md).
 
 ## Create the network interface
 
@@ -61,8 +61,8 @@ flowchart LR
 
    ```sh
    origin network list-vpcs
-   origin network list-subnets --vpc <vpc-id> --zone eu-central1-az1
-   origin network list-security-groups --vpc <vpc-id>
+   origin network list-subnets --vpc //network.origincloudapis.eu/projects/<project>/regions/<region>/vpcs/<vpc-id> --zone eu-central1-az1
+   origin network list-security-groups --vpc //network.origincloudapis.eu/projects/<project>/regions/<region>/vpcs/<vpc-id>
    ```
 
    The default VPC reads `projectDefault: true`, and its default security group `vpcDefault: true`. The default security group admits SSH, HTTP, HTTPS and ICMP from anywhere. See [Security groups](../../network/traffic-control/security-groups.md).
@@ -70,7 +70,7 @@ flowchart LR
 2. Create a network interface in the subnet, and note its `name` from the output:
 
    ```sh
-   origin network create-network-interface --subnet <subnet-id>
+   origin network create-network-interface --subnet //network.origincloudapis.eu/projects/<project>/zones/<zone>/subnets/<subnet-id>
    ```
 
    The interface gets the subnet's next free IPv4 and IPv6 addresses. It admits and sends nothing until a security group opens it.
@@ -80,7 +80,7 @@ flowchart LR
    ```sh
    origin network create-security-group-association \
      --network-interface <network-interface-id> \
-     --security-group <security-group-id>
+     --security-group //network.origincloudapis.eu/projects/<project>/regions/<region>/securityGroups/<security-group-id>
    ```
 
    Repeat this step for each further group. An interface admits the traffic any of its groups allows. For more on interfaces, see [Network interfaces](../../network/vpcs/network-interfaces.md).
@@ -91,12 +91,14 @@ flowchart LR
 
    ```sh
    origin compute create-instance \
-     --instance-type gp1.core.2 \
-     --image-family <family-id> \
-     --key-pair <key-pair-id> \
-     --network-interface <network-interface-id> \
+     --instance-type //compute.origincloudapis.eu/instanceTypes/gp1.core.2 \
+     --image-family //compute.origincloudapis.eu/imageFamilies/<family-id> \
+     --key-pair //compute.origincloudapis.eu/projects/<project>/keyPairs/<key-pair-id> \
+     --network-interface //network.origincloudapis.eu/projects/<project>/zones/<zone>/networkInterfaces/<network-interface-id> \
      --tag origin:name=web-1
    ```
+
+   Each flag that names another resource takes its full name: its service's host, such as `//compute.origincloudapis.eu/`, followed by the `name` its list or create command prints.
 
    The instance passes through `INITIALIZING` and `PENDING`. The command waits until it reads `RUNNING`, then prints it. If the launch fails, the command fails with the reason; the instance still exists as `FAILED`, with the reason in `stateReason`. See [Status reasons](../reference/status-reasons.md).
 
@@ -104,8 +106,8 @@ flowchart LR
 
    | Option | Use it to |
    |---|---|
-   | `--image <image-id>` | Launch a specific image instead of a family's current one. A public image is named `zones/<zone>/images/<image-id>`; one of your own takes its id. Give exactly one of `--image` and `--image-family`. |
-   | `--boot-volume size_gib=<size>,storage_class=<class>` | Make the root disk bigger than the image, or pick its storage class. Either key can be left out. See [Instance storage](../instance-storage/index.md) and [Storage classes](../../storage/volumes/storage-classes.md). |
+   | `--image <image>` | Launch a specific image instead of a family's current one, by its full name: a public image's is `//compute.origincloudapis.eu/zones/<zone>/images/<image-id>`, one of your own `//compute.origincloudapis.eu/projects/<project>/zones/<zone>/images/<image-id>`. Give exactly one of `--image` and `--image-family`. |
+   | `--boot-volume size_gib=<size>,storage_class=//pvs.origincloudapis.eu/storageClasses/<class>` | Make the root disk bigger than the image, or pick its storage class. Either key can be left out. See [Instance storage](../instance-storage/index.md) and [Storage classes](../../storage/volumes/storage-classes.md). |
    | `--login-user <name>` | Override the image's default user. See [Guest environment](guest-environment.md#login-user). |
    | `--tag <KEY=VALUE>` | Tag the instance; `--tag origin:name=web-1` names it. Repeat it for more tags. See [Tags](../../platform/tags.md). |
    | `--no-wait` | Print the launch's operation at once instead of waiting. Wait for it later with `origin compute wait-operation --operation <operation-name>`. See [Wait for long-running operations](../../platform/access/cli.md#wait-for-long-running-operations). |
@@ -133,7 +135,7 @@ An instance launched with an interface you created gets no public address of its
    ```sh
    origin network create-floating-ip-association \
      --floating-ip <floating-ip-id> \
-     --network-interface <network-interface-id>
+     --network-interface //network.origincloudapis.eu/projects/<project>/zones/<zone>/networkInterfaces/<network-interface-id>
    ```
 
 See [Floating IPs](../../network/internet-access/floating-ips.md).
@@ -150,19 +152,19 @@ One of the interface's security groups must allow inbound TCP port 22 from your 
 
 ## Using the API
 
-The `launchInstance` mutation takes the image, instance type, key pair and boot volume. Without a subnet, it launches into your project's default subnet, and the platform creates the default VPC the first time a launch needs it; see [Default VPC](../../network/vpcs/default-vpc.md). It also accepts `imageFamily` in place of `imageUrn`, which launches the image currently designated for that family. Set exactly one of the two. See [Image families](../images/image-families.md).
+The `launchInstance` mutation takes the project, the image, instance type, key pair and boot volume; the project, the image, the key pair and the subnet are named by their full resource names. Without a subnet, it launches into your project's default subnet, and the platform creates the default VPC the first time a launch needs it; see [Default VPC](../../network/vpcs/default-vpc.md). It also accepts `imageFamily` in place of `image`, which launches the image currently designated for that family. Set exactly one of the two. See [Image families](../images/image-families.md).
 
 ```graphql
 mutation {
   compute {
     launchInstance(input: {
-      projectUrn: "<project-urn>"
+      project: "//resourcemanager.origincloudapis.eu/projects/<project-id>"
       imageFamily: "<family-slug>"
       instanceType: "gp1.core.2"
-      keyPairUrn: "<key-pair-urn>"
+      keyPair: "//compute.origincloudapis.eu/projects/<project-id>/keyPairs/<key-pair-id>"
       bootVolume: { sizeInGib: 40 }
     }) {
-      urn
+      id
       status
       loginUser
     }

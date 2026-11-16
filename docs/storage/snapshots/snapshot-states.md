@@ -6,7 +6,7 @@ page_type: concept
 parent: snapshots
 nav_order: 10
 tags: [storage, snapshots]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Snapshot states
@@ -41,7 +41,7 @@ stateDiagram-v2
 | `DELETING` | The platform is removing the snapshot. | No |
 | `DELETED` | The snapshot is gone. | No |
 
-`sourceVolume` names the volume the snapshot was taken from, and `sourceSizeGib` its size at the time: the smallest size a volume created from the snapshot can have.
+`sourceVolume` is the full name of the volume the snapshot was taken from, `//pvs.origincloudapis.eu/` followed by the volume's `name`, and `sourceSizeGib` its size at the time: the smallest size a volume created from the snapshot can have.
 
 ## When an operation fails
 
@@ -94,7 +94,7 @@ A snapshot can be the source of a new volume, an image, or an instance's volume 
 
 ## Settled states
 
-A `COMPLETED` snapshot stays usable as a clone source as long as it stays protected, and a `DELETED` snapshot stays gone. A deleted snapshot drops out of your snapshot list immediately. For 24 hours you can still look it up by its name with `origin pvs get-snapshot`, or by its URN with the `pvs.snapshot` query; after that the lookup finds nothing.
+A `COMPLETED` snapshot stays usable as a clone source as long as it stays protected, and a `DELETED` snapshot stays gone. A deleted snapshot drops out of your snapshot list immediately. For 24 hours you can still look it up by its name with `origin pvs get-snapshot`, or by its `id` with the `pvs.snapshot` query; after that the lookup finds nothing.
 
 In the GraphQL API, a change of state can take a few seconds to show in a list or a lookup. To read your own change at once, send back the token its response carried; see [Read what you just changed](../../platform/access/api.md#read-what-you-just-changed).
 
@@ -109,7 +109,7 @@ The GraphQL API's `PvsSnapshot` reports the same states under these names:
 | `protectionState` | `protectionStatus` |
 | `PROTECTION_FAILED` | `FAILED` |
 | `protectionReason` | `protectionStatusReason` |
-| `sourceVolume` | `volumeUrn` |
+| `sourceVolume` | `volume` |
 | `sourceSizeGib` | `volumeSizeInGib` |
 
 The GraphQL API also reports a copy's progress: while a snapshot is `PENDING`, `progress` reports `PENDING` and `percentComplete` shows how far the copy has got. `progress` is `AVAILABLE` once the data is fully copied, and `UNAVAILABLE` when no progress information exists. The CLI doesn't show progress.

@@ -8,7 +8,7 @@ parent: access
 nav_order: 10
 tags: [cli, getting-started]
 related: [reference-cli, access-api]
-last_reviewed: 2026-11-11
+last_reviewed: 2026-11-15
 ---
 
 # Use the CLI
@@ -231,7 +231,7 @@ Most commands work on resources in a project, and in a zone or a region. You nam
 
    ```sh
    origin resourcemanager list-organizations
-   origin resourcemanager list-projects --organization <organization-id>
+   origin resourcemanager list-projects --organization //resourcemanager.origincloudapis.eu/organizations/<organization-id>
    ```
 
    For creating a project, see [Manage projects](../organizations/projects.md).
@@ -271,16 +271,19 @@ The region also decides where the `compute`, `network`, `pvs` and `observability
 
 ## Name resources
 
-Every resource has a `name`, its full path, such as `projects/my-project/zones/eu-central1-az1/volumes/vol-123`. A zonal resource's name contains its zone, and a regional resource's name, such as a VPC's, contains its region. The last segment, here `vol-123`, is the resource's id.
+Every resource has a `name`, its path within its service, such as `projects/my-project/zones/eu-central1-az1/volumes/vol-123`. A zonal resource's name contains its zone, and a regional resource's name, such as a VPC's, contains its region. The last segment, here `vol-123`, is the resource's id. Its full name is its service's host followed by its `name`: `//pvs.origincloudapis.eu/projects/my-project/zones/eu-central1-az1/volumes/vol-123`.
 
-A command takes a resource by its id, completed with `--project` and `--zone` or `--region` and their defaults, or by its whole name. These two commands return the same volume:
+A command takes the resource it acts on, and that resource's parent, by its id, completed with `--project` and `--zone` or `--region` and their defaults, by its `name`, or by its full name. These three commands return the same volume:
 
 ```sh
 origin pvs get-volume --volume vol-123
 origin pvs get-volume --volume projects/my-project/zones/eu-central1-az1/volumes/vol-123
+origin pvs get-volume --volume //pvs.origincloudapis.eu/projects/my-project/zones/eu-central1-az1/volumes/vol-123
 ```
 
-So you can pass a `name` from a command's output straight to the next command. A resource that belongs to another one, such as a rule of a security group or a volume attachment of an instance, also needs its parent: `--security-group <security-group-id>` or `--instance <instance-id>`, unless you give its whole name.
+A resource that belongs to another one, such as a rule of a security group or a volume attachment of an instance, also needs its parent: `--security-group <security-group-id>` or `--instance <instance-id>`, unless you give its whole name.
+
+A flag that refers to another resource, such as `--vpc` of `origin network create-subnet` or `--storage-class` of `origin pvs create-volume`, takes that resource's full name or its `name`, never its id alone: `--storage-class //pvs.origincloudapis.eu/storageClasses/gp1`. The CLI sends it as given, so it may name another project's resource; `--project` and `--zone` don't complete or check it. A full name's host must be the referenced resource's service, which may be another service than the command's: `origin compute create-volume-attachment --volume //pvs.origincloudapis.eu/...`.
 
 ## Wait for long-running operations
 
@@ -312,7 +315,7 @@ For example, to send an API request with `curl`:
 curl -sS https://graph.origincloudapis.eu/graphql \
   -H "$(origin id token --as-header --raw)" \
   -H "Content-Type: application/json" \
-  -d '{"query":"{ admin { organisations { orgId name status } } }"}'
+  -d '{"query":"{ admin { organisations { id name status } } }"}'
 ```
 
 ## Give an AI agent access

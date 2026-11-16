@@ -6,7 +6,7 @@ page_type: task
 parent: snapshots
 nav_order: 30
 tags: [storage, snapshots, cli, api]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Delete a snapshot
@@ -41,7 +41,7 @@ Skip this section if the snapshot reports `protectionState: UNPROTECTED`.
    ```graphql
    mutation {
      pvs {
-       unprotectSnapshot(input: { snapshotUrn: "<snapshot-urn>" }) {
+       unprotectSnapshot(input: { snapshot: "//pvs.origincloudapis.eu/projects/<project-id>/zones/<zone>/snapshots/<snapshot-id>" }) {
          accepted
          message
        }
@@ -64,7 +64,7 @@ Skip this section if the snapshot reports `protectionState: UNPROTECTED`.
    ```graphql
    mutation {
      pvs {
-       deleteSnapshot(input: { snapshotUrn: "<snapshot-urn>" }) {
+       deleteSnapshot(input: { snapshot: "//pvs.origincloudapis.eu/projects/<project-id>/zones/<zone>/snapshots/<snapshot-id>" }) {
          accepted
          message
        }

@@ -41,8 +41,8 @@ A short-lived bearer token that every API request carries in its `Authorization`
 **Service account**  
 A credential for automation, such as CI jobs and scripts, that authenticates as itself rather than as a person. See [Service accounts](../../iam/service-accounts.md).
 
-**Resource URN**  
-The identifier the API and the CLI use for every resource. See [Use the GraphQL API](api.md#resource-urns).
+**Resource name**  
+The identifier the GraphQL API uses for a resource: its full resource name, such as `//resourcemanager.origincloudapis.eu/projects/<project-id>`. See [Use the GraphQL API](api.md#resource-names).
 
 ## Compare the access methods
 

@@ -6,7 +6,7 @@ page_type: concept
 parent: home
 nav_order: 10
 tags: [iam, roles, security]
-last_reviewed: 2026-11-13
+last_reviewed: 2026-11-15
 ---
 
 # Access model
@@ -15,15 +15,17 @@ Access in Origin Cloud is granted by role assignments. A role assignment gives o
 
 ## Principals
 
-A principal is whoever or whatever is granted access: a user, a service account, or a service agent of the platform. The `origin iam` commands and the REST API call it a member and write a user by email; the GraphQL API writes a user by ID.
+A principal is whoever or whatever is granted access: a user, a service account, or a service agent of the platform. The `origin iam` commands, the REST API and the GraphQL API call it a member, and take and show it by its full name only.
 
-| Principal | CLI and REST API | GraphQL API |
-|---|---|---|
-| User | `user:<email>`, the verified email address of the user's account | `user:<user-id>` |
-| Service account | `serviceAccount:<service-account-id>` | `service_account:<service-account-id>` |
-| Service agent | `serviceAgent:<name>`, such as `serviceAgent:compute` | `serviceAgent:<name>` |
+| Principal | Full name |
+|---|---|
+| User | `//iam.origincloudapis.eu/users/<user-id>` |
+| Service account | `//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>` |
+| Service agent | `//iam.origincloudapis.eu/serviceAgents/<name>`, such as `//iam.origincloudapis.eu/serviceAgents/compute` |
 
-A binding made for an email address holds on to the account, not the address: it follows a later change of address and is always shown with the account's current one. A user whose address isn't verified is shown as `userId:<user-id>`, and one whose account is gone as `deleted:user:<user-id>`. Your own user ID and member are in [`origin iam get-user --user me`](reference/cli.md#get-user); a service account's ID is in its resource name, from [`list-service-accounts`](reference/cli.md#list-service-accounts).
+A user must have an enabled account, and a service account must be one of the organization's own: either is refused with `NOT_FOUND` otherwise. An email address names no member: to bind someone you know by address, look their full name up with [`origin iam lookup-user`](reference/cli.md#lookup-user).
+
+A binding holds on to the account, not to an address, so it follows a later change of address. Your own full name is the `member` of [`origin iam get-user --user me`](reference/cli.md#get-user), and a service account's is the `member` of [`get-service-account`](reference/cli.md#get-service-account).
 
 Both IDs are UUIDs. A user ID belongs to the person's account and is the same in every organization they're a member of.
 
@@ -31,7 +33,7 @@ A service agent is the identity one of the platform's own services acts as in yo
 
 ## Roles
 
-A role is a named, fixed set of permissions. Every role is built in: you can assign and revoke them, but you can't create, change or delete a role. Each role has a short ID such as `roles/owner` or `roles/iam/editor`. The `origin iam` commands and the REST API name a role with the slashes after `roles/` written as dots, such as `roles/iam.editor`; the GraphQL API takes its URN, such as `urn:origin:cloud:iam::::builtin/role/roles/iam/editor`. The [`list-roles`](reference/cli.md#list-roles) command shows every role with its permissions. For the full catalog, see [Built-in roles](roles.md).
+A role is a named, fixed set of permissions. Every role is built in: you can assign and revoke them, but you can't create, change or delete a role. Each role has a short ID such as `roles/owner` or `roles/iam.editor`. The `origin iam` commands take a role by its ID, and the REST API by its ID or its full name, such as `//iam.origincloudapis.eu/roles/iam.editor`; the GraphQL API takes its URN, which its `roles` query lists. The [`list-roles`](reference/cli.md#list-roles) command shows every role with its permissions. For the full catalog, see [Built-in roles](roles.md).
 
 ## Permissions
 
@@ -55,7 +57,7 @@ The role applies only to resources inside that one project. It doesn't apply to 
 
 All IAM operations, such as inviting members, assigning roles and creating service accounts, act on the organization. A project-scoped assignment therefore never allows them, even for `roles/owner`. To let someone manage access, assign the role org-wide. The billing roles must always be assigned org-wide; see [Billing access](../platform/billing/billing-access.md).
 
-Whoever creates an organization receives `roles/owner` and `roles/billing/administrator` org-wide, and compute's service agent receives `roles/kms/grant-delegate` org-wide ([Service agents](service-agents.md)). Anyone else holds only the roles you assign to them.
+Whoever creates an organization receives `roles/owner` and `roles/billing.administrator` org-wide, and compute's service agent receives `roles/kms.grant-delegate` org-wide ([Service agents](service-agents.md)). Anyone else holds only the roles you assign to them.
 
 ## Who can assign a role
 
@@ -67,7 +69,7 @@ This applies to every path that changes a grant:
 - [Inviting a member](manage-members.md): you can only invite with a role you could assign. A pending invite is checked again when it's applied. If the person who sent it can no longer assign the role by then, the invite is dropped.
 - [Removing a member](manage-members.md#remove-a-member): you must be able to revoke every role the member holds.
 
-A request that would go beyond your own permissions is refused with [`FORBIDDEN`](../platform/reference/errors.md#forbidden). The error names the role and some of the permissions you lack. For example, Owner holds no billing permission, so an Owner can assign a billing role only if it also holds `roles/billing/administrator`. An IAM Editor can't assign Owner.
+A request that would go beyond your own permissions is refused with [`FORBIDDEN`](../platform/reference/errors.md#forbidden). The error names the role and some of the permissions you lack. For example, Owner holds no billing permission, so an Owner can assign a billing role only if it also holds `roles/billing.administrator`. An IAM Editor can't assign Owner.
 
 ## How a request is authorized
 
@@ -94,9 +96,9 @@ Permissions only add up. There are no deny rules, so holding a role never takes 
 
 In the `origin iam` commands and the REST API, binding a role that the member already holds at the same scope is refused with [`CONFLICT`](../platform/reference/errors.md#conflict), and a binding is revoked by deleting it by its ID, so it can't miss the scope. A retry with the same request ID within a day answers as the first request did.
 
-In the GraphQL API, assigning and revoking are idempotent. Assigning a role that the principal already holds at the same scope, with the same role URN, succeeds and changes nothing. Revoking a role that the principal doesn't hold at that scope also succeeds and changes nothing.
+In the GraphQL API, assigning and revoking are idempotent. Assigning a role that the principal already holds at the same scope, with the same role, succeeds and changes nothing. Revoking a role that the principal doesn't hold at that scope also succeeds and changes nothing.
 
-A GraphQL revocation matches the role URN and the scope exactly. An org-wide grant needs an org-wide revoke, and a project-scoped grant needs the same project. Use the role URN as it appears in the principal's grants, because a grant created together with the organization carries the organization ID inside its URN. For the steps, see [Assign and revoke roles](assign-roles.md).
+A GraphQL revocation matches the role and the scope exactly. An org-wide grant needs an org-wide revoke, and a project-scoped grant needs the same project. Use the role's full name as it appears in the principal's grants. For the steps, see [Assign and revoke roles](assign-roles.md).
 
 ## The last owner is protected
 

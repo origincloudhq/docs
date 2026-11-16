@@ -6,7 +6,7 @@ page_type: task
 parent: volumes
 nav_order: 30
 tags: [storage, volumes, cli, api]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Create a volume
@@ -33,11 +33,12 @@ Create a standalone volume when you need a disk that isn't tied to one instance'
 2. Create the volume. `--size-gib` is required.
 
    ```sh
-   origin pvs create-volume --size-gib 100 --storage-class gp1 \
+   origin pvs create-volume --size-gib 100 \
+     --storage-class //pvs.origincloudapis.eu/storageClasses/gp1 \
      --tag origin:name=db-data
    ```
 
-   `--tag` is optional and repeatable; `origin:name` names the volume. See [Tags](../../platform/tags.md).
+   `--storage-class` takes the class's full name: `//pvs.origincloudapis.eu/` followed by its `name`. `--tag` is optional and repeatable; `origin:name` names the volume. See [Tags](../../platform/tags.md).
 
    The command waits until the volume is `AVAILABLE` and prints it. Note its `name`; the last segment is the volume's id. To return at once instead, add `--no-wait` and wait for the operation later. See [Wait for long-running operations](../../platform/access/cli.md#wait-for-long-running-operations).
 
@@ -47,11 +48,11 @@ Create a standalone volume when you need a disk that isn't tied to one instance'
    mutation {
      pvs {
        createVolume(input: {
-         projectUrn: "<project-urn>"
+         project: "//resourcemanager.origincloudapis.eu/projects/<project-id>"
          sizeInGib: 100
          storageClass: "gp1"
        }) {
-         urn
+         id
          status
        }
      }
@@ -87,12 +88,13 @@ If a rule doesn't hold, the request is refused with an error that names the rule
 2. Create the volume, passing a size of at least `sourceSizeGib`.
 
    ```sh
-   origin pvs create-volume --source-snapshot <snapshot-id> --size-gib 100
+   origin pvs create-volume --size-gib 100 \
+     --source-snapshot //pvs.origincloudapis.eu/projects/<project>/zones/<zone>/snapshots/<snapshot-id>
    ```
 
-   The command waits until the volume is `AVAILABLE` and prints it.
+   `--source-snapshot` takes the snapshot's full name: `//pvs.origincloudapis.eu/` followed by its `name`. The command waits until the volume is `AVAILABLE` and prints it.
 
-   With the API, add `snapshotUrn` to the `createVolume` input.
+   With the API, add `snapshot`, the snapshot's `id`, to the `createVolume` input.
 
 ## If this fails
 

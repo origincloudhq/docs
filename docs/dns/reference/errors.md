@@ -6,7 +6,7 @@ page_type: reference
 parent: reference
 nav_order: 40
 tags: [dns, errors, reference]
-last_reviewed: 2026-11-08
+last_reviewed: 2026-11-15
 ---
 
 # DNS errors
@@ -19,6 +19,7 @@ The DNS API answers with the platform's error codes, and an `origin dns` command
 | [`CONFLICT`](#conflict) | No | Something already there, or still there |
 | [`NOT_FOUND`](#not_found) | No | A zone, record set or attachment that doesn't exist |
 | [`PAYMENT_METHOD_REQUIRED`](#payment_method_required) | No | A project without valid billing |
+| [`LEGAL_ACCEPTANCE_REQUIRED`](#legal_acceptance_required) | No | A billing account that hasn't accepted the legal documents in force |
 | [`SERVICE_UNAVAILABLE`](#service_unavailable) | Yes | A dependency that didn't answer in time |
 
 ## BAD_REQUEST
@@ -46,6 +47,10 @@ A delete repeated with the same request id (`--request-id`, `requestId`) within 
 ## PAYMENT_METHOD_REQUIRED
 
 **Creating a hosted zone** while the project has no valid billing. See [Add a payment method](../../platform/billing/payment-method.md).
+
+## LEGAL_ACCEPTANCE_REQUIRED
+
+**Creating a hosted zone** while the project's billing account hasn't accepted a version of the legal documents that is in force. See [Legal documents and acceptance](../../platform/billing/legal-documents.md#while-a-requirement-blocks).
 
 ## SERVICE_UNAVAILABLE
 

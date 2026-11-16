@@ -6,7 +6,7 @@ page_type: task
 parent: home
 nav_order: 20
 tags: [observability, metrics, api]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Query metrics
@@ -31,7 +31,7 @@ Pick the metric names for the resource's type: an instance has `oc_compute_insta
 
 ## Query metrics with the REST API
 
-1. Find the resource name of the resource, its `name` field, such as `projects/<project-id>/zones/eu-central1-az1/instances/<instance-id>`. Each command lists the project's resources of one kind, in every zone, with their `name`:
+1. Find the full name of the resource: its service's host followed by its `name` field, such as `//compute.origincloudapis.eu/projects/<project-id>/zones/eu-central1-az1/instances/<instance-id>`. An instance is on `//compute.origincloudapis.eu/`, a volume on `//pvs.origincloudapis.eu/` and a network interface on `//network.origincloudapis.eu/`. Each command lists the project's resources of one kind, in every zone, with their `name`:
 
    ```sh
    origin compute list-instances
@@ -45,7 +45,7 @@ Pick the metric names for the resource's type: an instance has `oc_compute_insta
    curl -sS -G \
      "https://observability.origincloudapis.eu/v1beta1/projects/<project-id>/timeSeries:query" \
      -H "$(origin id token --as-header --raw)" \
-     --data-urlencode "resource=projects/<project-id>/zones/eu-central1-az1/instances/<instance-id>" \
+     --data-urlencode "resource=//compute.origincloudapis.eu/projects/<project-id>/zones/eu-central1-az1/instances/<instance-id>" \
      --data-urlencode "metrics=oc_compute_instance_cpu_seconds_total" \
      --data-urlencode "startTime=2026-10-03T10:00:00Z" \
      --data-urlencode "endTime=2026-10-03T10:15:00Z" \
@@ -64,7 +64,7 @@ Pick the metric names for the resource's type: an instance has `oc_compute_insta
      "timeSeries": [
        {
          "metric": "oc_compute_instance_cpu_seconds_total",
-         "resource": "projects/<project-id>/zones/eu-central1-az1/instances/<instance-id>",
+         "resource": "//compute.origincloudapis.eu/projects/<project-id>/zones/eu-central1-az1/instances/<instance-id>",
          "unit": "seconds",
          "points": [
            { "endTime": "2026-10-03T10:00:00Z", "value": 0.12 },
@@ -81,7 +81,7 @@ If the request fails, look up its HTTP status and `error.status` in [REST errors
 
 ## Query metrics with the GraphQL API
 
-1. Find the URN of the resource, its `urn` field, in the output of the same commands.
+1. Find the full resource name of the resource, such as `//compute.origincloudapis.eu/projects/<project-id>/zones/eu-central1-az1/instances/<instance-id>`: the `id` of the instance, volume or network interface in the GraphQL API, or its `name` in the output of the same commands with the host `//compute.origincloudapis.eu/`, `//pvs.origincloudapis.eu/` or `//network.origincloudapis.eu/` put in front. A URN, a name without its host or a bare ID is refused.
 
 2. Pick the metric names and the window, as [above](#choose-the-window-and-the-period). In the GraphQL API, the window is `from` to `to` and the period is `periodSeconds`.
 
@@ -89,10 +89,10 @@ If the request fails, look up its HTTP status and `error.status` in [REST errors
 
    ```json
    {
-     "query": "query Metrics($input: MetricQueryInput!) { observability { metrics(input: $input) { metricName resourceUrn unit dataPoints { timestamp value } } } }",
+     "query": "query Metrics($input: MetricQueryInput!) { observability { metrics(input: $input) { metricName resource unit dataPoints { timestamp value } } } }",
      "variables": {
        "input": {
-         "resourceUrn": "<instance-urn>",
+         "resource": "//compute.origincloudapis.eu/projects/<project-id>/zones/eu-central1-az1/instances/<instance-id>",
          "metricNames": ["oc_compute_instance_cpu_seconds_total"],
          "from": "2026-10-03T10:00:00Z",
          "to": "2026-10-03T10:15:00Z",
@@ -110,7 +110,7 @@ If the request fails, look up its HTTP status and `error.status` in [REST errors
      observability {
        metrics(input: $input) {
          metricName
-         resourceUrn
+         resource
          unit
          dataPoints {
            timestamp
@@ -141,7 +141,7 @@ If the request fails, look up its HTTP status and `error.status` in [REST errors
          "metrics": [
            {
              "metricName": "oc_compute_instance_cpu_seconds_total",
-             "resourceUrn": "<instance-urn>",
+             "resource": "//compute.origincloudapis.eu/projects/<project-id>/zones/eu-central1-az1/instances/<instance-id>",
              "unit": "seconds",
              "dataPoints": [
                { "timestamp": "2026-10-03T10:00:00+00:00", "value": 0.12 },

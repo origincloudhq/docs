@@ -6,7 +6,7 @@ page_type: concept
 parent: volumes
 nav_order: 10
 tags: [storage, volumes]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Storage classes
@@ -76,7 +76,7 @@ You can't change a volume's limit yet.
 
 ## Choosing a class
 
-Pass the class as `--storage-class` on `origin pvs create-volume` and `origin pvs import-volume`, by its id, such as `gp1`, or its whole name, `storageClasses/gp1`. With the API, pass it as `storageClass` on the `createVolume` or `importVolume` mutation. Omit it to get the default.
+Pass the class as `--storage-class` on `origin pvs create-volume` and `origin pvs import-volume` by its full name, such as `//pvs.origincloudapis.eu/storageClasses/gp1`; a volume shows its class the same way. With the API, pass it as `storageClass` on the `createVolume` or `importVolume` mutation. Omit it to get the default.
 
 The platform answers two kinds of wrong values differently:
 

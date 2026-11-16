@@ -6,7 +6,7 @@ page_type: concept
 parent: internet-access
 nav_order: 20
 tags: [networking, internet-access, billing]
-last_reviewed: 2026-11-05
+last_reviewed: 2026-11-15
 ---
 
 # Floating IPs
@@ -42,7 +42,7 @@ For example, to give an instance a public address, allocate one, find the instan
 ```sh
 origin network create-floating-ip
 origin network create-floating-ip-association --floating-ip <floating-ip-id> \
-  --network-interface <network-interface-id>
+  --network-interface //network.origincloudapis.eu/projects/<project>/zones/<zone>/networkInterfaces/<network-interface-id>
 ```
 
 The Floating IP's `address` is the public address, and `networkInterface` and `privateAddress` show where it points. You can associate the address before you launch the instance, as soon as the interface exists. The instance's subnet must be in a VPC with an Internet Gateway, and its security groups and network ACL must allow the traffic. See [Internet access](index.md).

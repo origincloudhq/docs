@@ -6,7 +6,7 @@ page_type: task
 parent: volumes
 nav_order: 60
 tags: [storage, volumes, cli, api]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Delete a volume
@@ -29,7 +29,7 @@ Delete a volume to remove its data and stop paying for it. Deleting frees the vo
    origin pvs get-volume --volume <volume-id>
    ```
 
-2. Find the volume's snapshots. Every snapshot names the volume it was taken from as `sourceVolume`. List the snapshots in the volume's zone and look for the volume's `name`:
+2. Find the volume's snapshots. Every snapshot names the volume it was taken from as `sourceVolume`, by the volume's full name: `//pvs.origincloudapis.eu/` followed by its `name`. List the snapshots in the volume's zone and look for that full name:
 
    ```sh
    origin pvs list-snapshots --zone eu-central1-az1
@@ -52,7 +52,7 @@ Delete a volume to remove its data and stop paying for it. Deleting frees the vo
    ```graphql
    mutation {
      pvs {
-       deleteVolume(input: { volumeUrn: "<volume-urn>" }) {
+       deleteVolume(input: { volume: "//pvs.origincloudapis.eu/projects/<project-id>/zones/<zone>/volumes/<volume-id>" }) {
          accepted
          message
        }

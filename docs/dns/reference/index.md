@@ -7,7 +7,7 @@ page_type: reference
 parent: home
 nav_order: 50
 tags: [dns, reference, cli, api]
-last_reviewed: 2026-11-08
+last_reviewed: 2026-11-15
 availability: preview
 ---
 
@@ -61,6 +61,16 @@ Requests and responses are JSON, with fields in lower camel case, such as `dnsNa
 | Record set | `projects/<project-id>/hostedZones/<zone-id>/recordSets/<record-set-id>` |
 | VPC attachment | `projects/<project-id>/hostedZones/<zone-id>/vpcAttachments/<vpc-id>` |
 
+A resource's full name is `//dns.origincloudapis.eu/` followed by its name. Every reference to another resource is a full name, in what the API takes and in what it shows: an attachment's `vpc` and the `vpc` filter, an alias's `floatingIp`, a batch's `deletions`. A relative name or an id there is refused with `BAD_REQUEST`. Zones, record sets and attachments have no `urn` field in the CLI and REST API.
+
+## GraphQL API
+
+The GraphQL API's `dns` namespace works on the same resources, which it names by their full resource names: an `id` is `//dns.origincloudapis.eu/` followed by the resource name above, such as `//dns.origincloudapis.eu/projects/<project-id>/hostedZones/<zone-id>`, and an argument that names a resource takes the same form: `project`, `hostedZone`, `recordSet`, `vpc` and, for an alias, `floatingIp`. Copy a full name from a response's `id` rather than assembling it. A URN, a name without its host, a bare ID or the name of another kind of resource is refused with `BAD_REQUEST`, naming the argument.
+
+- A project that doesn't exist is `NOT_FOUND`; a `hostedZone(id)` query answers `null` for a zone that isn't there.
+- A `vpc` and a `floatingIp` must be in the zone's project: the full name of a VPC (`//network.origincloudapis.eu/projects/<project-id>/regions/<region>/vpcs/<vpc-id>`) carries its region, and that of a Floating IP its zone, so neither is given separately.
+- A record set shows its zone in `hostedZone`, an alias its Floating IP in `aliasFloatingIp`, and an attachment its zone in `hostedZone` and its VPC in `vpc`.
+
 ## API methods
 
 Paths are relative to `https://dns.origincloudapis.eu/v1beta1/`.
@@ -89,14 +99,13 @@ Paths are relative to `https://dns.origincloudapis.eu/v1beta1/`.
 | Field | Description |
 |---|---|
 | `name` | The zone's resource name. |
-| `urn` | The zone's URN, which access policies and the audit log use. |
 | `dnsName` | The domain, without the final dot. Fixed at creation. |
 | `visibility` | `PUBLIC` or `PRIVATE`. Fixed at creation. |
 | `state` | `PENDING_VERIFICATION`, `ACTIVE` or `SUSPENDED`. See [Hosted zones](../hosted-zones/index.md#states). |
 | `nameServers` | A public zone's own name servers to delegate to; a delegation to them proves control of the domain. Empty for a private zone. |
 | `challenge` | A public zone's ownership challenge: `dnsName`, `token`, `expireTime`, `verifyTime`, `suspendTime`, `suspensionReason`, and `lastCheck` in a verify response. Unset for a private zone. See [Domain ownership](../hosted-zones/ownership.md). |
 | `createTime` | When the zone was created. |
-| `creator` | Who created it, such as `user:<id>` or `service_account:<id>`. |
+| `creator` | The full name of who created it, such as `//iam.origincloudapis.eu/users/<user-id>` or `//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>`. |
 | `tags` | Up to 50 tags. See [Tags](../../platform/tags.md). |
 
 ## Record set fields
@@ -104,12 +113,11 @@ Paths are relative to `https://dns.origincloudapis.eu/v1beta1/`.
 | Field | Description |
 |---|---|
 | `name` | The record set's resource name. |
-| `urn` | The record set's URN. |
 | `dnsName` | The name the records answer for, in full. Fixed at creation. |
 | `type` | `A`, `AAAA`, `CNAME`, `TXT`, `MX`, `SRV` or `CAA`. Fixed at creation. |
 | `ttl` | 30 seconds to 7 days; 300 seconds when left out. |
 | `basic.values` | The record set's own values. See [Record value formats](record-values.md). |
-| `alias.floatingIp` | The Floating IP whose address an `A` alias answers with. |
+| `alias.floatingIp` | The full name of the Floating IP whose address an `A` alias answers with. |
 | `createTime`, `updateTime` | When the record set was created and last changed. |
 
 A record set has either `basic` or `alias`, never both.

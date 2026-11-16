@@ -60,12 +60,12 @@ To get control back without waiting, add `--no-wait` to either command, and wait
 
 ## Using the API
 
-The `startInstance` and `stopInstance` mutations take the instance URN:
+The `startInstance` and `stopInstance` mutations take the instance's full name, its `id`:
 
 ```graphql
 mutation {
   compute {
-    stopInstance(input: { instanceUrn: "<instance-urn>" }) {
+    stopInstance(input: { instance: "//compute.origincloudapis.eu/projects/<project-id>/zones/<zone>/instances/<instance-id>" }) {
       accepted
       message
     }

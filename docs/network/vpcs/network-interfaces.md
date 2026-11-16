@@ -6,7 +6,7 @@ page_type: concept
 parent: vpcs
 nav_order: 30
 tags: [networking, vpc]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Network interfaces
@@ -20,7 +20,7 @@ With the CLI, you create a network interface first and launch an instance with i
 1. Create the interface in a subnet. It takes the subnet's next free IPv4 and IPv6 addresses, and starts `AVAILABLE`, in no security group.
 
    ```sh
-   origin network create-network-interface --subnet <subnet-id>
+   origin network create-network-interface --subnet //network.origincloudapis.eu/projects/<project>/zones/<zone>/subnets/<subnet-id>
    ```
 
 2. Associate one or more security groups with it. Until then the interface admits and sends nothing except replies to its own traffic and address resolution.
@@ -28,7 +28,7 @@ With the CLI, you create a network interface first and launch an instance with i
    ```sh
    origin network create-security-group-association \
      --network-interface <network-interface-id> \
-     --security-group <security-group-id>
+     --security-group //network.origincloudapis.eu/projects/<project>/regions/<region>/securityGroups/<security-group-id>
    ```
 
 3. Launch the instance with `--network-interface <network-interface-id>`. See [Launch an instance](../../compute/instances/launch.md).

@@ -7,7 +7,7 @@ parent: instance-storage
 nav_order: 10
 tags: [compute, storage, volumes, cli, api]
 related: [instance-storage]
-last_reviewed: 2026-11-05
+last_reviewed: 2026-11-15
 ---
 
 # Attach and detach volumes
@@ -27,8 +27,10 @@ Attach a volume to give an instance another disk. Detach it to move the disk and
    ```sh
    origin compute create-volume-attachment \
      --instance <instance-id> \
-     --volume <volume-id>
+     --volume //pvs.origincloudapis.eu/projects/<project>/zones/<zone>/volumes/<volume-id>
    ```
+
+   `--volume` takes the volume's full name: `//pvs.origincloudapis.eu/` followed by its `name`.
 
    To choose the guest device name, add `--device`, for example `--device vdb`. Names run from `vda` to `vdz`, and `vdc` is reserved by the platform. Omitted, the platform assigns the first free name.
 
@@ -83,17 +85,17 @@ You can't detach an instance's root disk.
 
 ## Using the API
 
-The `attachVolume` and `detachVolume` mutations return the attachment:
+The `attachVolume` and `detachVolume` mutations take the instance's full name, its `id` in the `compute` graph, and the volume's, its `id` in the `pvs` graph. Both must be in the same project and zone. They return the attachment:
 
 ```graphql
 mutation {
   compute {
     attachVolume(input: {
-      instanceUrn: "<instance-urn>"
-      volumeUrn: "<volume-urn>"
+      instance: "//compute.origincloudapis.eu/projects/<project-id>/zones/<zone>/instances/<instance-id>"
+      volume: "//pvs.origincloudapis.eu/projects/<project-id>/zones/<zone>/volumes/<volume-id>"
       deviceName: "vdb"
     }) {
-      urn
+      id
       deviceName
       status
     }

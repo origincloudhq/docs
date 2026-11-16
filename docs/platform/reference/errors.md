@@ -6,7 +6,7 @@ page_type: reference
 parent: reference
 nav_order: 20
 tags: [errors, reference, api]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Error codes
@@ -63,7 +63,7 @@ Branch on the `reason`. An error about a resource you can act on also names it i
 | `FORBIDDEN` | `PERMISSION_DENIED` |
 | `BAD_REQUEST` | `INVALID_ARGUMENT` |
 | `NOT_FOUND` | `NOT_FOUND` |
-| `CONFLICT`, `PRODUCT_UNAVAILABLE`, `PAYMENT_METHOD_REQUIRED` | `FAILED_PRECONDITION` |
+| `CONFLICT`, `PRODUCT_UNAVAILABLE`, `PAYMENT_METHOD_REQUIRED`, `LEGAL_ACCEPTANCE_REQUIRED` | `FAILED_PRECONDITION` |
 | `INSUFFICIENT_CAPACITY` | `RESOURCE_EXHAUSTED` |
 | `INTERNAL_SERVER_ERROR`, `SERVER_ERROR` | `INTERNAL` |
 | `SERVICE_UNAVAILABLE` | `UNAVAILABLE` |
@@ -76,7 +76,7 @@ The `origin` CLI prints the API's message and code in its failure envelope, and 
 
 Every code is one of two kinds, and the difference tells you who has to act:
 
-- **A refusal you can act on.** The platform understood the request and declined it, for a reason the message states: invalid input, missing permission, an exhausted quota, a missing payment method, no capacity right now. Nothing was created or changed. Fix what the message names, or wait where the code says so, then send the request again.
+- **A refusal you can act on.** The platform understood the request and declined it, for a reason the message states: invalid input, missing permission, an exhausted quota, a missing payment method, a legal document version not yet accepted, no capacity right now. Nothing was created or changed. Fix what the message names, or wait where the code says so, then send the request again.
 - **A platform fault.** Something inside the platform failed. The message is deliberately generic and names no internal detail. Nothing about your request is wrong; retry if the code is retryable, and otherwise report the `correlationId`.
 
 | Code | Kind | Retryable |
@@ -87,6 +87,7 @@ Every code is one of two kinds, and the difference tells you who has to act:
 | [`NOT_FOUND`](#not_found) | Refusal | No |
 | [`CONFLICT`](#conflict) | Refusal | No |
 | [`PAYMENT_METHOD_REQUIRED`](#payment_method_required) | Refusal | No |
+| [`LEGAL_ACCEPTANCE_REQUIRED`](#legal_acceptance_required) | Refusal | No |
 | [`PRODUCT_UNAVAILABLE`](#product_unavailable) | Refusal | No |
 | [`INSUFFICIENT_CAPACITY`](#insufficient_capacity) | Refusal | Yes |
 | [`SERVICE_UNAVAILABLE`](#service_unavailable) | Fault | Yes |
@@ -177,6 +178,17 @@ The codes below are ordered the same way: refusals first, then faults.
 - A project linked to a different billing account than the one you added a payment method to.
 
 **What to do:** Add a payment method to the project's billing account, then send the identical request again. See [Add a payment method](../billing/payment-method.md). Waiting doesn't help.
+
+## LEGAL_ACCEPTANCE_REQUIRED
+
+**Meaning:** The request would create or grow something that costs money, and the project's billing account hasn't accepted a version of Origin Cloud's legal documents that is in force. Nothing about the request is wrong, and resources that already run are not affected. The message is `this project's billing account has not accepted the current version of Origin Cloud's legal documents - accept them to create billable resources; running resources are not affected`.
+
+**Common causes:**
+
+- A new version of the Terms, the DPA, the SLA or the AUP took effect, and the billing account didn't accept it before then.
+- A billing account that existed before the first version of a document was published, and hasn't accepted it since.
+
+**What to do:** List the versions the billing account has yet to accept with `QueryLegalRequirements`, accept them with `AcceptLegalDocuments`, then send the identical request again. The refusal ends as soon as the acceptance is recorded. See [Legal documents and acceptance](../billing/legal-documents.md). A payment method doesn't help, and neither does waiting.
 
 ## PRODUCT_UNAVAILABLE
 

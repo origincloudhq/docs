@@ -7,7 +7,7 @@ page_type: task
 parent: private-zones
 nav_order: 10
 tags: [dns, vpc, cli]
-last_reviewed: 2026-11-08
+last_reviewed: 2026-11-15
 ---
 
 # Create a private zone and attach it to a VPC
@@ -33,10 +33,9 @@ Give the services in your VPCs names of your own, such as `db.corp.example`, tha
    ```text
    name        projects/my-project/hostedZones/hz-kk6T2DGfIwv
    state       ACTIVE
-   urn         urn:origin:cloud:dns::<org-id>:my-project:hz-kk6T2DGfIwv
    dnsName     corp.example
    visibility  PRIVATE
-   creator     user:<user-id>
+   creator     //iam.origincloudapis.eu/users/<user-id>
    createTime  2026-11-08T09:19:45.095279Z (0s ago)
    ```
 
@@ -57,19 +56,18 @@ Give the services in your VPCs names of your own, such as `db.corp.example`, tha
 
    ```sh
    origin dns create-vpc-attachment --hosted-zone <zone-id> \
-     --region eu-central1 --vpc <vpc-id>
+     --vpc //network.origincloudapis.eu/projects/<project-id>/regions/eu-central1/vpcs/<vpc-id>
    ```
 
    Example output:
 
    ```text
    name        projects/my-project/hostedZones/hz-kk6T2DGfIwv/vpcAttachments/vpc-h1YVgFoiOtm
-   urn         urn:origin:cloud:dns::<org-id>:my-project:hza-lK1GyvP0IBm
-   vpc         projects/my-project/regions/eu-central1/vpcs/vpc-h1YVgFoiOtm
+   vpc         //network.origincloudapis.eu/projects/my-project/regions/eu-central1/vpcs/vpc-h1YVgFoiOtm
    createTime  2026-11-08T09:19:45.491641Z (0s ago)
    ```
 
-   `--region` completes the VPC's id to its whole name; you can give the whole name, `projects/<project-id>/regions/eu-central1/vpcs/<vpc-id>`, instead.
+   `--vpc` takes the VPC's full name: `//network.origincloudapis.eu/` followed by the `name` `origin network list-vpcs` prints.
 
 2. From an instance in the VPC, check that the name resolves:
 
@@ -88,8 +86,8 @@ A VPC created moments ago may be refused with the retryable [`SERVICE_UNAVAILABL
 List the attachments of every zone in the project, narrowed to one VPC, with `-` in place of the zone:
 
 ```sh
-origin dns list-vpc-attachments --hosted-zone - --region eu-central1 \
-  --vpc <vpc-id> -o name
+origin dns list-vpc-attachments --hosted-zone - \
+  --vpc //network.origincloudapis.eu/projects/<project-id>/regions/eu-central1/vpcs/<vpc-id> -o name
 ```
 
 Example output:

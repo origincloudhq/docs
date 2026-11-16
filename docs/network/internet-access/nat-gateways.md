@@ -7,7 +7,7 @@ page_type: task
 parent: internet-access
 nav_order: 40
 tags: [networking, internet-access, cli, billing]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Give a private subnet internet access with a NAT gateway
@@ -37,8 +37,8 @@ A NAT gateway translates IPv4 only. It's billed per hour, in addition to the Flo
 2. Create the gateway in the public subnet, and note its id:
 
    ```sh
-   origin network create-nat-gateway --subnet <public-subnet-id> \
-     --floating-ip <floating-ip-id>
+   origin network create-nat-gateway --subnet //network.origincloudapis.eu/projects/<project>/zones/<zone>/subnets/<public-subnet-id> \
+     --floating-ip //network.origincloudapis.eu/projects/<project>/zones/<zone>/floatingIps/<floating-ip-id>
    ```
 
    The command is refused if the subnet isn't public, if the Floating IP is associated with a network interface, if the Floating IP already backs another NAT gateway, or if you're at your NAT gateway quota.
@@ -57,7 +57,7 @@ A NAT gateway translates IPv4 only. It's billed per hour, in addition to the Flo
 
    ```sh
    origin network create-route --route-table <route-table-id> \
-     --destination 0.0.0.0/0 --nat-gateway <nat-gateway-id>
+     --destination 0.0.0.0/0 --nat-gateway //network.origincloudapis.eu/projects/<project>/zones/<zone>/natGateways/<nat-gateway-id>
    ```
 
    A NAT gateway route must have the destination `0.0.0.0/0`. A `::/0` route to a NAT gateway is refused. The route table is regional and the NAT gateway zonal: if the gateway isn't in your default zone, give its whole `name`.
@@ -66,7 +66,7 @@ A NAT gateway translates IPv4 only. It's billed per hour, in addition to the Flo
 
    ```sh
    origin network create-route-table-association \
-     --subnet <private-subnet-id> --route-table <route-table-id>
+     --subnet <private-subnet-id> --route-table //network.origincloudapis.eu/projects/<project>/regions/<region>/routeTables/<route-table-id>
    ```
 
 4. Verify from an instance in the private subnet that it reaches the internet as the gateway's address, for example by calling a service that shows the caller's public address. The change applies to new connections within a few seconds.

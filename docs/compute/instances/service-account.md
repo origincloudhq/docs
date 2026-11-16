@@ -8,7 +8,7 @@ parent: instances
 nav_order: 85
 tags: [compute, instances, iam, service-accounts, api]
 related: [instances-launch]
-last_reviewed: 2026-11-08
+last_reviewed: 2026-11-15
 ---
 
 # Run an instance as a service account
@@ -34,11 +34,11 @@ sequenceDiagram
 
 - A `WORKLOAD` service account of the instance's organization. Create one with `type` set to `WORKLOAD`; see [Use service accounts](../../iam/service-accounts.md).
 - The roles the software needs, bound to that service account. It can do what its role bindings allow, and nothing else.
-- `iam.service_account.act_as` on the organization, which [`roles/iam/service-account-user`](../../iam/roles.md#rolesiamservice-account-user) grants, besides the permission to launch or update the instance. You can only hand an instance an identity you could use yourself.
+- `iam.service_account.act_as` on the organization, which [`roles/iam.service-account-user`](../../iam/roles.md#rolesiamservice-account-user) grants, besides the permission to launch or update the instance. You can only hand an instance an identity you could use yourself.
 
 ## Launch the instance with the service account
 
-1. Launch the instance with its `serviceAccount` set to the service account's resource name, `organizations/<org-id>/serviceAccounts/<service-account-id>`, alongside the fields described in [Launch an instance](launch.md).
+1. Launch the instance with its `serviceAccount` set to the service account's full name, `//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>`, alongside the fields described in [Launch an instance](launch.md).
 
    ```sh
    curl -s -X POST \
@@ -46,11 +46,11 @@ sequenceDiagram
      -H "Authorization: Bearer $(origin id token --raw)" \
      -H "Content-Type: application/json" \
      -d '{
-       "instanceType": "instanceTypes/gp1.core.2",
-       "imageFamily": "imageFamilies/<family>",
-       "keyPair": "projects/<project-id>/keyPairs/<key-pair-id>",
-       "networkInterfaces": ["projects/<project-id>/zones/eu-central1-az1/networkInterfaces/<interface-id>"],
-       "serviceAccount": "organizations/<org-id>/serviceAccounts/<service-account-id>"
+       "instanceType": "//compute.origincloudapis.eu/instanceTypes/gp1.core.2",
+       "imageFamily": "//compute.origincloudapis.eu/imageFamilies/<family>",
+       "keyPair": "//compute.origincloudapis.eu/projects/<project-id>/keyPairs/<key-pair-id>",
+       "networkInterfaces": ["//network.origincloudapis.eu/projects/<project-id>/zones/eu-central1-az1/networkInterfaces/<interface-id>"],
+       "serviceAccount": "//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>"
      }'
    ```
 
@@ -107,14 +107,14 @@ origin compute list-instances
 
 ## Change or remove the service account
 
-Update the instance with `serviceAccount` in the update mask: a resource name sets or replaces the service account, an empty value removes it. Setting one needs `iam.service_account.act_as`; removing one doesn't. A terminated instance's service account can't change.
+Update the instance with `serviceAccount` in the update mask: a full name sets or replaces the service account, an empty value removes it. Setting one needs `iam.service_account.act_as`; removing one doesn't. A terminated instance's service account can't change.
 
 ```sh
 curl -s -X PATCH \
   "https://compute.origincloudapis.eu/v1beta1/projects/<project-id>/zones/eu-central1-az1/instances/<instance-id>?updateMask=serviceAccount" \
   -H "Authorization: Bearer $(origin id token --raw)" \
   -H "Content-Type: application/json" \
-  -d '{"serviceAccount": "organizations/<org-id>/serviceAccounts/<service-account-id>"}'
+  -d '{"serviceAccount": "//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>"}'
 ```
 
 A credential issued before the change is refused from the moment the instance shows the change. So is one of an instance that stopped, or one of a service account that was deleted.

@@ -6,7 +6,7 @@ page_type: concept
 parent: traffic-control
 nav_order: 10
 tags: [networking, security]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Security groups
@@ -89,7 +89,7 @@ A security group association puts an interface in a group, also while it's attac
 ```sh
 origin network create-security-group-association \
   --network-interface <network-interface-id> \
-  --security-group <web-security-group-id>
+  --security-group //network.origincloudapis.eu/projects/<project>/regions/<region>/securityGroups/<web-security-group-id>
 ```
 
 To take the interface out of a group, delete the association. Its id is the security group's id:

@@ -7,7 +7,7 @@ page_type: task
 parent: home
 nav_order: 40
 tags: [iam, organizations, cli, api]
-last_reviewed: 2026-11-04
+last_reviewed: 2026-11-15
 ---
 
 # Manage organization members
@@ -19,7 +19,7 @@ Invites and member removal are in the console's **Access** page and the GraphQL 
 ## Before you begin
 
 - To invite, remove or cancel an invite: an org-wide `roles/owner` assignment. You can only invite with a role you could assign yourself, and only remove a member whose every role you could revoke. See [Who can assign a role](access-model.md#who-can-assign-a-role).
-- To list members and invites: an org-wide `roles/owner`, `roles/viewer` or `roles/iam/editor` assignment.
+- To list members and invites: an org-wide `roles/owner`, `roles/viewer` or `roles/iam.editor` assignment.
 
 ## Invite a member
 
@@ -36,12 +36,12 @@ Invites and member removal are in the console's **Access** page and the GraphQL 
 
 3. Verify the invite. An existing account appears among the principals on the **Access** page; a pending invite appears under the pending invites.
 
-Invites are org-wide only. To give someone access to a single project, ask them to sign up first, then [bind a project-scoped role](assign-roles.md) to `user:<email>`.
+Invites are org-wide only. To give someone access to a single project, ask them to sign up first, then [bind a project-scoped role](assign-roles.md) to their full name, which [`lookup-user`](reference/cli.md#lookup-user) finds by their address.
 
 ## List members and invites
 
 - The **Access** page shows every principal with a role, at any scope, with its grants, and the pending invites: the email address, role, who invited them and when. An invite disappears from the list once it's applied or revoked.
-- [`list-role-bindings`](reference/cli.md#list-role-bindings) lists the organization's role bindings: each member with one role, org-wide or in one project. Add `--member user:<email>` for one member's bindings, or `--project projects/<project-id>` for one project's.
+- [`list-role-bindings`](reference/cli.md#list-role-bindings) lists the organization's role bindings: each member with one role, org-wide or in one project. Add `--member //iam.origincloudapis.eu/users/<user-id>` for one member's bindings, or `--project //resourcemanager.origincloudapis.eu/projects/<project-id>` for one project's.
 
   ```sh
   origin iam list-role-bindings --organization <org-id>
@@ -71,15 +71,15 @@ Removing a member acts only on role bindings, so it doesn't cancel a pending inv
 
 ## Using the API
 
-The mutations are `inviteMember`, `removeMember` and `revokeInvite`; the queries are `orgMembers` and `orgInvites`, all in the `iam` namespace. `orgRoleAssignments` returns the same data as `orgMembers` with one entry per assignment, including its project scope and when it was created. For the full list, see the [IAM reference](reference/index.md).
+The mutations are `inviteMember`, `removeMember` and `revokeInvite`; the queries are `orgMembers` and `orgInvites`, all in the `iam` namespace. `orgRoleAssignments` returns the same data as `orgMembers` with one entry per assignment, including its project scope and when it was created. They name a member and a role by their full names, and `removeMember` takes the member's, as `member`; `revokeInvite` takes the invite's `id`. For the full list, see the [IAM reference](reference/index.md).
 
 ```graphql
 mutation {
   iam {
     inviteMember(input: {
-      orgId: "<org-id>"
+      organisation: "//resourcemanager.origincloudapis.eu/organizations/<org-id>"
       email: "jane@example.com"
-      roleUrn: "urn:origin:cloud:iam::::builtin/role/roles/viewer"
+      role: "//iam.origincloudapis.eu/roles/viewer"
     })
   }
 }

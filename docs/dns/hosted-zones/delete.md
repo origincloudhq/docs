@@ -6,7 +6,7 @@ page_type: task
 parent: hosted-zones
 nav_order: 30
 tags: [dns, cli]
-last_reviewed: 2026-11-08
+last_reviewed: 2026-11-15
 ---
 
 # Delete a hosted zone
@@ -38,7 +38,7 @@ error: CONFLICT: zone hz-Oqu2Vgc2nt6 still holds 4 record set(s); delete them fi
    ```sh
    deletions=()
    for name in $(origin dns list-record-sets --hosted-zone <zone-id> -o name); do
-     deletions+=(--deletion "$name")
+     deletions+=(--deletion "//dns.origincloudapis.eu/$name")
    done
    origin dns batch-change-record-sets --hosted-zone <zone-id> "${deletions[@]}"
    ```

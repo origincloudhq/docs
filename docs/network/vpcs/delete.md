@@ -6,7 +6,7 @@ page_type: task
 parent: vpcs
 nav_order: 50
 tags: [networking, vpc, cli]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Delete a subnet or VPC
@@ -43,7 +43,7 @@ Neither deletes a DNS policy, because a policy belongs to the project and can se
 2. Verify that the subnet no longer appears:
 
    ```sh
-   origin network list-subnets --vpc <vpc-id>
+   origin network list-subnets --vpc //network.origincloudapis.eu/projects/<project>/regions/<region>/vpcs/<vpc-id>
    ```
 
 Deleting a subnet doesn't return its range to the VPC, even if it was the VPC's last subnet. A new subnet in the same VPC gets a different range.
@@ -53,11 +53,11 @@ Deleting a subnet doesn't return its range to the VPC, even if it was the VPC's 
 1. Delete what the VPC still holds. List each kind by VPC:
 
    ```sh
-   origin network list-subnets --vpc <vpc-id>
-   origin network list-route-tables --vpc <vpc-id>
-   origin network list-acls --vpc <vpc-id>
-   origin network list-security-groups --vpc <vpc-id>
-   origin network list-internet-gateways --vpc <vpc-id>
+   origin network list-subnets --vpc //network.origincloudapis.eu/projects/<project>/regions/<region>/vpcs/<vpc-id>
+   origin network list-route-tables --vpc //network.origincloudapis.eu/projects/<project>/regions/<region>/vpcs/<vpc-id>
+   origin network list-acls --vpc //network.origincloudapis.eu/projects/<project>/regions/<region>/vpcs/<vpc-id>
+   origin network list-security-groups --vpc //network.origincloudapis.eu/projects/<project>/regions/<region>/vpcs/<vpc-id>
+   origin network list-internet-gateways --vpc //network.origincloudapis.eu/projects/<project>/regions/<region>/vpcs/<vpc-id>
    ```
 
    Delete each with its `delete-` command and `--yes`, in the order above. An Internet Gateway can be deleted once no route names it; see [Create and delete an Internet Gateway](../internet-access/internet-gateways.md#delete-an-internet-gateway).

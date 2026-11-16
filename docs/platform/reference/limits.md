@@ -32,7 +32,7 @@ The `organisationQuota` query returns each limit together with current usage. Us
 ```graphql
 query {
   admin {
-    organisationQuota(orgId: "<org-id>") {
+    organisationQuota(organisation: "//resourcemanager.origincloudapis.eu/organizations/<org-id>") {
       maxInstances      currentInstances
       maxVcpu           currentVcpu
       maxVolumeGib      currentVolumeGib
@@ -45,7 +45,7 @@ query {
 }
 ```
 
-`projectQuota(orgId: "<org-id>", projectId: "<project-id>")` returns the same fields for one project. There, a `max*` field is `null` when the project has no budget for that dimension.
+`projectQuota(project: "//resourcemanager.origincloudapis.eu/projects/<project-id>")` returns the same fields for one project. There, a `max*` field is `null` when the project has no budget for that dimension.
 
 With the CLI, read the organization's quota and a project's budgets, each with its usage:
 
@@ -71,8 +71,7 @@ The flags are `--max-instances`, `--max-vcpu`, `--max-volume-gib`, `--max-vpcs` 
 mutation {
   admin {
     setProjectQuotaLimit(input: {
-      orgId: "<org-id>"
-      projectId: "<project-id>"
+      project: "//resourcemanager.origincloudapis.eu/projects/<project-id>"
       dimension: MAX_VCPU
       value: 16
     }) {

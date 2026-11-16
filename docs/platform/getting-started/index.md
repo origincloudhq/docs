@@ -7,7 +7,7 @@ page_type: tutorial
 parent: home
 nav_order: 10
 tags: [getting-started, cli, organizations, instances]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Get started with Origin Cloud
@@ -168,29 +168,29 @@ An instance's network interface lives in a subnet. For the instance to be reacha
 2. Create a subnet in it:
 
    ```sh
-   origin network create-subnet --vpc <vpc-id>
+   origin network create-subnet --vpc //network.origincloudapis.eu/projects/<project>/regions/<region>/vpcs/<vpc-id>
    ```
 
 3. Create the VPC's internet gateway:
 
    ```sh
-   origin network create-internet-gateway --vpc <vpc-id>
+   origin network create-internet-gateway --vpc //network.origincloudapis.eu/projects/<project>/regions/<region>/vpcs/<vpc-id>
    ```
 
 4. Create a route table, add a default route to the gateway, and associate the table with the subnet:
 
    ```sh
-   origin network create-route-table --vpc <vpc-id>
+   origin network create-route-table --vpc //network.origincloudapis.eu/projects/<project>/regions/<region>/vpcs/<vpc-id>
    origin network create-route --route-table <route-table-id> \
-     --destination 0.0.0.0/0 --internet-gateway <internet-gateway-id>
+     --destination 0.0.0.0/0 --internet-gateway //network.origincloudapis.eu/projects/<project>/regions/<region>/internetGateways/<internet-gateway-id>
    origin network create-route-table-association --subnet <subnet-id> \
-     --route-table <route-table-id>
+     --route-table //network.origincloudapis.eu/projects/<project>/regions/<region>/routeTables/<route-table-id>
    ```
 
 5. Create a security group, and allow SSH in and all traffic out:
 
    ```sh
-   origin network create-security-group --vpc <vpc-id> --tag origin:name=ssh
+   origin network create-security-group --vpc //network.origincloudapis.eu/projects/<project>/regions/<region>/vpcs/<vpc-id> --tag origin:name=ssh
    origin network create-security-group-rule --security-group <security-group-id> \
      --direction INGRESS --protocol TCP --first-port 22 --cidr-block 0.0.0.0/0
    origin network create-security-group-rule --security-group <security-group-id> \
@@ -200,10 +200,10 @@ An instance's network interface lives in a subnet. For the instance to be reacha
 6. Create the instance's network interface in the subnet, and put it in the security group:
 
    ```sh
-   origin network create-network-interface --subnet <subnet-id>
+   origin network create-network-interface --subnet //network.origincloudapis.eu/projects/<project>/zones/<zone>/subnets/<subnet-id>
    origin network create-security-group-association \
      --network-interface <network-interface-id> \
-     --security-group <security-group-id>
+     --security-group //network.origincloudapis.eu/projects/<project>/regions/<region>/securityGroups/<security-group-id>
    ```
 
 7. Allocate a Floating IP, a public IPv4 address, and associate it with the interface. Note the Floating IP's `address`:
@@ -211,7 +211,7 @@ An instance's network interface lives in a subnet. For the instance to be reacha
    ```sh
    origin network create-floating-ip
    origin network create-floating-ip-association --floating-ip <floating-ip-id> \
-     --network-interface <network-interface-id>
+     --network-interface //network.origincloudapis.eu/projects/<project>/zones/<zone>/networkInterfaces/<network-interface-id>
    ```
 
    If the allocation is refused, the public IP quota may be used up. See [Limits](../reference/limits.md#network).
@@ -226,7 +226,7 @@ For what each part does, see [Create a VPC and subnets](../../network/vpcs/creat
    origin compute list-instance-types
    ```
 
-2. Choose an image family, such as an Ubuntu release. Pick one whose `available` is `true`, and note its id, the last segment of its `name`:
+2. Choose an image family, such as an Ubuntu release. Pick one whose `available` is `true`, and note its `name`:
 
    ```sh
    origin compute list-image-families
@@ -236,12 +236,14 @@ For what each part does, see [Create a VPC and subnets](../../network/vpcs/creat
 
    ```sh
    origin compute create-instance \
-     --instance-type gp1.core.2 \
-     --image-family <image-family-id> \
-     --key-pair <key-pair-id> \
-     --network-interface <network-interface-id> \
+     --instance-type //compute.origincloudapis.eu/instanceTypes/gp1.core.2 \
+     --image-family //compute.origincloudapis.eu/imageFamilies/<image-family-id> \
+     --key-pair //compute.origincloudapis.eu/projects/<project>/keyPairs/<key-pair-id> \
+     --network-interface //network.origincloudapis.eu/projects/<project>/zones/<zone>/networkInterfaces/<network-interface-id> \
      --tag origin:name=getting-started
    ```
+
+   A flag that names another resource takes its full name: its service's host followed by the `name` its command printed.
 
 4. Note the instance's id and its `loginUser` in the output.
 
@@ -250,12 +252,12 @@ For what each part does, see [Create a VPC and subnets](../../network/vpcs/creat
    ```json
    {
      "name": "projects/getting-started/zones/eu-central1-az1/instances/i-WsGD79fcM9y",
-     "instanceType": "instanceTypes/gp1.core.2",
+     "instanceType": "//compute.origincloudapis.eu/instanceTypes/gp1.core.2",
      "loginUser": "cloud",
      "state": "RUNNING",
      "interfaceAddresses": [
        {
-         "networkInterface": "projects/getting-started/zones/eu-central1-az1/networkInterfaces/nic-OFNeQKPRn3l",
+         "networkInterface": "//network.origincloudapis.eu/projects/getting-started/zones/eu-central1-az1/networkInterfaces/nic-OFNeQKPRn3l",
          "ipv4Address": "10.0.0.5",
          "ipv6Address": "2001:db8::5"
        }

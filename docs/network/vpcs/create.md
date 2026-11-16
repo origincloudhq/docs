@@ -6,7 +6,7 @@ page_type: task
 parent: vpcs
 nav_order: 40
 tags: [networking, vpc, cli]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Create a VPC and subnets
@@ -31,7 +31,7 @@ Creating VPCs and subnets doesn't require a payment method.
 
    `--tag origin:name=frontend` names the VPC; leave it out for an unnamed VPC. See [Name and tag network resources](name-and-tag.md).
 
-2. Note the VPC's id, the last segment of its `name` in the output. The commands below take it as `--vpc <vpc-id>`; see [Name resources](../../platform/access/cli.md#name-resources). Its `ipv4CidrBlock` shows the range, and `subnetIpv4PrefixLength` the size every subnet gets. To read it again:
+2. Note the VPC's `name` in the output. A command that acts on the VPC takes its id, the last segment of its `name`, as `--vpc <vpc-id>`; a command that refers to it from another resource, such as `create-subnet --vpc`, takes its full name: `//network.origincloudapis.eu/` followed by its `name`. See [Name resources](../../platform/access/cli.md#name-resources). Its `ipv4CidrBlock` shows the range, and `subnetIpv4PrefixLength` the size every subnet gets. To read it again:
 
    ```sh
    origin network get-vpc --vpc <vpc-id>
@@ -44,7 +44,7 @@ The VPC has no subnet, route table, network ACL, security group or Internet Gate
 1. Create the subnet in your default zone:
 
    ```sh
-   origin network create-subnet --vpc <vpc-id>
+   origin network create-subnet --vpc //network.origincloudapis.eu/projects/<project>/regions/<region>/vpcs/<vpc-id>
    ```
 
    The platform picks the subnet's ranges from the VPC. If the VPC has no room left, the command is refused; see [When address space runs out](addressing.md#when-address-space-runs-out).
@@ -82,7 +82,7 @@ flowchart LR
 2. Create the VPC's Internet Gateway, and note its id:
 
    ```sh
-   origin network create-internet-gateway --vpc <vpc-id>
+   origin network create-internet-gateway --vpc //network.origincloudapis.eu/projects/<project>/regions/<region>/vpcs/<vpc-id>
    ```
 
    Creating it adds no route to a VPC you created. See [Create and delete an Internet Gateway](../internet-access/internet-gateways.md).
@@ -90,21 +90,21 @@ flowchart LR
 3. Create a route table, and note its id. Its `localRoutes` are the VPC's own ranges, which every table reaches directly.
 
    ```sh
-   origin network create-route-table --vpc <vpc-id>
+   origin network create-route-table --vpc //network.origincloudapis.eu/projects/<project>/regions/<region>/vpcs/<vpc-id>
    ```
 
 4. Add a default route to the gateway:
 
    ```sh
    origin network create-route --route-table <route-table-id> \
-     --destination 0.0.0.0/0 --internet-gateway <internet-gateway-id>
+     --destination 0.0.0.0/0 --internet-gateway //network.origincloudapis.eu/projects/<project>/regions/<region>/internetGateways/<internet-gateway-id>
    ```
 
 5. Associate the subnet with the table:
 
    ```sh
    origin network create-route-table-association --subnet <subnet-id> \
-     --route-table <route-table-id>
+     --route-table //network.origincloudapis.eu/projects/<project>/regions/<region>/routeTables/<route-table-id>
    ```
 
    For more on routes, see [Route tables](../internet-access/route-tables.md).
@@ -112,7 +112,7 @@ flowchart LR
 6. Optional: filter the subnet's edge with a network ACL. Create one, add rules, and associate it with the subnet. An ACL with no rules drops everything, and ACLs are stateless, so allow the replies too. For example, to allow all traffic in both directions and both address families:
 
    ```sh
-   origin network create-acl --vpc <vpc-id>
+   origin network create-acl --vpc //network.origincloudapis.eu/projects/<project>/regions/<region>/vpcs/<vpc-id>
    origin network create-acl-rule --acl <acl-id> --direction INGRESS \
      --priority 100 --protocol ALL --cidr-block 0.0.0.0/0 --action ACCEPT
    origin network create-acl-rule --acl <acl-id> --direction INGRESS \
@@ -121,7 +121,7 @@ flowchart LR
      --priority 100 --protocol ALL --cidr-block 0.0.0.0/0 --action ACCEPT
    origin network create-acl-rule --acl <acl-id> --direction EGRESS \
      --priority 110 --protocol ALL --cidr-block ::/0 --action ACCEPT
-   origin network create-acl-association --subnet <subnet-id> --acl <acl-id>
+   origin network create-acl-association --subnet <subnet-id> --acl //network.origincloudapis.eu/projects/<project>/regions/<region>/acls/<acl-id>
    ```
 
    See [Network ACLs](../traffic-control/network-acls.md).
@@ -129,7 +129,7 @@ flowchart LR
 7. Create a security group and add its rules. A network interface in no security group passes no traffic. For example, to allow SSH and ping in, traffic between the group's members, and everything out:
 
    ```sh
-   origin network create-security-group --vpc <vpc-id> --tag origin:name=web
+   origin network create-security-group --vpc //network.origincloudapis.eu/projects/<project>/regions/<region>/vpcs/<vpc-id> --tag origin:name=web
    origin network create-security-group-rule --security-group <security-group-id> \
      --direction INGRESS --protocol TCP --first-port 22 --cidr-block 0.0.0.0/0
    origin network create-security-group-rule --security-group <security-group-id> \
@@ -147,10 +147,10 @@ flowchart LR
 8. Create a network interface in the subnet, note its id, and associate the security group with it:
 
    ```sh
-   origin network create-network-interface --subnet <subnet-id>
+   origin network create-network-interface --subnet //network.origincloudapis.eu/projects/<project>/zones/<zone>/subnets/<subnet-id>
    origin network create-security-group-association \
      --network-interface <network-interface-id> \
-     --security-group <security-group-id>
+     --security-group //network.origincloudapis.eu/projects/<project>/regions/<region>/securityGroups/<security-group-id>
    ```
 
    See [Network interfaces](network-interfaces.md).
@@ -160,7 +160,7 @@ flowchart LR
    ```sh
    origin network create-floating-ip
    origin network create-floating-ip-association --floating-ip <floating-ip-id> \
-     --network-interface <network-interface-id>
+     --network-interface //network.origincloudapis.eu/projects/<project>/zones/<zone>/networkInterfaces/<network-interface-id>
    ```
 
    See [Floating IPs](../internet-access/floating-ips.md).

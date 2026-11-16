@@ -6,7 +6,7 @@ page_type: concept
 parent: home
 nav_order: 70
 tags: [iam, audit, api]
-last_reviewed: 2026-11-13
+last_reviewed: 2026-11-15
 ---
 
 # Audit log
@@ -19,7 +19,7 @@ The audit log records these fourteen actions. Each one is recorded when the chan
 
 | Action | Recorded when | Target |
 |---|---|---|
-| `iam.role.assign` | A role is assigned, including when an invite grants a role to an existing account, and when a new organization binds a service agent (actor `platform`) | The principal |
+| `iam.role.assign` | A role is assigned, including when an invite grants a role to an existing account, and when a new organization binds a service agent (the platform is the actor) | The principal |
 | `iam.role.revoke` | A role is revoked, including when its organization is deleted | The principal |
 | `iam.member.remove` | A member is removed, or a revoked service account's role assignments are removed (one entry in each organization it held roles in) | The principal |
 | `iam.org_invite.create` | A pending invite is stored for an email address without an account | The email address |
@@ -27,13 +27,14 @@ The audit log records these fourteen actions. Each one is recorded when the chan
 | `iam.service_account.create` | A service account is created | The service account's principal |
 | `iam.service_account.revoke` | A service account is revoked | The service account's principal |
 | `iam.service_account.rotate_secret` | A service account's client secret is rotated | The service account's principal; `details` holds the new secret's expiry |
-| `iam.service_account.secret_expired` | A service account's client secret expired and the platform stopped accepting it; the actor is the platform (`platform` in the REST API) | The service account's principal; `details` holds the expiry |
+| `iam.service_account.secret_expired` | A service account's client secret expired and the platform stopped accepting it; the actor is the platform | The service account's principal; `details` holds the expiry |
 | `iam.federated_credential.create` | A federated credential is created on a service account | The federated credential's name; `details` holds its issuer, audience, conditions and service account |
 | `iam.federated_credential.delete` | A federated credential is deleted | The federated credential's name; `details` names its service account |
 | `iam.federated_credential.exchange` | A CI job's OIDC token is exchanged for the service account's access token through a federated credential; the actor is the service account | The federated credential's name; `details` holds the job token's issuer and subject, the run's claims (`run`), and the access token's id and expiry |
 | `compute.instance.service_account.attach` | An instance is launched as a service account, or updated to run as one (replacing one records a detach, then an attach) | The instance's URN; `details` names the service account |
 | `compute.instance.service_account.detach` | An instance's service account is removed or replaced | The instance's URN; `details` names the service account |
 
+The KMS records every change to a key and every use of it but reading a public key, each answered only once its entry is written: `kms.keys.create`, `kms.keys.enable`, `kms.keys.disable`, `kms.keys.rotate`, `kms.keys.updateTags`, `kms.keys.scheduleDeletion`, `kms.keys.cancelDeletion`, `kms.keys.destroy` (the platform destroying a deleted key's material at its purge time, with the platform as the actor), `kms.keys.encrypt`, `kms.keys.decrypt`, `kms.keys.generateDataKey`, `kms.keys.sign`, and a key's grants: `kms.keys.createGrant`, `kms.keys.renewGrant` and `kms.keys.retireGrant`, whose `details.grant` names the grant, its host and when it expires. The target is the key's full name, `//kms.origincloudapis.eu/projects/…/keys/…`; `details` hold its `region`, the key `version` used or made, and the `encryption_context`, never a plaintext or a data key. An encrypt, decrypt, data key or sign the KMS refuses on one of your keys is recorded too, with outcome `FAILED` and the `reason` in `details`: `does_not_open` (the ciphertext doesn't decrypt under the key and that context), `key_not_enabled`, `version_unavailable` (the key version's material is destroyed) or `invalid_request`. So is a grant the KMS refuses to make or renew, and a host's decryption under a grant it refuses: `no_live_grant`, `grantee_not_proven`, `grantee_not_enrolled` (the host the grant names isn't enrolled with the platform), `grant_expired`, `grant_limit_reached` (the key holds the most grants it may in the zone) or `grant_host_limit_reached` (the most it may for that host), besides the reasons above. A request naming a key that doesn't exist, or that isn't in the caller's project, is recorded against no key. See the [KMS guide](../kms/index.md).
 
 The audit log doesn't record organization or project lifecycle changes, other resource changes such as launching an instance without a service account, or refused requests, except a KMS key's refused uses. Writing an entry never blocks the change itself: if an entry can't be written, the change still takes effect, so in rare cases an action is missing from the log. The two `compute.instance.service_account` actions are recorded with the change itself and reach the log within seconds; a change that is refused records nothing. An exchange through a federated credential is the other way round: no access token is issued unless its entry is written, and it reaches the log within seconds.
 
@@ -43,15 +44,14 @@ Each entry has these fields.
 
 | Field | Description |
 |---|---|
-| `id` | Unique ID of the entry. |
-| `orgId` | The organization the action happened in. |
-| `projectId` | The project, for a project-scoped role assignment or revocation. Otherwise `null`. |
-| `actor` | The principal that performed the action. |
+| `id` | The entry's full name, `//iam.origincloudapis.eu/organizations/<org-id>/auditLogEntries/<entry-id>`. |
+| `project` | The project's full name, for a project-scoped role assignment or revocation. Otherwise `null`. The organization the action happened in is the one in `id`. |
+| `actor` | Who performed the action, by full name: a principal such as `//iam.origincloudapis.eu/users/<user-id>`, or, for an action the platform took on its own account, the platform component that took it, such as `//iam.origincloudapis.eu/services/kms` for the KMS destroying a deleted key's material. |
 | `action` | The action key from the table above. |
 | `target` | What the action was applied to, as listed in the table above. |
 | `outcome` | `SUCCESS` for an action that was made; `FAILED` for one that was attempted and refused, such as a KMS decrypt under the wrong encryption context, with the reason in `details`. |
 | `occurredAt` | When the action happened, as an RFC 3339 timestamp. |
-| `details` | Action-specific context as a JSON string, for example the role URN that was assigned. For a user actor or target, it also holds the verified email address the account had when the change was made, as `actor_verified_email` and `target_verified_email`, when one was verified. For a change made by a CI job, it also holds `federated` (see [Changes made by a CI job](#changes-made-by-a-ci-job)). |
+| `details` | Action-specific context as a JSON string, for example the role that was assigned, as `role`, by its public name such as `roles/viewer`. For a user actor or target, it also holds the verified email address the account had when the change was made, as `actor_verified_email` and `target_verified_email`, when one was verified. For a change made by a CI job, it also holds `federated` (see [Changes made by a CI job](#changes-made-by-a-ci-job)). |
 
 ## Changes made by a CI job
 
@@ -80,7 +80,7 @@ Reading the audit log requires the `iam.audit_log.list` permission on the organi
 
 ## Paging through the log
 
-`auditLogEntries` returns one page of entries, newest first, with a stable order for entries recorded at the same moment. You can read the whole organization's log, or narrow it to the entries of one project with `projectId`. Only project-scoped role assignments and revocations carry a project, so a narrowed query leaves out every other action.
+`auditLogEntries` returns one page of entries, newest first, with a stable order for entries recorded at the same moment. You can read the whole organization's log, or narrow it to the entries of one project with `project`, its full name. Only project-scoped role assignments and revocations carry a project, so a narrowed query leaves out every other action.
 
 The page tells you where you are:
 
@@ -110,7 +110,11 @@ flowchart TD
 ```graphql
 query {
   iam {
-    auditLogEntries(input: { orgId: "<org-id>", offset: 0, limit: 100 }) {
+    auditLogEntries(input: {
+      organisation: "//resourcemanager.origincloudapis.eu/organizations/<org-id>"
+      offset: 0
+      limit: 100
+    }) {
       entries {
         id
         actor
@@ -136,7 +140,7 @@ The IAM REST API serves the audit log too, as a preview (`v1beta1`) that may sti
 It differs from the GraphQL query in three ways:
 
 - It serves a recent window of the log: 90 days by default, which the platform can set longer. Each response says where the window starts in `windowStartTime`, and an older entry is answered with `NOT_FOUND`. The GraphQL query serves the whole log.
-- The actor and the target are written as members, as they were when the change was made: `user:<email>` with the verified address the account had then, `userId:<user-id>` when none was recorded, `serviceAccount:<id>`, `serviceAgent:<name>` for a platform service agent acting in your organization ([Service agents](service-agents.md)), or `platform` for a change the platform made itself. A later change of address doesn't change an entry.
+- The actor and a target that is a principal are full names, as a role binding's `member` is: `//iam.origincloudapis.eu/users/<user-id>`, `//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<id>`, `//iam.origincloudapis.eu/serviceAgents/<name>` for a platform service agent acting in your organization ([Service agents](service-agents.md)), or `//iam.origincloudapis.eu/services/<service>` for a change the platform made itself, such as `//iam.origincloudapis.eu/services/kms` for the KMS destroying a deleted key's material. An entry names an account, never an address, so a later change of address doesn't change it. The `project` is the project's full name, `//resourcemanager.origincloudapis.eu/projects/<project-id>`, and so is the `project` filter.
 - A role in `details` has its role name, such as `roles/iam.editor`, not its URN.
 
 ## Related

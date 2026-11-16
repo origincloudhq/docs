@@ -6,7 +6,7 @@ page_type: task
 parent: volumes
 nav_order: 50
 tags: [storage, volumes, cli, api]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Resize a volume
@@ -49,7 +49,7 @@ Grow a volume when it runs out of space. You can grow a volume while it's attach
    mutation {
      pvs {
        resizeVolume(input: {
-         volumeUrn: "<volume-urn>"
+         volume: "//pvs.origincloudapis.eu/projects/<project-id>/zones/<zone>/volumes/<volume-id>"
          sizeInGib: 120
        }) {
          accepted

@@ -7,7 +7,7 @@ page_type: task
 parent: home
 nav_order: 57
 tags: [iam, service-accounts, security, cli]
-last_reviewed: 2026-11-12
+last_reviewed: 2026-11-15
 ---
 
 # Log in as a service account with your identity provider's token
@@ -60,14 +60,14 @@ Get a token from your identity provider and write it to a file, then log in with
 ```sh
 origin id login \
   --oidc-token-file token \
-  --service-account organizations/<org-id>/serviceAccounts/<service-account-id>
+  --service-account //iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>
 ```
 
 ```text
-Logged in as organizations/<org-id>/serviceAccounts/<service-account-id>.
+Logged in as //iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>.
 ```
 
-Every command after that runs as the service account, with nothing set in the environment, until you log in again. `--service-account` names the account to assume. Without it, the STS assumes the account whose federated credential trusts the token, and refuses a token that more than one credential trusts.
+Every command after that runs as the service account, with nothing set in the environment, until you log in again. `--service-account` names the account to assume, by its full name. Without it, the STS assumes the account whose federated credential trusts the token, and refuses a token that more than one credential trusts.
 
 The service account's access token lasts 15 minutes. When it's about to expire, the next command reads the file again and assumes the account again. A file that your identity provider or a credential helper keeps current therefore keeps the login going. `--oidc-token-file -` reads the token from standard input instead. That token is read once, so log in again once its access token expires.
 
@@ -78,11 +78,11 @@ The service account's access token lasts 15 minutes. When it's about to expire, 
 ```sh
 origin sts assume-service-account \
   --oidc-token-file token \
-  --service-account organizations/<org-id>/serviceAccounts/<service-account-id> \
+  --service-account //iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id> \
   --lifetime 10m
 ```
 
-It prints the access token in `accessToken`, with `expireTime`, the `serviceAccount` and the `federatedCredential` it went through. `--lifetime` takes from `60s` to `1h`, and the default is 15 minutes. Neither command needs you to be logged in, because the STS authenticates no caller: the token is the proof.
+It prints the access token in `accessToken`, with `expireTime`, and the full names of the `serviceAccount` and of the `federatedCredential` it went through. `--service-account` takes the account's full name. `--lifetime` takes from `60s` to `1h`, and the default is 15 minutes. Neither command needs you to be logged in, because the STS authenticates no caller: the token is the proof.
 
 ## When the exchange is refused
 

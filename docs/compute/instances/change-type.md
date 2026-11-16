@@ -8,7 +8,7 @@ parent: instances
 nav_order: 80
 tags: [compute, instances, cli, api]
 related: [instances-instance-types, instances-stop-start]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Change an instance's type
@@ -35,10 +35,10 @@ Change an instance's type to resize it, or to move it off a type that is no long
 
    ```sh
    origin compute update-instance --instance <instance-id> \
-     --instance-type gp1.core.4
+     --instance-type //compute.origincloudapis.eu/instanceTypes/gp1.core.4
    ```
 
-   The command waits until the instance shows the new type, then prints it. Verify that its `instanceType` reads `instanceTypes/gp1.core.4`. The new type takes effect at the next start.
+   The command waits until the instance shows the new type, then prints it. Verify that its `instanceType` reads `//compute.origincloudapis.eu/instanceTypes/gp1.core.4`. The new type takes effect at the next start.
 
 4. Start the instance:
 
@@ -52,7 +52,7 @@ Change an instance's type to resize it, or to move it off a type that is no long
 mutation {
   compute {
     changeInstanceType(input: {
-      instanceUrn: "<instance-urn>"
+      instance: "//compute.origincloudapis.eu/projects/<project-id>/zones/<zone>/instances/<instance-id>"
       instanceType: "gp1.core.4"
     }) {
       accepted

@@ -6,7 +6,7 @@ page_type: task
 parent: snapshots
 nav_order: 20
 tags: [storage, snapshots, cli, api]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Create and protect a snapshot
@@ -29,11 +29,12 @@ Take a snapshot to capture a volume's data at one point in time. Protect it when
 2. Create the snapshot.
 
    ```sh
-   origin pvs create-snapshot --source-volume <volume-id> \
+   origin pvs create-snapshot \
+     --source-volume //pvs.origincloudapis.eu/projects/<project>/zones/<zone>/volumes/<volume-id> \
      --tag origin:name=before-upgrade
    ```
 
-   `--tag` is optional and repeatable; `origin:name` names the snapshot. See [Tags](../../platform/tags.md).
+   `--source-volume` takes the volume's full name: `//pvs.origincloudapis.eu/` followed by its `name`. `--tag` is optional and repeatable; `origin:name` names the snapshot. See [Tags](../../platform/tags.md).
 
    The command waits until the copy is done and prints the snapshot with `state: COMPLETED`. Note its `name`; the last segment is the snapshot's id. To return at once instead, add `--no-wait`. See [Wait for long-running operations](../../platform/access/cli.md#wait-for-long-running-operations).
 
@@ -44,8 +45,8 @@ Take a snapshot to capture a volume's data at one point in time. Protect it when
    ```graphql
    mutation {
      pvs {
-       createSnapshot(input: { volumeUrn: "<volume-urn>" }) {
-         urn
+       createSnapshot(input: { volume: "//pvs.origincloudapis.eu/projects/<project-id>/zones/<zone>/volumes/<volume-id>" }) {
+         id
          status
        }
      }
@@ -71,7 +72,7 @@ Protect the snapshot only after it reports `COMPLETED`. A protect request for a 
    ```graphql
    mutation {
      pvs {
-       protectSnapshot(input: { snapshotUrn: "<snapshot-urn>" }) {
+       protectSnapshot(input: { snapshot: "//pvs.origincloudapis.eu/projects/<project-id>/zones/<zone>/snapshots/<snapshot-id>" }) {
          accepted
          message
        }
