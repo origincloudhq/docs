@@ -7,7 +7,7 @@ parent: instances
 nav_order: 20
 tags: [compute, instances]
 related: [instances-launch, instances-change-type]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Instance types
@@ -37,7 +37,7 @@ Each entry carries these fields:
 
 | Field | Meaning |
 |---|---|
-| `instanceType` | The name to pass at launch, for example `gp1.core.2`. `origin compute list-instance-types` prints it as `name`, `instanceTypes/gp1.core.2`; `--instance-type` takes either form. |
+| `instanceType` | The type's id, for example `gp1.core.2`. `origin compute list-instance-types` prints its `name`, `instanceTypes/gp1.core.2`; a launch takes its full name, `//compute.origincloudapis.eu/instanceTypes/gp1.core.2`, as `--instance-type`, and an instance shows it the same way. |
 | `kind` | The hardware family, for example `gp1`. |
 | `cpuAllocationMode` | The middle part of the name, for example `core`. |
 | `vcpu` | Number of vCPUs. |

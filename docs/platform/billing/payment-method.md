@@ -16,7 +16,7 @@ A project can create billable resources only once its billing account has a veri
 ## Before you begin
 
 - The organization ID and the ID of the project you want to unblock.
-- The `roles/billing/administrator` or `roles/billing/user` role on the organization. Whoever created the organization has the first one. The Owner role alone isn't enough. See [Billing access](billing-access.md). To look up which billing account a project is charged to, you also need read access to the project, such as `roles/viewer`.
+- The `roles/billing.administrator` or `roles/billing.user` role on the organization. Whoever created the organization has the first one. The Owner role alone isn't enough. See [Billing access](billing-access.md). To look up which billing account a project is charged to, you also need read access to the project, such as `roles/viewer`.
 - A way to call the GraphQL API, for example `curl` with your CLI token. See [Use the GraphQL API](../access/api.md).
 
 ## When a payment method is needed
@@ -56,19 +56,22 @@ EOF
 
    ```json
    {
-     "query": "query($org: OrgId!, $p: ProjectId!) { admin { project(orgId: $org, projectId: $p) { billingAccountId } billingAccounts(input: {orgId: $org}) { billingAccountId displayName paymentMethodStatus } } }",
-     "variables": { "org": "<org-id>", "p": "<project-id>" }
+     "query": "query($org: ID!, $p: ID!) { admin { project(id: $p) { billingAccount } billingAccounts(input: {organisation: $org}) { id displayName paymentMethodStatus } } }",
+     "variables": {
+       "org": "//resourcemanager.origincloudapis.eu/organizations/<org-id>",
+       "p": "//resourcemanager.origincloudapis.eu/projects/<project-id>"
+     }
    }
    ```
 
-   If the project's billing account is `VERIFIED` or `NOT_REQUIRED`, you're done.
+   The project's account is the one whose `id` equals the project's `billingAccount`. Note that full resource name. If its status is `VERIFIED` or `NOT_REQUIRED`, you're done.
 
 2. Start the setup on that billing account:
 
    ```json
    {
-     "query": "mutation($org: OrgId!, $ba: BillingAccountId!) { admin { startPaymentMethodSetup(input: {orgId: $org, id: $ba}) { redirectUrl } } }",
-     "variables": { "org": "<org-id>", "ba": "<billing-account-id>" }
+     "query": "mutation($ba: ID!) { admin { startPaymentMethodSetup(input: {billingAccount: $ba}) { redirectUrl } } }",
+     "variables": { "ba": "//billing.origincloudapis.eu/organizations/<org-id>/billingAccounts/<billing-account-id>" }
    }
    ```
 
@@ -80,8 +83,8 @@ EOF
 
    ```json
    {
-     "query": "mutation($org: OrgId!, $ba: BillingAccountId!) { admin { confirmPaymentMethodSetup(input: {orgId: $org, id: $ba}) { paymentMethodStatus paymentMethodBrand paymentMethodLast4 } } }",
-     "variables": { "org": "<org-id>", "ba": "<billing-account-id>" }
+     "query": "mutation($ba: ID!) { admin { confirmPaymentMethodSetup(input: {billingAccount: $ba}) { paymentMethodStatus paymentMethodBrand paymentMethodLast4 } } }",
+     "variables": { "ba": "//billing.origincloudapis.eu/organizations/<org-id>/billingAccounts/<billing-account-id>" }
    }
    ```
 

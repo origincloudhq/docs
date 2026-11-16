@@ -7,7 +7,7 @@ page_type: task
 parent: internet-access
 nav_order: 30
 tags: [networking, internet-access, cli]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Create and delete an Internet Gateway
@@ -25,24 +25,24 @@ An Internet Gateway connects a whole VPC to the internet, including subnets and 
 1. Create the gateway for the VPC:
 
    ```sh
-   origin network create-internet-gateway --vpc <vpc-id>
+   origin network create-internet-gateway --vpc //network.origincloudapis.eu/projects/<project>/regions/<region>/vpcs/<vpc-id>
    ```
 
    The command is refused with `FAILED_PRECONDITION` if the VPC already has a gateway, and refused if your organization or project is at its Internet Gateway quota.
 
    Creating the gateway adds no route to a VPC you created. Only a VPC with a main route table, your default VPC, gets two default routes through the gateway added to that table: `0.0.0.0/0` and `::/0`.
 
-2. Note the gateway's id from its `name`. The VPC's `internetGateway` field names it too:
+2. Note the gateway's `name`; a route takes the gateway by its full name, `//network.origincloudapis.eu/` followed by its `name`. The VPC's `internetGateway` field shows that full name too:
 
    ```sh
-   origin network list-internet-gateways --vpc <vpc-id>
+   origin network list-internet-gateways --vpc //network.origincloudapis.eu/projects/<project>/regions/<region>/vpcs/<vpc-id>
    ```
 
 3. Give each subnet that should reach the internet a route table with a default route through the gateway:
 
    ```sh
    origin network create-route --route-table <route-table-id> \
-     --destination 0.0.0.0/0 --internet-gateway <internet-gateway-id>
+     --destination 0.0.0.0/0 --internet-gateway //network.origincloudapis.eu/projects/<project>/regions/<region>/internetGateways/<internet-gateway-id>
    ```
 
    For the steps, see [Change routes](route-tables.md#change-routes) and [Associate a subnet with a table](route-tables.md#associate-a-subnet-with-a-table). In your default VPC, check the main table's routes instead: find it with `list-route-tables --vpc <vpc-id>`, its `main` field `true`, then:

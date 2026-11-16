@@ -7,7 +7,7 @@ page_type: task
 parent: record-sets
 nav_order: 10
 tags: [dns, cli]
-last_reviewed: 2026-11-08
+last_reviewed: 2026-11-15
 ---
 
 # Add, change and delete record sets
@@ -33,7 +33,6 @@ Add the records a name answers with, change them, and remove them.
 
    ```text
    name        projects/my-project/hostedZones/hz-Oqu2Vgc2nt6/recordSets/rrset-4pWqIJyKCYA
-   urn         urn:origin:cloud:dns::<org-id>:my-project:hz-Oqu2Vgc2nt6/rrset-4pWqIJyKCYA
    dnsName     www.example.com
    type        A
    ttl         300s

@@ -6,7 +6,7 @@ page_type: reference
 parent: home
 nav_order: 30
 tags: [storage, reference, cli, api]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Storage reference
@@ -17,16 +17,20 @@ The storage reference covers the `origin pvs` CLI commands and the `pvs` namespa
 
 [`origin pvs` commands](cli.md) lists every command with its options. Attaching and detaching volumes are `origin compute` commands; see [`create-volume-attachment`](../../compute/reference/cli.md#create-volume-attachment) and [`delete-volume-attachment`](../../compute/reference/cli.md#delete-volume-attachment). The CLI prints volumes and snapshots with the field names of [Volume states](../volumes/volume-states.md) and [Snapshot states](../snapshots/snapshot-states.md), which also map them to the GraphQL fields below.
 
+## Names
+
+A volume's, snapshot's and storage class's `name` is its relative name, such as `projects/<project>/zones/<zone>/volumes/<volume-id>`; the commands that act on one take it, or its id. Its full name is `//pvs.origincloudapis.eu/` followed by its `name`. Every reference to another resource is a full name, both in what the CLI and REST API take and in what they show: `storageClass` and `sourceSnapshot` on a volume, `sourceVolume` on a snapshot, and an operation's `target`. A relative name or an id there is refused with `BAD_REQUEST`. `creator` is the full name of the principal that created the resource, such as `//iam.origincloudapis.eu/users/<user-id>` or `//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>`. Volumes and snapshots have no `urn` field in the CLI and REST API.
+
 ## GraphQL queries
 
-Queries live under `query { pvs { … } }`.
+Queries live under `query { pvs { … } }`. A volume's or snapshot's `id` is its full resource name, such as `//pvs.origincloudapis.eu/projects/<project-id>/zones/<zone>/volumes/<volume-id>`, and every argument that names one takes that `id`. A project is named by its full resource name too: `//resourcemanager.origincloudapis.eu/projects/<project-id>`. A URN, a relative name or a bare id is refused with `BAD_REQUEST`.
 
 | Query | Returns | Permission |
 |---|---|---|
-| `volumes(input: { projectUrn })` | The project's volumes, without deleted ones. | `pvs.volume.list` |
-| `volume(volumeUrn)` | One volume, including a deleted one. | `pvs.volume.get` |
-| `snapshots(input: { projectUrn })` | The project's snapshots, without deleted ones. | `pvs.snapshot.list` |
-| `snapshot(snapshotUrn)` | One snapshot, including a deleted one. | `pvs.snapshot.get` |
+| `volumes(input: { project })` | The project's volumes, without deleted ones. | `pvs.volume.list` |
+| `volume(id)` | One volume, including a deleted one. | `pvs.volume.get` |
+| `snapshots(input: { project })` | The project's snapshots, without deleted ones. | `pvs.snapshot.list` |
+| `snapshot(id)` | One snapshot, including a deleted one. | `pvs.snapshot.get` |
 | `storageClasses` | Every published storage class with its `available` flag and its baseline IOPS and throughput. | None |
 
 To find the instance an `INUSE` volume is attached to, use the `compute.volumeAttachments` query. See [Find the instance a volume is attached to](../volumes/find-instance.md).

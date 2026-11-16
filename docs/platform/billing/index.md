@@ -6,7 +6,7 @@ page_type: overview
 parent: home
 nav_order: 40
 tags: [billing, overview]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Billing
@@ -46,6 +46,9 @@ Issued per billing account and calendar month, and emailed to the invoice email 
 **Spend limit**  
 An amount per calendar month that triggers email alerts when the month's spend crosses the thresholds you set, such as 80 % and 100 %. A spend limit only alerts; it doesn't stop or refuse anything. Manage it with `setSpendLimit`, `clearSpendLimit` and `spendLimitStatus`, or in the [REST API](rest-api.md) with `UpdateSpendLimit` and `GetSpendLimit`.
 
+**Legal documents**  
+The Terms of Service, Data Processing Agreement, Service Level Agreement and Acceptable Use Policy a billing account accepts, in fixed versions. See [Legal documents and acceptance](legal-documents.md).
+
 **Usage and cost**  
 What a project or the whole organization has used and what it costs, by hour or by day. Read it with the `usageCost` and `orgUsageCost` queries, or in the [REST API](rest-api.md) with `QueryProjectCost` and `QueryOrganizationCost`. Prices come from the [price list](../../pricing/index.md).
 
@@ -70,3 +73,4 @@ Billing accounts, payment methods, spend limits and cost reports are available t
 - [Pricing](../../pricing/index.md)
 - [Organizations and projects](../organizations/index.md)
 - [`PAYMENT_METHOD_REQUIRED`](../reference/errors.md#payment_method_required)
+- [`LEGAL_ACCEPTANCE_REQUIRED`](../reference/errors.md#legal_acceptance_required)

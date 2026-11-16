@@ -6,7 +6,7 @@ page_type: task
 parent: organizations
 nav_order: 30
 tags: [projects, organizations, cli]
-last_reviewed: 2026-11-05
+last_reviewed: 2026-11-15
 ---
 
 # Manage projects
@@ -28,7 +28,7 @@ You choose the project's id. It's 6 to 16 lowercase letters, digits and hyphens,
 1. Create the project:
 
    ```sh
-   origin resourcemanager create-project --organization <organization-id> \
+   origin resourcemanager create-project --organization //resourcemanager.origincloudapis.eu/organizations/<organization-id> \
      --project-id shop-prod --display-name "Web shop"
    ```
 
@@ -37,10 +37,10 @@ You choose the project's id. It's 6 to 16 lowercase letters, digits and hyphens,
    ```json
    {
      "name": "projects/shop-prod",
-     "urn": "urn:origin:cloud:admin::0a1b2c3d4e5f::shop-prod",
+     "organization": "//resourcemanager.origincloudapis.eu/organizations/0a1b2c3d4e5f",
      "displayName": "Web shop",
      "createTime": "2026-11-03T09:20:01Z",
-     "creator": "user:..."
+     "creator": "//iam.origincloudapis.eu/users/<user-id>"
    }
    ```
 
@@ -49,7 +49,7 @@ You choose the project's id. It's 6 to 16 lowercase letters, digits and hyphens,
 2. Verify that the project is listed:
 
    ```sh
-   origin resourcemanager list-projects --organization <organization-id>
+   origin resourcemanager list-projects --organization //resourcemanager.origincloudapis.eu/organizations/<organization-id>
    ```
 
 3. Optional: make it your CLI's default project, so that commands work in it without `--project`:
@@ -83,7 +83,7 @@ To rename the organization, use `origin resourcemanager update-organization --or
 
 ## Change a project's billing account
 
-A project is always charged to exactly one billing account of its organization. To charge it to another one, call the `linkProjectToBillingAccount` mutation in the `admin` namespace with `orgId`, `projectId` and `billingAccountId`. It replaces the current link; there's no way to leave a project without a billing account.
+A project is always charged to exactly one billing account of its organization. To charge it to another one, call the `linkProjectToBillingAccount` mutation in the `admin` namespace with the project's full resource name as `project` and the billing account's as `billingAccount`; the account must be one of the project's organization. It replaces the current link; there's no way to leave a project without a billing account.
 
 This needs the `admin.project.attach` permission, which the Owner role has. It doesn't need access to the billing account itself. See [Billing access](../billing/billing-access.md).
 
@@ -97,19 +97,23 @@ Deleting a project is refused while it still owns any of these resources. Nothin
 - A NAT gateway or a Floating IP.
 - A VPC, including the project's default VPC.
 - A DNS policy other than the project's default one.
+- A hosted zone.
+- A KMS key of yours that isn't `DELETED`. A key the platform manages doesn't block: it's deleted with the project.
 
-1. Delete every resource in the project: terminate its instances, delete its images, key pairs, volumes and snapshots, delete its NAT gateways, release its Floating IPs, delete its VPCs, and delete its DNS policies except the default one.
+1. Delete every resource in the project: terminate its instances, delete its images, key pairs, volumes and snapshots, delete its NAT gateways, release its Floating IPs, delete its VPCs, delete its DNS policies except the default one, delete its [hosted zones](../../dns/hosted-zones/delete.md), and [delete its KMS keys](../../kms/disable-delete.md#delete-a-key).
 2. Delete the project. Deleting can't be undone, so the command needs `--yes`:
 
    ```sh
    origin resourcemanager delete-project --project <project-id> --yes
    ```
 
-3. Verify that the project is no longer listed by `origin resourcemanager list-projects --organization <organization-id>`.
+3. Verify that the project is no longer listed by `origin resourcemanager list-projects --organization //resourcemanager.origincloudapis.eu/organizations/<organization-id>`.
 
 If a resource remains, the request fails with `CONFLICT`, naming every kind of resource the project still owns, in the order to remove them. See [`CONFLICT`](../reference/errors.md#conflict).
 
 Deleting a project also removes its default DNS policy, the quota budgets you set on it, and every role assignment scoped to it, for every member and service account. Org-wide role assignments are unaffected. See [Role assignments and scopes](../../iam/access-model.md#role-assignments-and-scopes).
+
+The project's deletion also deletes each KMS key the platform manages in it, such as the volumes key: the key becomes `DELETED`, with a `purgeTime` 30 days later, when its material is destroyed. See [Keys the platform manages](../../kms/keys.md#keys-the-platform-manages).
 
 ## Delete an organization
 

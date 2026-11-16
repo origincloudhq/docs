@@ -6,7 +6,7 @@ page_type: task
 parent: home
 nav_order: 60
 tags: [iam, roles, cli, api]
-last_reviewed: 2026-11-04
+last_reviewed: 2026-11-15
 ---
 
 # Check access
@@ -16,12 +16,12 @@ You can check access before you act instead of handling a permission error after
 ## Before you begin
 
 - To see your own profile, your own role bindings and the list of permissions, and to test your own permissions: any signed-in user. A service account can do all of it except read a profile, which it doesn't have.
-- To list another member's role bindings: `iam.member.list` on the organization, which `roles/owner`, `roles/viewer` and `roles/iam/editor` grant org-wide.
+- To list another member's role bindings: `iam.member.list` on the organization, which `roles/owner`, `roles/viewer` and `roles/iam.editor` grant org-wide.
 - To check whether another principal holds a permission: `roles/owner` that covers the resource you check. Only the GraphQL API offers this check.
 
 ## Check who you are
 
-Show your own profile. Others bind a role to you as the `member` it shows: `user:<email>` once your email address is verified.
+Show your own profile. Others bind a role to you as the `member` it shows, your full name.
 
 ```sh
 origin iam get-user --user me
@@ -32,7 +32,7 @@ Example output (illustrative):
 ```json
 {
   "name": "users/3f6e1c2a-8b4d-4e5f-9a1b-2c3d4e5f6a7b",
-  "member": "user:jane@example.com",
+  "member": "//iam.origincloudapis.eu/users/3f6e1c2a-8b4d-4e5f-9a1b-2c3d4e5f6a7b",
   "email": "jane@example.com",
   "emailVerified": true,
   "givenName": "Jane",
@@ -53,7 +53,7 @@ origin iam list-role-bindings --organization -
 List every role a member holds in the organization, each binding with its project:
 
 ```sh
-origin iam list-role-bindings --organization <org-id> --member user:jane@example.com
+origin iam list-role-bindings --organization <org-id> --member //iam.origincloudapis.eu/users/<user-id>
 ```
 
 Leave out `--member` to list every binding in the organization. See [Manage organization members](manage-members.md#list-members-and-invites).
@@ -86,15 +86,15 @@ A permission held on the organization counts for each of its projects; one held 
 
 ## Using the API
 
-In the REST API, these are `GetUser`, `ListRoleBindings`, `ListPermissions` and `TestIamPermissions`; see the [IAM reference](reference/index.md#rest-api). The GraphQL queries are `currentUser`, `currentUserGrants`, `orgMembers`, `orgRoleAssignments`, `permissions` and `hasPermission`, all in the `iam` namespace. `hasPermission` checks any principal's permission on one resource, by its URN:
+In the REST API, these are `GetUser`, `ListRoleBindings`, `ListPermissions` and `TestIamPermissions`; see the [IAM reference](reference/index.md#rest-api). The GraphQL queries are `currentUser`, `currentUserGrants`, `orgMembers`, `orgRoleAssignments`, `permissions` and `hasPermission`, all in the `iam` namespace. `hasPermission` checks any principal's permission on an organization or a project, by its full name in `resource`; it needs `iam.permission.query` there:
 
 ```graphql
 query {
   iam {
     hasPermission(input: {
-      principal: "user:<user-id>"
+      member: "//iam.origincloudapis.eu/users/<user-id>"
       permissionKey: "network.vpc.create"
-      onResourceUrn: "<resource-urn>"
+      resource: "//resourcemanager.origincloudapis.eu/projects/<project-id>"
     })
   }
 }

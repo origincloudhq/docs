@@ -7,7 +7,7 @@ page_type: task
 parent: home
 nav_order: 55
 tags: [iam, service-accounts, security, api]
-last_reviewed: 2026-11-11
+last_reviewed: 2026-11-15
 ---
 
 # Authenticate from GitHub Actions without a secret
@@ -63,7 +63,7 @@ jobs:
           curl -fsSL https://packages.origincloud.eu/install.sh | sh
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: List the organization's projects
-        run: origin resourcemanager list-projects --organization <org-id>
+        run: origin resourcemanager list-projects --organization //resourcemanager.origincloudapis.eu/organizations/<org-id>
 ```
 
 The job's token comes after `ORIGINCLOUD_ACCESS_TOKEN` and a service account's `ORIGINCLOUD_CLIENT_ID` and `ORIGINCLOUD_CLIENT_SECRET`, and before a login session. A refused exchange fails the command with the reason to check, as described in [When the exchange is refused](#when-the-exchange-is-refused). These variables change how the token is found:

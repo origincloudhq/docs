@@ -6,7 +6,7 @@ page_type: concept
 parent: internet-access
 nav_order: 10
 tags: [networking, internet-access]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Route tables
@@ -59,7 +59,7 @@ Each route is a resource of its table. Add one with `create-route`, list them wi
 
 ```sh
 origin network create-route --route-table <route-table-id> \
-  --destination 0.0.0.0/0 --internet-gateway <internet-gateway-id>
+  --destination 0.0.0.0/0 --internet-gateway //network.origincloudapis.eu/projects/<project>/regions/<region>/internetGateways/<internet-gateway-id>
 ```
 
 To point the destination at another target, delete the route and create a new one:
@@ -69,7 +69,7 @@ origin network list-routes --route-table <route-table-id>
 origin network delete-route --route-table <route-table-id> \
   --route <route-id> --yes
 origin network create-route --route-table <route-table-id> \
-  --destination 0.0.0.0/0 --nat-gateway <nat-gateway-id>
+  --destination 0.0.0.0/0 --nat-gateway //network.origincloudapis.eu/projects/<project>/zones/<zone>/natGateways/<nat-gateway-id>
 ```
 
 A change takes effect within a few seconds. Removing a subnet's default route also stops that family's connections between the subnet and the internet that are already open, including a transfer in progress.
@@ -80,7 +80,7 @@ A route table association points a subnet at a table. The table must belong to t
 
 ```sh
 origin network create-route-table-association --subnet <subnet-id> \
-  --route-table <route-table-id>
+  --route-table //network.origincloudapis.eu/projects/<project>/regions/<region>/routeTables/<route-table-id>
 ```
 
 To move a subnet to another table, remove its association and create a new one. The association's id is the route table's id:

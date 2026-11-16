@@ -7,7 +7,7 @@ page_type: troubleshooting
 parent: home
 nav_order: 60
 tags: [dns, troubleshooting]
-last_reviewed: 2026-11-14
+last_reviewed: 2026-11-15
 ---
 
 # Troubleshoot DNS
@@ -49,17 +49,16 @@ A pending zone is deleted at its `challenge.expireTime`, 7 days after its creati
 
 ## An attachment is refused
 
-**Symptom:** Attaching a private zone to a VPC, `origin dns create-vpc-attachment`, fails with `BAD_REQUEST`, `CONFLICT` or, for a zone you know exists, `NOT_FOUND`; or the CLI refuses it before sending anything, with `--project <project-id> differs from the project of --vpc …`.
+**Symptom:** Attaching a private zone to a VPC, `origin dns create-vpc-attachment`, fails with `BAD_REQUEST` or `CONFLICT`.
 
 **Cause:**
 
 - `BAD_REQUEST`: the VPC isn't in the zone's project, or the zone is public. The message doesn't say which project the VPC is in.
 - `CONFLICT`: the VPC already carries an attached zone of the same domain.
-- The CLI's refusal: `--vpc` is the whole name of a VPC in another project than `--project`. Without `--project`, the CLI takes the project from `--vpc`'s whole name, and the zone isn't found there: `NOT_FOUND`.
 
 **Resolution:**
 
-- Check the VPC's whole name: its `projects/<project-id>` part must be the zone's project. A zone can't be attached to another project's VPC; create a private zone in the VPC's project instead.
+- Check the VPC's full name: its `projects/<project-id>` part must be the zone's project. A zone can't be attached to another project's VPC; create a private zone in the VPC's project instead.
 - Public zones don't attach: they're answered in every VPC through the internet. Create a private zone for names only your VPCs should see.
 - For `CONFLICT`, find the zone already attached to the VPC and detach it first. See [Find the zones attached to a VPC](../private-zones/create.md#find-the-zones-attached-to-a-vpc).
 

@@ -7,7 +7,7 @@ page_type: task
 parent: hosted-zones
 nav_order: 20
 tags: [dns, cli]
-last_reviewed: 2026-11-14
+last_reviewed: 2026-11-15
 ---
 
 # Create a public zone and verify it
@@ -57,11 +57,10 @@ flowchart LR
    ```text
    name         projects/my-project/hostedZones/hz-Oqu2Vgc2nt6
    state        PENDING_VERIFICATION
-   urn          urn:origin:cloud:dns::<org-id>:my-project:hz-Oqu2Vgc2nt6
    dnsName      example.com
    visibility   PUBLIC
    nameServers  k7q2m9x4p1za.ns1.origincloud.eu, k7q2m9x4p1za.ns2.origincloud.eu, k7q2m9x4p1za.ns3.origincloud.eu
-   creator      user:<user-id>
+   creator      //iam.origincloudapis.eu/users/<user-id>
    createTime   2026-11-08T09:18:04.510953Z (0s ago)
    challenge
      dnsName     _origin-challenge.example.com

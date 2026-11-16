@@ -7,7 +7,7 @@ parent: images
 nav_order: 20
 tags: [compute, images, snapshots, cli, api]
 related: [images, instances-guest-environment]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Create an image
@@ -43,7 +43,8 @@ Create your own image to launch more instances with the same software and config
 2. Create a snapshot of that volume, and note the snapshot's `name` and `sourceSizeGib`:
 
    ```sh
-   origin pvs create-snapshot --source-volume <volume-id>
+   origin pvs create-snapshot \
+     --source-volume //pvs.origincloudapis.eu/projects/<project>/zones/<zone>/volumes/<volume-id>
    ```
 
    The command waits until the snapshot reads `COMPLETED`, then prints it.
@@ -68,7 +69,7 @@ An image lists its disks as block devices. Each has a guest device name, a size 
    origin compute create-image \
      --description "Web server base" \
      --root-device vda \
-     --block-device device=vda,size_gib=<size-gib>,source_snapshot=<snapshot-id> \
+     --block-device device=vda,size_gib=<size-gib>,source_snapshot=//pvs.origincloudapis.eu/projects/<project>/zones/<zone>/snapshots/<snapshot-id> \
      --tag origin:name=web-base
    ```
 
@@ -87,7 +88,7 @@ An image lists its disks as block devices. Each has a guest device name, a size 
 
 3. Launch an instance from it to test it, with `--image <image-id>`. See [Launch an instance](../instances/launch.md).
 
-With the API, `createImage` takes the root device as one of a list of `blockDeviceSpecs`, each with a `deviceName`, `snapshotUrn` and `sizeInGib`. `rootDeviceName` must name one of them.
+With the API, `createImage` takes the root device as one of a list of `blockDeviceSpecs`, each with a `deviceName`, `snapshot` (the snapshot's full name, its `id` in the `pvs` graph, in the image's project and zone) and `sizeInGib`. `rootDeviceName` must name one of them.
 
 ## Update or delete an image
 

@@ -7,7 +7,7 @@ parent: key-pairs
 nav_order: 10
 tags: [compute, key-pairs, cli, api]
 related: [key-pairs, instances-launch]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Create a key pair
@@ -39,7 +39,7 @@ Both ways use `origin compute create-key-pair`: with `--public-key`, it imports 
 
    A key with an unsupported type, or more than one line, is refused.
 
-3. Note the key pair's `name` from the output. Its last segment is the id a launch takes as `--key-pair`. To list the project's key pairs:
+3. Note the key pair's `name` from the output. A launch takes the key pair as `--key-pair` by its full name: `//compute.origincloudapis.eu/` followed by that `name`. To list the project's key pairs:
 
    ```sh
    origin compute list-key-pairs
@@ -71,8 +71,11 @@ The `importKeyPair` and `generateKeyPair` mutations take the same inputs. Reques
 ```graphql
 mutation {
   compute {
-    generateKeyPair(input: { projectUrn: "<project-urn>", name: "my-key" }) {
-      urn
+    generateKeyPair(input: {
+      project: "//resourcemanager.origincloudapis.eu/projects/<project-id>"
+      name: "my-key"
+    }) {
+      id
       publicKey
       privateKey
     }

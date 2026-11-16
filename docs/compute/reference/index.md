@@ -7,7 +7,7 @@ page_type: reference
 parent: home
 nav_order: 50
 tags: [reference, compute]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Compute reference
@@ -21,6 +21,10 @@ Every `origin compute` command with its options.
 
 **[Status reasons](status-reasons.md)**  
 Every text an instance can report as its reason, in `stateReason` (CLI) or `statusReason` (GraphQL API), what it means and what to do.
+
+## Names
+
+An instance's, image's, key pair's and volume attachment's `name` is its relative name, such as `projects/<project>/zones/<zone>/instances/<instance-id>`; the commands that act on one take it, or its id. Its full name is `//compute.origincloudapis.eu/` followed by its `name`. Every reference to another resource is a full name, both in what the CLI and REST API take and in what they show: an instance's `instanceType`, `image`, `imageFamily`, `keyPair`, `networkInterfaces`, `serviceAccount` and `bootVolume`, an image's block devices' `sourceSnapshot`, a public image's `imageFamily`, a volume attachment's `volume`, and an operation's `target`. A relative name or an id there is refused with `BAD_REQUEST`. `creator` is the full name of the principal that created the resource, such as `//iam.origincloudapis.eu/users/<user-id>`. These resources have no `urn` field in the CLI and REST API.
 
 ## Shared reference
 

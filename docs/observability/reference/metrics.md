@@ -7,7 +7,7 @@ page_type: reference
 parent: reference
 nav_order: 20
 tags: [reference, observability, metrics, api, errors]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Metrics reference
@@ -141,7 +141,7 @@ The write operations completed during the period.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `resource` | string | yes | Resource name of one compute instance (`projects/<project-id>/zones/<zone>/instances/<instance-id>`), volume (`.../volumes/<volume-id>`), or network interface (`.../networkInterfaces/<network-interface-id>`), in the project of the path. |
+| `resource` | string | yes | Full name of one compute instance (`//compute.origincloudapis.eu/projects/<project-id>/zones/<zone>/instances/<instance-id>`), volume (`//pvs.origincloudapis.eu/projects/<project-id>/zones/<zone>/volumes/<volume-id>`), or network interface (`//network.origincloudapis.eu/projects/<project-id>/zones/<zone>/networkInterfaces/<network-interface-id>`), in the project of the path. A relative name is refused with `BAD_REQUEST`. |
 | `metrics` | string, repeated | yes | One or more metric names from this page. Each name returns one series, in the order given. Repeat the parameter for several. |
 | `startTime` | RFC 3339 timestamp | yes | Start of the time window. The first data point is at `startTime`. Fractions of a second are ignored. |
 | `endTime` | RFC 3339 timestamp | yes | End of the time window. Must not be earlier than `startTime`. |
@@ -155,7 +155,7 @@ The response holds `timeSeries`, one series per requested metric.
 | Field | Type | Description |
 |---|---|---|
 | `timeSeries.metric` | string | The metric name, as requested. |
-| `timeSeries.resource` | string | The resource name, as requested. |
+| `timeSeries.resource` | string | The resource's full name, as requested. |
 | `timeSeries.unit` | string | Unit of the underlying counter: `seconds`, `bytes`, or `operations`. A `RATE` value is this unit per second. |
 | `timeSeries.points` | list | The data points in time order. Empty when the platform has no values for the window. |
 | `timeSeries.points.endTime` | RFC 3339 timestamp | End of the period the data point covers. |
@@ -167,7 +167,7 @@ The `observability.metrics` query takes one `input` argument of type `MetricQuer
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `resourceUrn` | `Urn` | yes | URN of one compute instance, volume, or network interface. |
+| `resource` | `ID` | yes | The full resource name of one compute instance, volume, or network interface, such as `//compute.origincloudapis.eu/projects/<project-id>/zones/<zone>/instances/<instance-id>`. Its project must exist and you need `observability.metric.get` on the resource. |
 | `metricNames` | `[String!]` | yes | One or more metric names from this page. Each name returns one series, in the order given. |
 | `from` | `DateTime` | yes | Start of the time window, as an RFC 3339 timestamp. The first data point is at `from`. |
 | `to` | `DateTime` | yes | End of the time window, as an RFC 3339 timestamp. Must not be earlier than `from`. |
@@ -183,7 +183,7 @@ The query returns a list of `MetricSeries`, one per requested metric name.
 | Field | Type | Description |
 |---|---|---|
 | `metricName` | `String` | The metric name, as requested. |
-| `resourceUrn` | `Urn` | The resource the series belongs to. |
+| `resource` | `ID` | The full resource name of the resource the series belongs to. |
 | `unit` | `String` | Unit of the underlying counter: `seconds`, `bytes`, or `operations`. A `RATE` value is this unit per second. |
 | `dataPoints` | `[MetricDataPoint!]` | The data points in time order. Empty when the platform has no values for the window. |
 | `dataPoints.timestamp` | `DateTime` | End of the period the data point covers. |
@@ -219,7 +219,8 @@ GraphQL errors carry their code in `extensions.code`. For the general meaning of
 
 | Code | Cause | What to do |
 |---|---|---|
-| [`BAD_REQUEST`](../../platform/reference/errors.md#bad_request) | A name in `metricNames` isn't one of the metrics on this page (message: ``metric `<name>` is not in the catalog``), or `resourceUrn` isn't a compute instance, volume, or network interface. | Correct the metric name or the URN. |
+| [`BAD_REQUEST`](../../platform/reference/errors.md#bad_request) | A name in `metricNames` isn't one of the metrics on this page (message: ``metric `<name>` is not in the catalog``), or `resource` isn't the full resource name of a compute instance, volume, or network interface (a URN, a name without its host, a bare ID and another kind of resource are refused). | Correct the metric name or the resource name. |
+| [`NOT_FOUND`](../../platform/reference/errors.md#not_found) | The project in `resource` doesn't exist. | Correct the project ID. |
 | [`FORBIDDEN`](../../platform/reference/errors.md#forbidden) | You don't have `observability.metric.get` on the resource. | Ask for a role that includes it, such as Viewer. See [Roles](../../iam/roles.md). |
 | [`CONFLICT`](../../platform/reference/errors.md#conflict) | The query exceeds the data point limit, the per-minute limit, or the concurrency limit. All three return the message `metric query rate limit exceeded; please retry later`. | Check that the query has at most 11,000 data points. If it does, wait a few seconds and retry. |
 | [`SERVICE_UNAVAILABLE`](../../platform/reference/errors.md#service_unavailable) | The query didn't finish within 30 seconds, or metrics are temporarily unavailable. | Retry. If it keeps timing out, query a shorter window or fewer metrics. |

@@ -7,7 +7,7 @@ page_type: reference
 parent: home
 nav_order: 80
 tags: [iam, reference, cli, api]
-last_reviewed: 2026-11-11
+last_reviewed: 2026-11-15
 ---
 
 # IAM reference
@@ -35,14 +35,13 @@ The IAM REST API answers at `https://iam.origincloudapis.eu`. It's a preview (`v
 - `CreateRoleBinding`, `DeleteRoleBinding`, `CreateServiceAccount` and `RotateServiceAccountSecret` take an optional `requestId`, a UUID. A retry with the same `requestId` within 24 hours changes nothing. A role binding retry returns what the first request did; a `CreateServiceAccount` or `RotateServiceAccountSecret` retry is refused, because the client secret was in the first response only (see the table). The same `requestId` with a different request is refused with `CONFLICT`.
 - A duration, such as `secretLifetime`, is written in seconds with an `s` suffix, such as `"7776000s"` for 90 days.
 
-In the REST API, a role binding names its member by email: `user:<email>` for the enabled user whose account has that verified email address, `serviceAccount:<id>` for one of the organization's own service accounts, or `serviceAgent:<name>` for a [service agent](../service-agents.md) of the platform, bound in any organization but only to a role its service needs. The binding stays with the account, so it follows a later change of address.
+In the REST API, a role binding and the `member` and `actor` filters take a member by its full name, and only by it: `//iam.origincloudapis.eu/users/<user-id>` for a user, `//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>` for one of the organization's own service accounts, or `//iam.origincloudapis.eu/serviceAgents/<name>` for a [service agent](../service-agents.md) of the platform, bound in any organization but only to a role its service needs. Responses show every member, `creator`, audit `actor` and `target` the same way. A binding stays with the account, so it follows a later change of address.
 
-- Binding an address that no account has verified is refused with `NOT_FOUND`.
-- Binding an address that more than one account has verified is refused with `CONFLICT`.
-- A response shows a user whose current address isn't verified as `userId:<user-id>`, and one whose account is gone as `deleted:user:<user-id>`.
-- A list of your own bindings (`organizations/-`) shows who created each one as `userId:<user-id>`.
+- Binding a user ID that no enabled account has, or a service account of another organization, is refused with `NOT_FOUND`. The `member` and `actor` filters only read a full name: a user whose account is gone still finds the audit entries of their changes.
+- An email address (`user:<email>`), a relative name such as `users/<user-id>` and the older forms `serviceAccount:<id>` and `serviceAgent:<name>` are refused with `INVALID_ARGUMENT`. `LookupUser` answers the user whose account verified an address.
+- A change the platform made itself names it among its internal services, such as `//iam.origincloudapis.eu/services/kms` for the KMS destroying a deleted key's material.
 
-Role names write the catalog's slashes as dots, such as `roles/iam.editor` for `roles/iam/editor`.
+A role is named `roles/<role>`, such as `roles/iam.editor`. A role binding takes and shows it by its full name, such as `//iam.origincloudapis.eu/roles/iam.editor`; a role's `includedPermissions` are full names too, such as `//iam.origincloudapis.eu/permissions/iam.role.assign`. A project is named by its full name, `//resourcemanager.origincloudapis.eu/projects/<project-id>`, in a binding, an audit entry and both filters.
 
 | Method | HTTP | Does |
 |---|---|---|
@@ -61,6 +60,7 @@ Role names write the catalog's slashes as dots, such as `roles/iam.editor` for `
 | `CreateFederatedCredential` | `POST /v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>/federatedCredentials` | Trusts tokens of an issuer and audience that carry the given claims. Needs `iam.service_account.create` and `iam.service_account.act_as`. |
 | `DeleteFederatedCredential` | `DELETE /v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>/federatedCredentials/<id>` | Stops trusting them: no token is exchanged for it from then on, and those exchanged before are refused at their next call. |
 | `GetUser` | `GET /v1beta1/users/me` | Your own profile. |
+| `LookupUser` | `GET /v1beta1/users:lookup?email=<email>&organization=//resourcemanager.origincloudapis.eu/organizations/<org-id>` | The user whose account verified `email`, by their `name` and their full name, `member`, which a role binding takes. Needs `iam.role.assign` on the organization. `NOT_FOUND` when no enabled account verified the address, `CONFLICT` when more than one did. Given and family names are left empty. |
 | `ListAuditLogEntries`, `GetAuditLogEntry` | `GET /v1beta1/organizations/<org-id>/auditLogEntries` | The audit log's recent entries, 90 days by default. See [Audit log](../audit-log.md#in-the-rest-api). |
 
 Invites and members are in the GraphQL API only.
@@ -71,13 +71,13 @@ The security token service answers at `https://sts.origincloudapis.eu`. It's a p
 
 | Method | HTTP | Does |
 |---|---|---|
-| `AssumeServiceAccount` | `POST /v1beta1:assumeServiceAccount` | Exchanges an OIDC token (`oidcToken`) for the access token of the `WORKLOAD` service account one of whose federated credentials trusts it. `serviceAccount`, `organizations/<org-id>/serviceAccounts/<service-account-id>`, limits it to that account's credentials. `lifetime`, such as `"900s"`, from 60 seconds to an hour, sets the access token's lifetime. Answers `accessToken`, `expireTime`, `serviceAccount` and `federatedCredential`. A token no credential trusts is refused with `PERMISSION_DENIED` (403), without saying why. |
+| `AssumeServiceAccount` | `POST /v1beta1:assumeServiceAccount` | Exchanges an OIDC token (`oidcToken`) for the access token of the `WORKLOAD` service account one of whose federated credentials trusts it. `serviceAccount`, the account's full name, `//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>`, limits it to that account's credentials; a relative name is refused with `BAD_REQUEST`. `lifetime`, such as `"900s"`, from 60 seconds to an hour, sets the access token's lifetime. Answers `accessToken`, `expireTime`, and `serviceAccount` and `federatedCredential` as full names. A token no credential trusts is refused with `PERMISSION_DENIED` (403), without saying why. |
 
 The same exchange is an OAuth 2.0 token exchange request (RFC 8693) at `POST /v1/token`, for OAuth clients: the form fields `grant_type=urn:ietf:params:oauth:grant-type:token-exchange`, `subject_token` and `subject_token_type=urn:ietf:params:oauth:token-type:jwt`, optionally `requested_token_lifetime` in seconds. [Authenticate from GitHub Actions](../github-actions.md#exchange-the-token-yourself) shows it with curl.
 
 ## GraphQL queries
 
-All queries are fields of the `iam` namespace of the query root.
+All queries are fields of the `iam` namespace of the query root. They name an organization, a project, a member, a role, an invite and a service account by full names, and show them the same way; see [Use the GraphQL API](../../platform/access/api.md#resource-names).
 
 | Query | Returns |
 |---|---|
@@ -85,10 +85,10 @@ All queries are fields of the `iam` namespace of the query root.
 | `currentUserGrants` | Every role assignment the caller holds, in all organizations. |
 | `principalGrants` | Every role assignment one principal holds in the organization, with its scope and creation time. Needs `iam.member.list`, like `orgRoleAssignments`. |
 | `roles` | Every built-in role with its permissions. |
-| `role` | One built-in role by the URN `roles` lists. Needs no permission. |
+| `role` | One built-in role by the full name `roles` lists as its `id`. Needs no permission. |
 | `permissions` | Every permission the platform defines. |
-| `hasPermission` | Whether a principal holds a permission on a resource. |
-| `orgMembers` | Every principal with a role assignment in the organization, with its role URNs. |
+| `hasPermission` | Whether a member holds a permission on an organization or a project, by its full name. Needs `iam.permission.query` there. |
+| `orgMembers` | Every principal with a role assignment in the organization, with its roles' full names. |
 | `orgRoleAssignments` | Every role assignment in the organization, with its scope and creation time. |
 | `orgInvites` | Pending invites in the organization. |
 | `serviceAccounts` | Every service account in the organization, active or revoked, without secrets. |

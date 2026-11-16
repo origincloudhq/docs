@@ -7,7 +7,7 @@ page_type: task
 parent: volumes
 nav_order: 40
 tags: [storage, volumes, images, cli, api]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Import a disk image as a volume
@@ -48,11 +48,11 @@ The platform detects the image format and converts it. Common disk image formats
    mutation {
      pvs {
        importVolume(input: {
-         projectUrn: "<project-urn>"
+         project: "//resourcemanager.origincloudapis.eu/projects/<project-id>"
          sizeInGib: 20
          sourceUrl: "https://example.com/images/my-image.qcow2"
        }) {
-         urn
+         id
          status
        }
      }

@@ -18,7 +18,7 @@ last_reviewed: 2026-10-19
 ```graphql
 query {
   compute {
-    instance(instanceUrn: "<instance-urn>") {
+    instance(id: "//compute.origincloudapis.eu/projects/<project-id>/zones/<zone>/instances/<instance-id>") {
       status
       healthChecks {
         availability

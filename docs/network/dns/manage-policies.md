@@ -6,7 +6,7 @@ page_type: task
 parent: dns
 nav_order: 10
 tags: [networking, dns, cli]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Manage DNS policies
@@ -40,7 +40,7 @@ A new policy isn't the project's default. Associate it with a VPC, or make it th
 
    ```sh
    origin network create-dns-policy-association --vpc <vpc-id> \
-     --dns-policy <dns-policy-id>
+     --dns-policy //network.origincloudapis.eu/projects/<project>/regions/<region>/dnsPolicies/<dns-policy-id>
    ```
 
 2. Verify that the VPC's `dnsPolicy` names the policy:

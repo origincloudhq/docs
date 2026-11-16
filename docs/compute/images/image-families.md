@@ -7,7 +7,7 @@ parent: images
 nav_order: 10
 tags: [compute, images]
 related: [images, instances-launch]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Image families
@@ -18,7 +18,7 @@ Launch by family to pick up rebuilt images automatically. Launch by image to pin
 
 ## Launching by family
 
-Launch with the family's id in place of an image: `--image-family <family-id>` on `origin compute create-instance`, or `imageFamily` on the `launchInstance` mutation. Give exactly one of `--image` and `--image-family`. The launched instance's `image` names the public image the family resolved to.
+Launch with the family's full name in place of an image: `--image-family //compute.origincloudapis.eu/imageFamilies/<family-id>` on `origin compute create-instance`, or `imageFamily` on the `launchInstance` mutation. Give exactly one of `--image` and `--image-family`. The launched instance's `image` names the public image the family resolved to.
 
 To see which image a family currently resolves to, list the public images. Each one carries its `imageFamily` and, as `familyCurrent`, whether it is that family's current image:
 

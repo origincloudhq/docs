@@ -7,7 +7,7 @@ page_type: task
 parent: record-sets
 nav_order: 40
 tags: [dns, service-accounts]
-last_reviewed: 2026-11-08
+last_reviewed: 2026-11-15
 availability: preview
 ---
 
@@ -47,13 +47,13 @@ flowchart LR
 
    Store the `clientId` and `clientSecret` from the output: the secret is shown only once. The output's `member` names the service account in the next step.
 
-2. Grant it [`roles/dns/editor`](../../iam/roles.md#rolesdnseditor) on the project that holds the zone. It manages record sets and reads zones, but can't create or delete a zone. The `origin iam` commands write the role as `roles/dns.editor`.
+2. Grant it [`roles/dns.editor`](../../iam/roles.md#rolesdnseditor) on the project that holds the zone. It manages record sets and reads zones, but can't create or delete a zone. The `origin iam` commands write the role as `roles/dns.editor`.
 
    ```sh
    origin iam create-role-binding --organization <org-id> \
-     --member serviceAccount:<service-account-id> \
-     --role roles/dns.editor \
-     --project projects/<project-id>
+     --member //iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id> \
+     --role //iam.origincloudapis.eu/roles/dns.editor \
+     --project //resourcemanager.origincloudapis.eu/projects/<project-id>
    ```
 
 3. Store the credential in a Kubernetes secret, in the namespace you install external-dns in.
@@ -175,7 +175,7 @@ Every zone of the project that holds a name the domain filter matches. `ORIGINCL
 
 - **The webhook container doesn't start: `container has runAsNonRoot and image has non-numeric user (nonroot)`.** Release 0.1.0's image named its user rather than numbering it: use 0.1.1 or later, or give the container `runAsUser: 65532`.
 - **external-dns exits with `failed to sync *v1.Node`.** With `namespaced: true`, the chart grants external-dns no access to nodes, which its `service` source reads to publish `NodePort` Services. Add `--service-type-filter` for the types you publish, such as `--service-type-filter=LoadBalancer`, to the chart's `extraArgs`, or leave `namespaced` off.
-- **The webhook container isn't ready.** It's ready once it has listed the project's zones. Its log says why it can't: an `ORIGINCLOUD_PROJECT` that doesn't exist, a credential that is wrong, or a service account without `roles/dns/editor` on the project.
+- **The webhook container isn't ready.** It's ready once it has listed the project's zones. Its log says why it can't: an `ORIGINCLOUD_PROJECT` that doesn't exist, a credential that is wrong, or a service account without `roles/dns.editor` on the project.
 - **An Ingress's record is missing.** external-dns publishes it once the ingress controller has written the Ingress's address into its status. `kubectl get ingress` shows the address under `ADDRESS`.
 - **external-dns logs `failed to apply changes with code 500`.** The provider's log names the zone and the API's error. For the error codes, see [DNS errors](../reference/errors.md).
 - **A record isn't created.** The zone may hold a record set of that name and type that this cluster doesn't own: another cluster's, or one you created yourself, which no cluster owns. external-dns leaves it as it is, and says so at `--log-level=debug`: `Skipping endpoint … because owner id does not match`. Delete the record set, or give the Service another name.

@@ -2,13 +2,13 @@
 id: access-api
 title: Use the GraphQL API
 nav_title: GraphQL API
-description: Call the Origin Cloud GraphQL API with a bearer token, find operations by namespace, read resource URNs, and handle typed enums and errors.
+description: Call the Origin Cloud GraphQL API with a bearer token, find operations by namespace, read resource names, and handle typed enums and errors.
 page_type: task
 parent: access
 nav_order: 20
 tags: [api, getting-started]
 related: [access-cli, reference-errors]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Use the GraphQL API
@@ -53,7 +53,7 @@ Access tokens are short-lived. When a request fails with `UNAUTHORIZED`, get a n
    query {
      admin {
        organisations {
-         orgId
+         id
          name
          status
        }
@@ -67,7 +67,7 @@ Access tokens are short-lived. When a request fails with `UNAUTHORIZED`, get a n
    curl -sS https://graph.origincloudapis.eu/graphql \
      -H "Authorization: Bearer <access-token>" \
      -H "Content-Type: application/json" \
-     -d '{"query":"{ admin { organisations { orgId name status } } }"}'
+     -d '{"query":"{ admin { organisations { id name status } } }"}'
    ```
 
 3. Verify the response. A successful response has a `data` object and no `errors` array.
@@ -79,7 +79,11 @@ Access tokens are short-lived. When a request fails with `UNAUTHORIZED`, get a n
      "data": {
        "admin": {
          "organisations": [
-           { "orgId": "0a1b2c3d4e5f", "name": "Example GmbH", "status": "ACTIVE" }
+           {
+             "id": "//resourcemanager.origincloudapis.eu/organizations/0a1b2c3d4e5f",
+             "name": "Example GmbH",
+             "status": "ACTIVE"
+           }
          ]
        }
      }
@@ -90,8 +94,8 @@ Pass values through `variables` rather than pasting them into the query text. Th
 
 ```json
 {
-  "query": "query($org: OrgId!) { admin { organisation(orgId: $org) { name status } } }",
-  "variables": { "org": "0a1b2c3d4e5f" }
+  "query": "query($org: ID!) { admin { organisation(id: $org) { name status } } }",
+  "variables": { "org": "//resourcemanager.origincloudapis.eu/organizations/0a1b2c3d4e5f" }
 }
 ```
 
@@ -106,45 +110,18 @@ Operations are grouped by service. Every query and mutation sits under one of th
 | `compute` | yes | yes | Instances, instance types, images, image families, key pairs |
 | `pvs` | yes | yes | Volumes, snapshots, storage classes |
 | `network` | yes | yes | VPCs, subnets, network interfaces, gateways, Floating IPs, route tables, security groups, network ACLs, DNS |
+| `dns` | yes | yes | Hosted zones, record sets, VPC attachments |
 | `observability` | yes | no | Metrics |
 
 For example, launching an instance is `mutation { compute { launchInstance(...) { ... } } }`.
 
-## Resource URNs
+## Resource names
 
-Every resource has a URN, a globally unique identifier returned in its `urn` field. Compute, storage and network operations take URNs as input, such as `projectUrn`, `instanceUrn` or `subnetUrn`. Organization and IAM operations take plain IDs, such as `orgId` and `projectId`.
+Every service names its resources by their full resource names: an organization's, project's, billing account's, support case's, role's, service account's, instance's, volume's, snapshot's, VPC's or hosted zone's `id` is its full name, such as `//resourcemanager.origincloudapis.eu/organizations/<org-id>`, `//billing.origincloudapis.eu/organizations/<org-id>/billingAccounts/<billing-account-id>` or `//support.origincloudapis.eu/organizations/<org-id>/cases/<case-id>`, or such as `//pvs.origincloudapis.eu/projects/<project-id>/zones/<zone>/volumes/<volume-id>` or `//network.origincloudapis.eu/projects/<project-id>/regions/<region>/vpcs/<vpc-id>` or `//dns.origincloudapis.eu/projects/<project-id>/hostedZones/<hosted-zone-id>`, and their operations take full names as input (`organisation`, `project`, `billingAccount`, `supportCase`, `instance`, `volume`, `snapshot`, `keyPair`, `vpc`, `subnet`, `securityGroup`, `floatingIp`, `hostedZone`, `recordSet`, `resource` and so on), a project's being `//resourcemanager.origincloudapis.eu/projects/<project-id>`. A resource that refers to another, such as a subnet's `vpc`, a Floating IP's `networkInterface` or a record set's `aliasFloatingIp`, shows the other's full name too, and a principal shown by any service, such as a creator, an opener or an author, is named by its full name on IAM, such as `//iam.origincloudapis.eu/users/<user-id>`. A project or a billing account an operation uses with an organization, such as a support case's `project` or the `billingAccount` a project is linked to, must be in that organization. Copy a full name from a response's `id` rather than assembling it yourself. A full name that names a resource of another type, a bare ID or a URN is refused with `BAD_REQUEST`, naming the argument.
 
-A URN has eight colon-separated parts:
+A VPC, security group, network ACL, route table, Internet Gateway or DNS policy is in a region; a subnet, network interface, NAT gateway or Floating IP is in a zone; a hosted zone is in no region. A resource you use with another, such as the subnet of a network interface, the route table of a subnet, the VPC a private zone is attached to or the Floating IP an alias answers with, must be in the same project, and in the same zone or region, as the resource it is used with. A metrics query names the instance, volume or network interface whose metrics it reads in `resource`.
 
-```text
-urn:origin:cloud:<service>:<region>:<org-id>:<project-id>:<resource-id>
-```
-
-**`urn:origin:cloud`**  
-A fixed prefix.
-
-**`<service>`**  
-The service that owns the resource: `admin`, `iam`, `compute`, `pvs`, `network` or `observability`.
-
-**`<region>`**  
-The region the resource lives in, such as `eu-central1`. Empty for resources that aren't bound to a region.
-
-**`<org-id>` and `<project-id>`**  
-The organization and project that own the resource. Empty where they don't apply.
-
-**`<resource-id>`**  
-The resource's own ID within the service.
-
-Examples:
-
-| Resource | URN |
-|---|---|
-| Organization | `urn:origin:cloud:admin::::0a1b2c3d4e5f` |
-| Project | `urn:origin:cloud:admin::0a1b2c3d4e5f::demo-48291037561` |
-| Instance | `urn:origin:cloud:compute:eu-central1:0a1b2c3d4e5f:demo-48291037561:i-WsGD79fcM9y` |
-| Built-in role | `urn:origin:cloud:iam::::builtin/role/roles/viewer` |
-
-Copy a URN from the `urn` field of a response rather than assembling it yourself. A project's URN is `urn:origin:cloud:admin::<org-id>::<project-id>`; the API returns it as the project's `urn` field, and `origin resourcemanager get-project` prints it too.
+IAM names its resources the same way: a role's, a permission's, a user's, a service account's, a role assignment's, an audit log entry's or a pending invite's `id` is its full name on IAM, such as `//iam.origincloudapis.eu/roles/viewer`, `//iam.origincloudapis.eu/permissions/<permission>`, `//iam.origincloudapis.eu/users/<user-id>`, `//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>` or `//iam.origincloudapis.eu/organizations/<org-id>/invites/<invite-id>`. Its operations take full names as input: `organisation`, `project`, `role`, `invite` and `serviceAccount`, and `member` for a principal, which is a user's, a service account's or a platform service agent's full name, as in the REST API and the `origin iam` commands. A member is never an email address: `inviteMember` takes one for a person who may not have an account yet, and `origin iam lookup-user` finds a user's full name by their verified address. IAM checks `hasPermission` on an organization's or a project's full name in `resource`.
 
 ## Typed enums
 
@@ -206,7 +183,7 @@ curl https://graph.origincloudapis.eu/graphql \
   -H "Authorization: Bearer $TOKEN" \
   -H "Origin-Consistency-Token: $TOKEN_FROM_THE_CHANGE" \
   -H "Content-Type: application/json" \
-  -d '{"query": "query { pvs { volume(volumeUrn: \"...\") { status } } }"}'
+  -d '{"query": "query { pvs { volume(id: \"...\") { status } } }"}'
 ```
 
 - A response to a change carries the token. It covers that change, every other change in the same request, and every change the token you sent with the request covered.

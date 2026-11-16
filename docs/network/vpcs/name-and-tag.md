@@ -6,7 +6,7 @@ page_type: task
 parent: vpcs
 nav_order: 45
 tags: [networking, vpc, tags, cli]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Name and tag network resources
@@ -33,7 +33,7 @@ Give a VPC, subnet or other network resource a name so you can tell it apart fro
 Every command that creates a VPC, subnet, network interface, route table, network ACL, security group, Internet Gateway, NAT gateway, Floating IP or DNS policy takes `--tag`, for example:
 
 ```sh
-origin network create-subnet --vpc <vpc-id> --tag origin:name=web
+origin network create-subnet --vpc //network.origincloudapis.eu/projects/<project>/regions/<region>/vpcs/<vpc-id> --tag origin:name=web
 ```
 
 Each of them has an `update-` command that changes its tags, such as `update-vpc`, `update-subnet` and `update-security-group`. Use them for resources you created and for those the platform created for you, such as your default VPC's default security group. Routes, rules and associations have no tags.

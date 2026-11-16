@@ -7,7 +7,7 @@ page_type: reference
 parent: home
 nav_order: 50
 tags: [networking, reference, cli, api]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Network reference
@@ -18,6 +18,16 @@ Network has two reference surfaces: the `origin network` CLI commands and the `n
 
 [`origin network` commands](cli.md) lists every command with its flags. For options that apply to every command, see [Global options](../../platform/reference/cli.md#global-options); for how `--project`, `--zone` and `--region` default, see [Use the CLI](../../platform/access/cli.md#set-a-default-project-zone-and-region).
 
+## Names
+
+A network resource's `name` is its relative name, such as `projects/<project>/regions/<region>/vpcs/<vpc-id>`; the commands that act on one take it, or its id. Its full name is `//network.origincloudapis.eu/` followed by its `name`. Every reference to another resource is a full name, in what the CLI and REST API take and in what they show:
+- `vpc`, `subnet`, `routeTable`, `acl`, `dnsPolicy`, `internetGateway`, `natGateway`, `floatingIp`, `networkInterface`, `securityGroup`(`s`) and `peerSecurityGroup`;
+- an interface's `instance`, on the compute service;
+- the `vpc` and `subnet` filters of the list commands;
+- an operation's `target`.
+
+A relative name or an id there is refused with `BAD_REQUEST`. `creator` is the full name of the principal that created the resource, such as `//iam.origincloudapis.eu/users/<user-id>`, or a platform service's, `//iam.origincloudapis.eu/services/<service>`, for what the platform created. Network resources have no `urn` field in the CLI and REST API.
+
 ## GraphQL queries
 
 All queries are fields of `network` on the root query type. For how to call the API, see [API access](../../platform/access/api.md).
@@ -25,23 +35,23 @@ All queries are fields of `network` on the root query type. For how to call the 
 | Query | Returns |
 |---|---|
 | `vpcs` | Every VPC in a project. |
-| `vpc` | One VPC by URN. |
+| `vpc` | One VPC by its full resource name. |
 | `subnets` | Every subnet in a project. |
-| `subnet` | One subnet by URN. |
+| `subnet` | One subnet by its full resource name. |
 | `networkInterfaces` | Every network interface in a project. |
-| `networkInterface` | One network interface by URN. |
-| `internetGateway` | A VPC's Internet Gateway, if it has one. |
+| `networkInterface` | One network interface by its full resource name. |
+| `internetGateway` | A VPC's Internet Gateway, by the VPC's full resource name, if it has one. |
 | `routeTables` | Every route table in a project. |
-| `routeTable` | One route table by URN. |
+| `routeTable` | One route table by its full resource name. |
 | `natGateways` | Every NAT gateway in a project. |
 | `floatingIps` | Every Floating IP in a project. |
-| `floatingIp` | One Floating IP by URN. |
+| `floatingIp` | One Floating IP by its full resource name. |
 | `acls` | Every network ACL in a project. |
-| `acl` | One network ACL by URN. |
+| `acl` | One network ACL by its full resource name. |
 | `securityGroups` | Every security group in a project. |
-| `securityGroup` | One security group by URN. |
+| `securityGroup` | One security group by its full resource name. |
 | `dnsPolicies` | Every DNS policy in a project. |
-| `dnsPolicy` | One DNS policy by URN. |
+| `dnsPolicy` | One DNS policy by its full resource name. |
 
 ## GraphQL mutations
 

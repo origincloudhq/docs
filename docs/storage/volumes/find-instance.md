@@ -7,7 +7,7 @@ page_type: task
 parent: volumes
 nav_order: 70
 tags: [storage, volumes, instances, cli, api]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Find the instance a volume is attached to
@@ -28,11 +28,11 @@ A volume that reports `IN_USE` names what holds it in `attachment`: the id of a 
    origin pvs get-volume --volume <volume-id>
    ```
 
-2. List the attachments of the volume across every instance in its zone. `-` for the instance means every instance; pass the volume's whole `name`, so its project and zone come with it:
+2. List the attachments of the volume across every instance in its zone. `-` for the instance means every instance; pass the volume's full name, `//pvs.origincloudapis.eu/` followed by its `name`:
 
    ```sh
    origin compute list-volume-attachments --instance - \
-     --volume projects/<project-id>/zones/eu-central1-az1/volumes/<volume-id>
+     --volume //pvs.origincloudapis.eu/projects/<project-id>/zones/eu-central1-az1/volumes/<volume-id>
    ```
 
    With the API, use the `volumeAttachments` query:
@@ -41,11 +41,11 @@ A volume that reports `IN_USE` names what holds it in `attachment`: the id of a 
    query {
      compute {
        volumeAttachments(input: {
-         projectUrn: "<project-urn>"
-         volumeUrn: "<volume-urn>"
+         project: "//resourcemanager.origincloudapis.eu/projects/<project-id>"
+         volume: "//pvs.origincloudapis.eu/projects/<project-id>/zones/<zone>/volumes/<volume-id>"
        }) {
          id
-         instanceUrn
+         instance
          deviceName
          status
        }
@@ -53,7 +53,7 @@ A volume that reports `IN_USE` names what holds it in `attachment`: the id of a 
    }
    ```
 
-3. Take the entry whose id, the last segment of its `name`, equals the volume's `attachment`. Its `name` has the form `projects/<project-id>/zones/<zone>/instances/<instance-id>/volumeAttachments/<attachment-id>`: the `<instance-id>` segment is the instance, and `device` is the device name the guest sees.
+3. Take the entry whose id, the last segment of its `name` (with the API, of its `id`), equals the volume's `attachment` (with the API, its `claimRef`). With the API, its `instance` is the instance's full name. Its `name` has the form `projects/<project-id>/zones/<zone>/instances/<instance-id>/volumeAttachments/<attachment-id>`: the `<instance-id>` segment is the instance, and `device` is the device name the guest sees.
 
 4. Confirm by listing the instance's attachments. The volume is among them.
 

@@ -6,7 +6,7 @@ page_type: task
 parent: home
 nav_order: 30
 tags: [iam, roles, cli, api]
-last_reviewed: 2026-11-04
+last_reviewed: 2026-11-15
 ---
 
 # Assign and revoke roles
@@ -15,13 +15,13 @@ Assign a role to give a user or service account access, and revoke it to take th
 
 ## Before you begin
 
-- An org-wide `roles/owner` or `roles/iam/editor` assignment, and every permission of the role you assign or revoke at the scope of the binding. For example, an Owner needs `roles/billing/administrator` as well to assign a billing role. See [Who can assign a role](access-model.md#who-can-assign-a-role).
+- An org-wide `roles/owner` or `roles/iam.editor` assignment, and every permission of the role you assign or revoke at the scope of the binding. For example, an Owner needs `roles/billing.administrator` as well to assign a billing role. See [Who can assign a role](access-model.md#who-can-assign-a-role).
 - Your organization ID (`<org-id>`) and, for a project-scoped binding, the project ID (`<project-id>`).
-- The member: `user:<email>`, the verified email address of the person's account, `serviceAccount:<service-account-id>`, or a platform service agent such as `serviceAgent:compute`, which can hold only the roles its service needs. See [Principals](access-model.md#principals) and [Service agents](service-agents.md).
+- The member, by its full name: a user, `//iam.origincloudapis.eu/users/<user-id>`, one of the organization's service accounts, `//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>`, or a platform service agent such as `//iam.origincloudapis.eu/serviceAgents/compute`, which can hold only the roles its service needs. An email address names no member: find a user's full name by their verified address with `origin iam lookup-user --email jane@example.com --organization //resourcemanager.origincloudapis.eu/organizations/<org-id>`, the `member` it answers. See [Principals](access-model.md#principals) and [Service agents](service-agents.md).
 
 ## Assign a role
 
-1. Find the role's name. The command lists every built-in role with its permissions; a name writes the catalog's slashes as dots, such as `roles/iam.editor` for IAM Editor.
+1. Find the role's name, such as `roles/iam.editor` for IAM Editor; a binding takes its full name, `//iam.origincloudapis.eu/roles/iam.editor`. The command lists every built-in role with its permissions.
 
    ```sh
    origin iam list-roles
@@ -33,21 +33,22 @@ Assign a role to give a user or service account access, and revoke it to take th
 
    ```sh
    origin iam create-role-binding --organization <org-id> \
-     --member user:jane@example.com \
-     --role roles/viewer
+     --member //iam.origincloudapis.eu/users/<user-id> \
+     --role //iam.origincloudapis.eu/roles/viewer
    ```
 
-   To limit the binding to one project, add `--project projects/<project-id>`. A project-scoped binding applies only to resources in that project; it never allows IAM operations. See [Role assignments and scopes](access-model.md#role-assignments-and-scopes).
+   To limit the binding to one project, add `--project //resourcemanager.origincloudapis.eu/projects/<project-id>`. A project-scoped binding applies only to resources in that project; it never allows IAM operations. See [Role assignments and scopes](access-model.md#role-assignments-and-scopes).
 
 3. Verify the binding. The output lists the member's bindings, each with its role and project.
 
    ```sh
-   origin iam list-role-bindings --organization <org-id> --member user:jane@example.com
+   origin iam list-role-bindings --organization <org-id> --member //iam.origincloudapis.eu/users/<user-id>
    ```
 
 The platform refuses the binding, and changes nothing, in these cases:
 
-- No account has the address as its verified email: [`NOT_FOUND`](../platform/reference/errors.md#not_found).
+- The user has no enabled account, or the service account is another organization's: [`NOT_FOUND`](../platform/reference/errors.md#not_found).
+- The member, role or project isn't a full name, such as `user:jane@example.com` or `roles/viewer`: [`BAD_REQUEST`](../platform/reference/errors.md#bad_request).
 - The member already holds the role at that scope: [`CONFLICT`](../platform/reference/errors.md#conflict). A retry of the command with the same `--request-id` within a day returns the binding the first one created instead.
 - The role has permissions you don't hold yourself at that scope: [`FORBIDDEN`](../platform/reference/errors.md#forbidden).
 - The member is a deleted service account: [`BAD_REQUEST`](../platform/reference/errors.md#bad_request).
@@ -57,7 +58,7 @@ The platform refuses the binding, and changes nothing, in these cases:
 1. Find the binding's ID in the member's bindings.
 
    ```sh
-   origin iam list-role-bindings --organization <org-id> --member user:jane@example.com
+   origin iam list-role-bindings --organization <org-id> --member //iam.origincloudapis.eu/users/<user-id>
    ```
 
 2. Delete the binding. Deleting can't be undone, so the command needs `--yes`.
@@ -77,15 +78,15 @@ To take away every role a member holds in the organization, delete each of their
 
 ## Using the API
 
-In the REST API, these are `CreateRoleBinding` and `DeleteRoleBinding`; see the [IAM reference](reference/index.md#rest-api). In the GraphQL API, the `assignRole` and `revokeRole` mutations take the same input, with the principal by user ID and the role by URN. Omit `projectId` for an org-wide grant.
+In the REST API, these are `CreateRoleBinding` and `DeleteRoleBinding`; see the [IAM reference](reference/index.md#rest-api). In the GraphQL API, the `assignRole` and `revokeRole` mutations take the same input as full names: the `organisation`, the `member`, the `role` and, for a grant on one project, the `project`. Omit `project` for an org-wide grant.
 
 ```graphql
 mutation {
   iam {
     assignRole(input: {
-      orgId: "<org-id>"
-      principal: "user:<user-id>"
-      roleUrn: "urn:origin:cloud:iam::::builtin/role/roles/viewer"
+      organisation: "//resourcemanager.origincloudapis.eu/organizations/<org-id>"
+      member: "//iam.origincloudapis.eu/users/<user-id>"
+      role: "//iam.origincloudapis.eu/roles/viewer"
     })
   }
 }

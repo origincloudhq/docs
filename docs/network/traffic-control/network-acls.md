@@ -6,7 +6,7 @@ page_type: concept
 parent: traffic-control
 nav_order: 20
 tags: [networking, security]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Network ACLs
@@ -60,7 +60,7 @@ A VPC's default ACL can't be deleted on its own; it goes with the VPC.
 `create-acl` adds an ACL with no rules to a VPC, so it drops everything until you add rules. Each rule is a resource of its ACL: add one with `create-acl-rule`, list them with `list-acl-rules`, and remove one with `delete-acl-rule`. For example, to allow HTTPS in from anywhere and everything out:
 
 ```sh
-origin network create-acl --vpc <vpc-id>
+origin network create-acl --vpc //network.origincloudapis.eu/projects/<project>/regions/<region>/vpcs/<vpc-id>
 origin network create-acl-rule --acl <acl-id> --direction INGRESS \
   --priority 100 --protocol TCP --first-port 443 \
   --cidr-block 0.0.0.0/0 --action ACCEPT
@@ -71,7 +71,7 @@ origin network create-acl-rule --acl <acl-id> --direction EGRESS \
 Then associate a subnet with it. The ACL must belong to the subnet's VPC, a subnet has at most one ACL association, and the change applies to the subnet's traffic without recreating anything.
 
 ```sh
-origin network create-acl-association --subnet <subnet-id> --acl <acl-id>
+origin network create-acl-association --subnet <subnet-id> --acl //network.origincloudapis.eu/projects/<project>/regions/<region>/acls/<acl-id>
 ```
 
 To move a subnet to another ACL, or leave it unfiltered, delete its association. The association's id is the ACL's id:

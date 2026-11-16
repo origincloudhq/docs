@@ -7,7 +7,7 @@ page_type: task
 parent: record-sets
 nav_order: 20
 tags: [dns, cli]
-last_reviewed: 2026-11-08
+last_reviewed: 2026-11-15
 ---
 
 # Change several record sets at once
@@ -25,7 +25,7 @@ last_reviewed: 2026-11-08
 
    ```sh
    origin dns batch-change-record-sets --hosted-zone <zone-id> \
-     --deletion <a-record-set-id> \
+     --deletion //dns.origincloudapis.eu/projects/<project-id>/hostedZones/<zone-id>/recordSets/<record-set-id> \
      --creations-json '[{"dnsName": "www.example.com", "type": "CNAME", "ttl": "300s",
                          "basic": {"values": ["app.example.net"]}}]'
    ```
@@ -35,7 +35,6 @@ last_reviewed: 2026-11-08
    ```text
    recordSets
      - name        projects/my-project/hostedZones/hz-Oqu2Vgc2nt6/recordSets/rrset-B7D9YpRmmh9
-       urn         urn:origin:cloud:dns::<org-id>:my-project:hz-Oqu2Vgc2nt6/rrset-B7D9YpRmmh9
        dnsName     www.example.com
        type        CNAME
        ttl         300s
@@ -51,7 +50,7 @@ The same `CNAME` created on its own, while the `A` record set exists, is refused
 
 | Option | Holds |
 |---|---|
-| `--deletion` | A record set to delete, by its id or its whole name. Repeat it for more. |
+| `--deletion` | A record set to delete, by its full name: `//dns.origincloudapis.eu/` followed by its `name`. Repeat it for more. |
 | `--updates-json` | The record sets to change, as a JSON array: each a `recordSet` with its whole `name` and the fields to change, and an `updateMask` naming them, `ttl`, `basic`, `alias` or `*`. |
 | `--creations-json` | The record sets to create, as a JSON array of record sets as a create takes them: `dnsName`, `type`, an optional `ttl`, and `basic` or `alias`. |
 | `--request-id` | Optional. A UUID; a repeat with the same id within a day answers with the first request's record sets, as they are now, instead of making the changes again. |

@@ -6,7 +6,7 @@ page_type: task
 parent: organizations
 nav_order: 10
 tags: [organizations, billing, cli, api]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-15
 ---
 
 # Create an organization
@@ -23,9 +23,11 @@ Create an organization to get an account your company's projects, members and bi
 
 Registering creates the organization and stores the billing details on its default billing account, so it can be invoiced from the start. Register in the console, or with the `registerOrganisation` mutation in the `admin` namespace of the [GraphQL API](../access/api.md). The CLI has no command that takes billing details.
 
-The mutation takes the organization's name, the billing address as a `billingAddress` object, the invoice email, the contact person and, where required, the VAT identification number. It answers with the organization, including its `orgId` and its `status`, `ACTIVE` or `PENDING_REVIEW`. For what each status means, see [Organization review status](review-status.md).
+The mutation takes the organization's name, the billing address as a `billingAddress` object, the invoice email, the contact person and, where required, the VAT identification number. It answers with the organization, including its `id`, its full resource name, and its `status`, `ACTIVE` or `PENDING_REVIEW`. For what each status means, see [Organization review status](review-status.md).
 
-The request is refused, and nothing is created, if the invoice email isn't a valid email address, the country isn't supported, or a required VAT identification number is missing. The error is [`BAD_REQUEST`](../reference/errors.md#bad_request) and names the field: `invoice_email`, `country` or `vat_id`.
+Once a version of Origin Cloud's legal documents is in force, registering also accepts them: `legalAcceptance` names every version in force with its `sha256` and sets `actsAsBusiness: true`. See [Legal documents and acceptance](../billing/legal-documents.md).
+
+The request is refused, and nothing is created, if the invoice email isn't a valid email address, the country isn't supported, a required VAT identification number is missing, or a version in force isn't accepted. The error is [`BAD_REQUEST`](../reference/errors.md#bad_request) and names the field: `invoice_email`, `country`, `vat_id`, `legal_acceptance`, `version`, `sha256` or `acts_as_business`.
 
 ## Create an organization from its name alone
 
@@ -44,11 +46,10 @@ Use this path if someone else adds the billing details later.
    ```json
    {
      "name": "organizations/0a1b2c3d4e5f",
-     "urn": "urn:origin:cloud:admin::::0a1b2c3d4e5f",
      "displayName": "Example GmbH",
      "state": "PENDING_REVIEW",
      "createTime": "2026-11-03T09:12:44Z",
-     "creator": "user:..."
+     "creator": "//iam.origincloudapis.eu/users/<user-id>"
    }
    ```
 
@@ -68,7 +69,7 @@ Both paths end in the same state; registering does it in one call.
 
 ## What happens when you create an organization
 
-- You become the organization's Owner (`roles/owner`) and its billing administrator (`roles/billing/administrator`), both organization-wide. See [Billing access](../billing/billing-access.md).
+- You become the organization's Owner (`roles/owner`) and its billing administrator (`roles/billing.administrator`), both organization-wide. See [Billing access](../billing/billing-access.md).
 - The organization gets a default billing account named `default`. When you register, it carries your billing details.
 - The organization is either activated immediately or placed under review. You get an email that the registration was received, and another when it's approved or rejected. See [Organization review status](review-status.md).
 

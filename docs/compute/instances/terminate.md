@@ -55,7 +55,7 @@ A terminated instance stays in `list-instances` for 2 hours, then drops out of t
 ```graphql
 mutation {
   compute {
-    terminateInstance(input: { instanceUrn: "<instance-urn>" }) {
+    terminateInstance(input: { instance: "//compute.origincloudapis.eu/projects/<project-id>/zones/<zone>/instances/<instance-id>" }) {
       accepted
       message
     }

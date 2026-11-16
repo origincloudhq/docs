@@ -7,12 +7,12 @@ page_type: task
 parent: home
 nav_order: 50
 tags: [iam, service-accounts, cli, api]
-last_reviewed: 2026-11-11
+last_reviewed: 2026-11-15
 ---
 
 # Use service accounts
 
-A service account is a non-interactive credential for automation such as CI pipelines, scripts and infrastructure-as-code tools. It belongs to one organization and acts as its own principal: the member `serviceAccount:<service-account-id>` in the `origin iam` commands and the REST API, `service_account:<service-account-id>` in the GraphQL API. Its access is checked exactly like a user's: it can do what its role bindings allow, and nothing else.
+A service account is a non-interactive credential for automation such as CI pipelines, scripts and infrastructure-as-code tools. It belongs to one organization and acts as its own principal: the member `//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>` in the `origin iam` commands and the REST API, its `id` in the GraphQL API. Its access is checked exactly like a user's: it can do what its role bindings allow, and nothing else.
 
 A service account authenticates with an OAuth 2.0 client ID and client secret, using the client credentials grant against the platform's identity provider. The resulting access token is sent to the API like a user's.
 
@@ -23,7 +23,7 @@ Every service account has a type, set when it's created. It never changes.
 | Type | Credential |
 | --- | --- |
 | `EXTERNAL` | An OAuth 2.0 client ID and client secret, for software outside Origin Cloud. The type a create uses when none is given, and the one this page describes. |
-| `WORKLOAD` | None. It has no client ID or secret and can't be given one, so no copied credential ever authenticates as it. An instance runs as one: software on it gets a short-lived credential from the instance's metadata service. Launching it needs `iam.service_account.act_as` on the organization, which [`roles/iam/service-account-user`](roles.md#rolesiamservice-account-user) grants. See [Run an instance as a service account](../compute/instances/service-account.md). |
+| `WORKLOAD` | None. It has no client ID or secret and can't be given one, so no copied credential ever authenticates as it. An instance runs as one: software on it gets a short-lived credential from the instance's metadata service. Launching it needs `iam.service_account.act_as` on the organization, which [`roles/iam.service-account-user`](roles.md#rolesiamservice-account-user) grants. See [Run an instance as a service account](../compute/instances/service-account.md). |
 
 ## Before you begin
 
@@ -49,9 +49,9 @@ Every service account has a type, set when it's created. It never changes.
 
    ```sh
    origin iam create-role-binding --organization <org-id> \
-     --member serviceAccount:<service-account-id> \
-     --role roles/viewer \
-     --project projects/<project-id>
+     --member //iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id> \
+     --role //iam.origincloudapis.eu/roles/viewer \
+     --project //resourcemanager.origincloudapis.eu/projects/<project-id>
    ```
 
    Grant the smallest role and scope that does the job. See [Assign and revoke roles](assign-roles.md).
@@ -158,7 +158,7 @@ An organization can't be deleted while it has a service account that isn't delet
    origin iam get-service-account --organization <org-id> --service-account <service-account-id>
    ```
 
-4. Run `list-role-bindings --member serviceAccount:<service-account-id>` and check that it lists no binding.
+4. Run `list-role-bindings --member //iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>` and check that it lists no binding.
 
 ## Trust a CI provider's tokens
 
@@ -195,16 +195,18 @@ origin iam create-federated-credential \
 
 ## Using the API
 
-In the REST API, these are `CreateServiceAccount`, `ListServiceAccounts`, `GetServiceAccount`, `RotateServiceAccountSecret` and `DeleteServiceAccount`, and for federated credentials `CreateFederatedCredential`, `ListFederatedCredentials`, `GetFederatedCredential` and `DeleteFederatedCredential`; see the [IAM reference](reference/index.md#rest-api). The GraphQL mutations are `createServiceAccount` and `revokeServiceAccount`; the query is `serviceAccounts`, all in the `iam` namespace. Neither API returns a client secret after the create, except the REST API's `RotateServiceAccountSecret`, which returns the new one. The secret's expiry, `secretExpireTime`, and the create's `secretLifetime` are in the REST API only.
+In the REST API, these are `CreateServiceAccount`, `ListServiceAccounts`, `GetServiceAccount`, `RotateServiceAccountSecret` and `DeleteServiceAccount`, and for federated credentials `CreateFederatedCredential`, `ListFederatedCredentials`, `GetFederatedCredential` and `DeleteFederatedCredential`; see the [IAM reference](reference/index.md#rest-api). The GraphQL mutations are `createServiceAccount` and `revokeServiceAccount`, which takes the account's full name as `serviceAccount`; an account's `id` is its member; the query is `serviceAccounts`, all in the `iam` namespace. Neither API returns a client secret after the create, except the REST API's `RotateServiceAccountSecret`, which returns the new one. The secret's expiry, `secretExpireTime`, and the create's `secretLifetime` are in the REST API only.
 
 The type is the service account's `type` field in both APIs: set it in the create to make a `WORKLOAD` service account, whose `clientId` and `clientSecret` are then empty in the REST API and null in GraphQL.
 
 ```graphql
 mutation {
   iam {
-    createServiceAccount(input: { orgId: "<org-id>", name: "ci-deploy" }) {
+    createServiceAccount(input: {
+      organisation: "//resourcemanager.origincloudapis.eu/organizations/<org-id>"
+      name: "ci-deploy"
+    }) {
       id
-      principal
       clientId
       clientSecret
     }

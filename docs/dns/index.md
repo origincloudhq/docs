@@ -70,7 +70,7 @@ The DNS API answers at `https://dns.origincloudapis.eu`, the same host for every
 
 ## Access
 
-Each method needs a `dns.*` permission on the project: `dns.hosted_zone.*`, `dns.record_set.*` or `dns.vpc_attachment.*`. Owner holds them all and Viewer the reads. For a program that only keeps records in step, such as [external-dns](record-sets/external-dns.md) or an ACME client, assign [`roles/dns/editor`](../iam/roles.md#rolesdnseditor) to its service account: it manages record sets and reads zones, but can't create or delete a zone. See [Built-in roles](../iam/roles.md).
+Each method needs a `dns.*` permission on the project: `dns.hosted_zone.*`, `dns.record_set.*` or `dns.vpc_attachment.*`. Owner holds them all and Viewer the reads. For a program that only keeps records in step, such as [external-dns](record-sets/external-dns.md) or an ACME client, assign [`roles/dns.editor`](../iam/roles.md#rolesdnseditor) to its service account: it manages record sets and reads zones, but can't create or delete a zone. See [Built-in roles](../iam/roles.md).
 
 ## Quotas
 
