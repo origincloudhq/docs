@@ -6,7 +6,7 @@ page_type: concept
 parent: traffic-control
 nav_order: 10
 tags: [networking, security]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-16
 ---
 
 # Security groups
@@ -77,6 +77,8 @@ For example, to restrict the default group's SSH to one range:
    origin network delete-security-group-rule --security-group <security-group-id> \
      --rule <rule-id> --yes
    ```
+
+A rule's id comes from what the rule says: its direction, protocol, ports, description and peer, where a peer group counts by its full resource name. The same rule always has the same id, and a rule that names a security group got a new id when ids began to follow full names (2026-11-16); list the rules again for the current ids. If you manage rules with Terraform, a state that holds the old id of such a rule no longer finds it: remove the rule from the state and import it again by its new id.
 
 A rule identical to one the group already has, `--description` included, is refused with `FAILED_PRECONDITION`. A group holds at most 120 rules by default, both directions together.
 
