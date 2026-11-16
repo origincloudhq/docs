@@ -6,7 +6,7 @@ page_type: concept
 parent: billing
 nav_order: 20
 tags: [billing, iam, roles]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-16
 ---
 
 # Billing access
@@ -62,6 +62,10 @@ Without a billing role, an Owner can still:
 - Read and set quota budgets on projects.
 
 An Owner can't read a billing account's details or payment method, and can't add a payment method.
+
+## When billing access is refused
+
+If you hold no billing role on the organization, reading its billing accounts answers `403 PERMISSION_DENIED`. This applies to listing them, too: `GET https://billing.origincloudapis.eu/v1beta1/organizations/<org-id>/billingAccounts`. An Owner gets this refusal as well. A role on a single project never gives billing access. Ask a billing administrator of the organization to assign you a billing role org-wide, for example `roles/billing.viewer` to read billing accounts.
 
 ## Related
 
