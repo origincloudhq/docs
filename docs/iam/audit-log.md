@@ -66,7 +66,7 @@ The `iam.federated_credential.exchange` entry with the same `token_id` holds the
 
 ```json
 {
-  "role_urn": "roles/viewer",
+  "role": "roles/viewer",
   "federated": {
     "credential": "organizations/<org-id>/serviceAccounts/<service-account-id>/federatedCredentials/<credential-id>",
     "token_id": "<token-id>"
