@@ -6,7 +6,7 @@ page_type: concept
 parent: home
 nav_order: 70
 tags: [iam, audit, api]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-18
 ---
 
 # Audit log
@@ -31,8 +31,8 @@ The audit log records these fourteen actions. Each one is recorded when the chan
 | `iam.federated_credential.create` | A federated credential is created on a service account | The federated credential's name; `details` holds its issuer, audience, conditions and service account |
 | `iam.federated_credential.delete` | A federated credential is deleted | The federated credential's name; `details` names its service account |
 | `iam.federated_credential.exchange` | A CI job's OIDC token is exchanged for the service account's access token through a federated credential; the actor is the service account | The federated credential's name; `details` holds the job token's issuer and subject, the run's claims (`run`), and the access token's id and expiry |
-| `compute.instance.service_account.attach` | An instance is launched as a service account, or updated to run as one (replacing one records a detach, then an attach) | The instance's URN; `details` names the service account |
-| `compute.instance.service_account.detach` | An instance's service account is removed or replaced | The instance's URN; `details` names the service account |
+| `compute.instance.service_account.attach` | An instance is launched as a service account, or updated to run as one (replacing one records a detach, then an attach) | The instance's full name, `//compute.origincloudapis.eu/projects/…/zones/…/instances/…`; `details` names the service account |
+| `compute.instance.service_account.detach` | An instance's service account is removed or replaced | The instance's full name; `details` names the service account |
 
 The KMS records every change to a key and every use of it but reading a public key, each answered only once its entry is written: `kms.keys.create`, `kms.keys.enable`, `kms.keys.disable`, `kms.keys.rotate`, `kms.keys.updateTags`, `kms.keys.scheduleDeletion`, `kms.keys.cancelDeletion`, `kms.keys.destroy` (the platform destroying a deleted key's material at its purge time, with the platform as the actor), `kms.keys.encrypt`, `kms.keys.decrypt`, `kms.keys.generateDataKey`, `kms.keys.sign`, and a key's grants: `kms.keys.createGrant`, `kms.keys.renewGrant` and `kms.keys.retireGrant`, whose `details.grant` names the grant, its host and when it expires. The target is the key's full name, `//kms.origincloudapis.eu/projects/…/keys/…`; `details` hold its `region`, the key `version` used or made, and the `encryption_context`, never a plaintext or a data key. An encrypt, decrypt, data key or sign the KMS refuses on one of your keys is recorded too, with outcome `FAILED` and the `reason` in `details`: `does_not_open` (the ciphertext doesn't decrypt under the key and that context), `key_not_enabled`, `version_unavailable` (the key version's material is destroyed) or `invalid_request`. So is a grant the KMS refuses to make or renew, and a host's decryption under a grant it refuses: `no_live_grant`, `grantee_not_proven`, `grantee_not_enrolled` (the host the grant names isn't enrolled with the platform), `grant_expired`, `grant_limit_reached` (the key holds the most grants it may in the zone) or `grant_host_limit_reached` (the most it may for that host), besides the reasons above. A request naming a key that doesn't exist, or that isn't in the caller's project, is recorded against no key. See the [KMS guide](../kms/index.md).
 
