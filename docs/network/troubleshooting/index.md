@@ -103,7 +103,7 @@ last_reviewed: 2026-11-15
 
 ## An update is refused without contacting the API
 
-**Symptom:** An `update-` command, such as `update-security-group` or `update-dns-policy`, exits with status `2` and `the following required arguments were not provided`.
+**Symptom:** An `update-` command, such as `update-security-group` or `update-resolver-policy`, exits with status `2` and `the following required arguments were not provided`.
 
 **Cause:** An update changes only what its flags name, so it needs at least one. Rules aren't changed with an `update-` command: they're resources of their own.
 

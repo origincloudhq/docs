@@ -26,7 +26,7 @@ Network ACL rules, security group rules, route table routes, and the association
 | A subnet's route table or network ACL | `create-route-table-association`, `create-acl-association` | `delete-route-table-association`, `delete-acl-association` |
 | A network interface's security group | `create-security-group-association` | `delete-security-group-association` |
 | A Floating IP's network interface | `create-floating-ip-association` | `delete-floating-ip-association` |
-| A VPC's DNS policy | `create-dns-policy-association` | `delete-dns-policy-association` |
+| A VPC's DNS policy | `create-resolver-policy-association` | `delete-resolver-policy-association` |
 
 None of them can be changed in place. To change one, add the new one and remove the old one; for an association, which a subnet, interface or VPC has at most one of, remove the old one first.
 
@@ -35,7 +35,7 @@ None of them can be changed in place. To change one, add the new one and remove 
 An `update-` command changes only what its flags name, and needs at least one; without any, the CLI refuses it before it sends anything. A list it names is replaced as a whole:
 
 - `--tag` replaces all of a resource's tags, so give every tag to keep. `--no-tags` removes them all. See [Name and tag network resources](../vpcs/name-and-tag.md).
-- `--upstream-server` on `update-dns-policy` replaces all of a DNS policy's upstream servers. `--no-upstream-servers` removes them all. See [Manage DNS policies](../dns/manage-policies.md).
+- `--upstream-server` on `update-resolver-policy` replaces all of a DNS policy's upstream servers. `--no-upstream-servers` removes them all. See [Manage DNS policies](../dns/manage-policies.md).
 
 An empty list is stated by name, with its `--no-` flag, never by leaving a flag out. Giving both forms, such as `--tag` together with `--no-tags`, is refused.
 
