@@ -6,7 +6,7 @@ page_type: task
 parent: vpcs
 nav_order: 50
 tags: [networking, vpc, cli]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-18
 ---
 
 # Delete a subnet or VPC
@@ -24,11 +24,11 @@ You can delete a single subnet, or a VPC once you've deleted what it holds. Both
 
 Deleting a subnet removes the subnet with its route table and network ACL associations and any unattached network interfaces in it. It's refused while an interface in it is attached to an instance, or a NAT gateway lives in it.
 
-`delete-vpc` deletes only a VPC that holds nothing you created. It's refused, naming what's left, while the VPC has a subnet, an Internet Gateway, a security group, a network ACL or a route table. Delete those first, in this order: subnets, which takes their associations and unattached network interfaces with them, then route tables with their routes, the Internet Gateway, network ACLs and security groups. What the platform created with your project's default VPC doesn't count: its default security group, default ACL, main route table and DNS policy association are deleted with it, and so is any VPC's DNS policy association.
+`delete-vpc` deletes only a VPC that holds nothing you created. It's refused, naming what's left, while the VPC has a subnet, an Internet Gateway, a security group, a network ACL or a route table. Delete those first, in this order: subnets, which takes their associations and unattached network interfaces with them, then route tables with their routes, the Internet Gateway, network ACLs and security groups. What the platform created with your project's default VPC doesn't count: its default security group, default ACL, main route table and resolver policy association are deleted with it, and so is any VPC's resolver policy association.
 
 The GraphQL API's `deleteVpc` mutation instead removes every subnet in the VPC, its route tables, network ACLs, security groups and Internet Gateway with it.
 
-Neither deletes a DNS policy, because a policy belongs to the project and can serve other VPCs. Delete the policy separately if you no longer need it; see [Manage DNS policies](../dns/manage-policies.md).
+Neither deletes a resolver policy, because a policy belongs to the project and can serve other VPCs. Delete the policy separately if you no longer need it; see [Manage resolver policies](../dns/manage-resolver-policies.md).
 
 ## Delete a subnet
 
@@ -89,7 +89,7 @@ The same rule applies elsewhere in Network. Each of these is refused, with a mes
 - Deleting a security group that a network interface's security group association still names
 - Deleting a route table that a subnet's route table association still names
 - Deleting an Internet Gateway or a NAT gateway that a route still names
-- Deleting a DNS policy that a VPC's DNS policy association still names, or the project's default policy
+- Deleting a resolver policy that a VPC's resolver policy association still names, or the project's default policy
 - Deleting a Floating IP that's still associated, or that a NAT gateway uses
 
 ## Related

@@ -6,7 +6,7 @@ page_type: concept
 parent: home
 nav_order: 35
 tags: [tags, networking, compute, storage]
-last_reviewed: 2026-11-13
+last_reviewed: 2026-11-18
 ---
 
 # Tags
@@ -15,7 +15,7 @@ A tag is a key-value label on a resource. Tags change how a resource is shown an
 
 These resources take tags:
 
-- Network: VPCs, subnets, network interfaces, security groups, network ACLs, Floating IPs, Internet Gateways, route tables, NAT gateways and DNS policies. Rules, routes and associations don't.
+- Network: VPCs, subnets, network interfaces, security groups, network ACLs, Floating IPs, Internet Gateways, route tables, NAT gateways and resolver policies. Rules, routes and associations don't.
 - Compute: instances, key pairs, and the images you create in a project. Platform images don't. A key pair's `origin:name` tag is its name; remove it and the key pair shows the name it was imported under.
 - Storage: volumes and snapshots.
 - DNS: hosted zones. Record sets and VPC attachments don't.

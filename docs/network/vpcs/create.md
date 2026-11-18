@@ -6,7 +6,7 @@ page_type: task
 parent: vpcs
 nav_order: 40
 tags: [networking, vpc, cli]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-18
 ---
 
 # Create a VPC and subnets
@@ -37,7 +37,7 @@ Creating VPCs and subnets doesn't require a payment method.
    origin network get-vpc --vpc <vpc-id>
    ```
 
-The VPC has no subnet, route table, network ACL, security group or Internet Gateway, and its `dnsPolicy` is empty: it relays DNS through the project's default policy in its region. See [DNS](../dns/index.md).
+The VPC has no subnet, route table, network ACL, security group or Internet Gateway, and its `resolverPolicy` is empty: it relays DNS through the project's default policy in its region. See [DNS](../dns/index.md).
 
 ## Add a subnet
 

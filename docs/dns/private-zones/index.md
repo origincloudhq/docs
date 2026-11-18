@@ -7,7 +7,7 @@ page_type: concept
 parent: home
 nav_order: 30
 tags: [dns, vpc, networking]
-last_reviewed: 2026-11-07
+last_reviewed: 2026-11-18
 ---
 
 # Private zones and VPC attachments
@@ -34,12 +34,12 @@ A private zone's domain may have one label, such as `corp`. It can't be `interna
 
 ## How a VPC answers
 
-The resolver of each subnet answers the names of the private zones attached to its VPC itself, with the rest of the VPC's own names. Queries for any other name go out as the VPC's DNS policy says. See [DNS in a VPC](../../network/dns/index.md).
+The resolver of each subnet answers the names of the private zones attached to its VPC itself, with the rest of the VPC's own names. Queries for any other name go out as the VPC's resolver policy says. See [DNS in a VPC](../../network/dns/index.md).
 
 - **Instance hostnames first.** Names in `internal` are always the instances' own; no private zone can take them.
 - **The most specific zone answers.** With `corp.example` and `dev.corp.example` both attached, `api.dev.corp.example` is answered from `dev.corp.example`.
 - **A private zone answers for every name below it.** A name the zone has no record set for is answered as nonexistent (`NXDOMAIN`), and a name without a record set of the type asked for is answered with no records (`NODATA`). Neither is passed on, so inside the VPC a private zone hides the public zone of the same domain.
-- **CNAMEs are followed.** A `CNAME` record set whose target lies outside its zone, in another attached zone, an instance hostname or a public name, is answered together with its target's records, following at most 8 `CNAME`s. A target without a record of the type asked for is answered with the chain and no records (`NODATA`). A chain that loops or is longer fails with `SERVFAIL`. If the VPC's DNS policy doesn't relay, a `CNAME` to a public name is answered as it is.
+- **CNAMEs are followed.** A `CNAME` record set whose target lies outside its zone, in another attached zone, an instance hostname or a public name, is answered together with its target's records, following at most 8 `CNAME`s. A target without a record of the type asked for is answered with the chain and no records (`NODATA`). A chain that loops or is longer fails with `SERVFAIL`. If the VPC's resolver policy doesn't relay, a `CNAME` to a public name is answered as it is.
 - **Aliases answer with the Floating IP's current address,** whichever zone of the region it's in, and with nothing while that Floating IP doesn't exist. When the Floating IP is in another zone and that zone can't be reached, the alias keeps the address it last answered with, as long as it still points at the same Floating IP: its removal, or the deletion of that Floating IP, takes effect once the other zones can be reached again. An alias pointed at another Floating IP meanwhile answers nothing until then.
 - **TTLs are the record sets' own.** An instance's resolver library may cache an answer for that long.
 

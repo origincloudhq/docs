@@ -7,23 +7,23 @@ page_type: overview
 parent: null
 nav_order: 0
 tags: [overview, networking, vpc]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-18
 ---
 
 # What is Origin Cloud Network?
 
-Network is where your instances live. A VPC is an isolated network with its own private address space, subnets divide that space, and every instance connects to a subnet through a network interface. A new VPC is private: nothing in it is reachable from the internet until you create an Internet Gateway for it and give instances a way out. Security groups and network ACLs decide which traffic is allowed, and a DNS policy decides how the VPC resolves names it doesn't know.
+Network is where your instances live. A VPC is an isolated network with its own private address space, subnets divide that space, and every instance connects to a subnet through a network interface. A new VPC is private: nothing in it is reachable from the internet until you create an Internet Gateway for it and give instances a way out. Security groups and network ACLs decide which traffic is allowed, and a resolver policy decides how the VPC resolves names it doesn't know.
 
 The following diagram shows how the parts contain and connect to each other.
 
 ```mermaid
 flowchart TD
   accTitle: Parts of an Origin Cloud network
-  accDescr: A VPC contains subnets, and each subnet contains network interfaces. An Internet Gateway connects the VPC to the internet. Each subnet uses a route table and a network ACL. Each network interface carries security groups and can hold a Floating IP. A NAT gateway sits in a public subnet. A DNS policy is associated with the VPC.
+  accDescr: A VPC contains subnets, and each subnet contains network interfaces. An Internet Gateway connects the VPC to the internet. Each subnet uses a route table and a network ACL. Each network interface carries security groups and can hold a Floating IP. A NAT gateway sits in a public subnet. A resolver policy is associated with the VPC.
   vpc[VPC] --> subnet[Subnet]
   subnet --> nic[Network interface]
   igw[Internet Gateway] -->|connects| vpc
-  dns[DNS policy] -->|associated with| vpc
+  dns[Resolver policy] -->|associated with| vpc
   rt[Route table] -->|routes| subnet
   acl[Network ACL] -->|filters| subnet
   sg[Security group] -->|filters| nic
@@ -45,15 +45,15 @@ Internet Gateways, route tables, NAT gateways and Floating IPs decide whether an
 Stateful security groups on each network interface and stateless network ACLs on each subnet. See [Traffic control](traffic-control/index.md).
 
 **DNS**  
-Every instance gets an internal hostname that other instances in its VPC can resolve. DNS policies decide where other queries are relayed. See [DNS](dns/index.md). For zones and records of your own domains, public or private, see the [DNS guide](../dns/index.md).
+Every instance gets an internal hostname that other instances in its VPC can resolve. Resolver policies decide where other queries are relayed. See [DNS](dns/index.md). For zones and records of your own domains, public or private, see the [DNS guide](../dns/index.md).
 
 ## Ways to access Network
 
 **CLI**  
-The `origin network` command group, with a command for each resource and for the associations between them. VPCs, route tables, network ACLs, security groups, Internet Gateways and DNS policies are regional; subnets, network interfaces, Floating IPs and NAT gateways are zonal. See [Use the CLI](../platform/access/cli.md) to install it and log in, and [`origin network` commands](reference/cli.md) for every command.
+The `origin network` command group, with a command for each resource and for the associations between them. VPCs, route tables, network ACLs, security groups, Internet Gateways and resolver policies are regional; subnets, network interfaces, Floating IPs and NAT gateways are zonal. See [Use the CLI](../platform/access/cli.md) to install it and log in, and [`origin network` commands](reference/cli.md) for every command.
 
 **GraphQL API**  
-VPCs, subnets, network interfaces, gateways, route tables, Floating IPs, ACLs, security groups and DNS policies live under the `network` namespace of the API, for both queries and mutations. See [API access](../platform/access/api.md) and the [Network reference](reference/index.md).
+VPCs, subnets, network interfaces, gateways, route tables, Floating IPs, ACLs, security groups and resolver policies live under the `network` namespace of the API, for both queries and mutations. See [API access](../platform/access/api.md) and the [Network reference](reference/index.md).
 
 ## When to use Network
 
@@ -69,7 +69,7 @@ Network doesn't connect two VPCs to each other, and it doesn't give instances IP
 
 ## Pricing
 
-VPCs, subnets, route tables, ACLs, security groups and DNS policies cost nothing by themselves. Floating IPs and NAT gateways are billed while you hold them, and traffic from your VPC to the internet is billed. Allocating a Floating IP and creating a NAT gateway require a payment method; see [Add a payment method](../platform/billing/payment-method.md). For prices, see [Pricing](../pricing/index.md).
+VPCs, subnets, route tables, ACLs, security groups and resolver policies cost nothing by themselves. Floating IPs and NAT gateways are billed while you hold them, and traffic from your VPC to the internet is billed. Allocating a Floating IP and creating a NAT gateway require a payment method; see [Add a payment method](../platform/billing/payment-method.md). For prices, see [Pricing](../pricing/index.md).
 
 ## On origincloud.eu
 
