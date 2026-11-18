@@ -6,7 +6,7 @@ page_type: reference
 parent: home
 nav_order: 20
 tags: [iam, roles, reference]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-18
 ---
 
 # Built-in roles
@@ -60,7 +60,7 @@ Full control of the organization's projects, resources and access. Owner doesn't
 | `kms.grant` | `get`, `list`, `create`, `update`, `delete` |
 | `kms.key` | `get`, `list`, `create`, `update`, `delete`, `rotate`, `encrypt`, `decrypt`, `generate_data_key`, `sign`, `get_public_key` |
 | `network.acl` | `get`, `list`, `create`, `update`, `delete` |
-| `network.dns_policy` | `get`, `list`, `create`, `update`, `set_default`, `delete`, `attach` |
+| `network.resolver_policy` | `get`, `list`, `create`, `update`, `set_default`, `delete`, `attach` |
 | `network.floating_ip` | `get`, `list`, `create`, `attach`, `detach`, `delete` |
 | `network.interface` | `get`, `list`, `create`, `delete`, `attach` |
 | `network.internet_gateway` | `get`, `attach`, `detach` |
@@ -100,7 +100,7 @@ Read-only access: every `get` and `list` permission that Owner holds. A Viewer c
 | `kms.grant` | `get`, `list` |
 | `kms.key` | `get`, `list` |
 | `network.acl` | `get`, `list` |
-| `network.dns_policy` | `get`, `list` |
+| `network.resolver_policy` | `get`, `list` |
 | `network.floating_ip` | `get`, `list` |
 | `network.interface` | `get`, `list` |
 | `network.internet_gateway` | `get` |

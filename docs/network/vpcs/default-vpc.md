@@ -6,7 +6,7 @@ page_type: concept
 parent: vpcs
 nav_order: 20
 tags: [networking, vpc, internet-access]
-last_reviewed: 2026-11-05
+last_reviewed: 2026-11-18
 ---
 
 # Default VPC
@@ -30,7 +30,7 @@ A VPC you create is empty. The default VPC comes with:
 - A main route table, its `main` field `true`, with default routes to the Internet Gateway. The default VPC's subnet uses it, and so does every subnet you create in the VPC until you associate it with another table.
 - A default network ACL that allows all traffic, its `vpcDefault` field `true`. The default VPC's subnet uses it, and so does every subnet you create in the VPC.
 - A default security group, its `vpcDefault` field `true`.
-- An association with the project's default DNS policy.
+- An association with the project's default resolver policy.
 
 The default security group, ACL and main route table can't be deleted on their own; they go with the VPC. Like any other VPC, the default VPC has a random private `/16` IPv4 range and an IPv6 range. For the address rules, see [VPC and subnet addressing](addressing.md).
 

@@ -6,7 +6,7 @@ page_type: task
 parent: vpcs
 nav_order: 45
 tags: [networking, vpc, tags, cli]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-18
 ---
 
 # Name and tag network resources
@@ -30,7 +30,7 @@ Give a VPC, subnet or other network resource a name so you can tell it apart fro
 
 ## Name other network resources
 
-Every command that creates a VPC, subnet, network interface, route table, network ACL, security group, Internet Gateway, NAT gateway, Floating IP or DNS policy takes `--tag`, for example:
+Every command that creates a VPC, subnet, network interface, route table, network ACL, security group, Internet Gateway, NAT gateway, Floating IP or resolver policy takes `--tag`, for example:
 
 ```sh
 origin network create-subnet --vpc //network.origincloudapis.eu/projects/<project>/regions/<region>/vpcs/<vpc-id> --tag origin:name=web

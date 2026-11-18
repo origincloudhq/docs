@@ -6,7 +6,7 @@ page_type: overview
 parent: home
 nav_order: 10
 tags: [networking, vpc]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-18
 ---
 
 # VPCs and subnets
@@ -18,7 +18,7 @@ A VPC lives in one region of a project, and each of its subnets in one zone. A V
 ```mermaid
 flowchart TD
   accTitle: The pieces of a VPC that reaches the internet
-  accDescr: You add subnets, route tables, network ACLs, security groups and an Internet Gateway to a VPC. A subnet uses a route table, whose default route leads to the Internet Gateway, and optionally a network ACL. A network interface in the subnet carries security groups. A VPC with no DNS policy association relays through the project's default policy in its region.
+  accDescr: You add subnets, route tables, network ACLs, security groups and an Internet Gateway to a VPC. A subnet uses a route table, whose default route leads to the Internet Gateway, and optionally a network ACL. A network interface in the subnet carries security groups. A VPC with no resolver policy association relays through the project's default policy in its region.
   vpc[VPC] --> subnet[Subnet]
   vpc --> igw[Internet Gateway]
   subnet -->|uses| rt[Route table]
@@ -26,7 +26,7 @@ flowchart TD
   subnet -.->|optionally uses| acl[Network ACL]
   subnet --> nic[Network interface]
   nic -->|carries| sg[Security groups]
-  vpc -.->|relays through| dns[Project's default DNS policy]
+  vpc -.->|relays through| dns[Project's default resolver policy]
 ```
 
 Until it has an Internet Gateway and a subnet's route table has a default route to it, nothing in the VPC can reach the internet or be reached from it. A missing piece has a defined meaning:
@@ -34,7 +34,7 @@ Until it has an Internet Gateway and a subnet's route table has a default route 
 - A subnet with no route table has no route out of the VPC and isn't reachable from the internet. Internet access is decided per subnet and address family by the subnet's own route table; see [Route tables](../internet-access/route-tables.md#how-internet-access-is-decided).
 - A subnet with no network ACL isn't filtered at its edge; its instances' security groups still apply.
 - A network interface in no security group passes no traffic except address resolution.
-- A VPC with no DNS policy association relays through the project's default policy in its region.
+- A VPC with no resolver policy association relays through the project's default policy in its region.
 
 Your project's [default VPC](default-vpc.md) is the exception: the platform creates it with all of these in place.
 

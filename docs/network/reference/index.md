@@ -7,7 +7,7 @@ page_type: reference
 parent: home
 nav_order: 50
 tags: [networking, reference, cli, api]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-18
 ---
 
 # Network reference
@@ -21,7 +21,7 @@ Network has two reference surfaces: the `origin network` CLI commands and the `n
 ## Names
 
 A network resource's `name` is its relative name, such as `projects/<project>/regions/<region>/vpcs/<vpc-id>`; the commands that act on one take it, or its id. Its full name is `//network.origincloudapis.eu/` followed by its `name`. Every reference to another resource is a full name, in what the CLI and REST API take and in what they show:
-- `vpc`, `subnet`, `routeTable`, `acl`, `dnsPolicy`, `internetGateway`, `natGateway`, `floatingIp`, `networkInterface`, `securityGroup`(`s`) and `peerSecurityGroup`;
+- `vpc`, `subnet`, `routeTable`, `acl`, `resolverPolicy`, `internetGateway`, `natGateway`, `floatingIp`, `networkInterface`, `securityGroup`(`s`) and `peerSecurityGroup`;
 - an interface's `instance`, on the compute service;
 - the `vpc` and `subnet` filters of the list commands;
 - an operation's `target`.
@@ -50,8 +50,8 @@ All queries are fields of `network` on the root query type. For how to call the 
 | `acl` | One network ACL by its full resource name. |
 | `securityGroups` | Every security group in a project. |
 | `securityGroup` | One security group by its full resource name. |
-| `dnsPolicies` | Every DNS policy in a project. |
-| `dnsPolicy` | One DNS policy by its full resource name. |
+| `resolverPolicies` | Every resolver policy in a project. |
+| `resolverPolicy` | One resolver policy by its full resource name. |
 
 ## GraphQL mutations
 
@@ -87,11 +87,11 @@ All mutations are fields of `network` on the root mutation type.
 | `createSecurityGroup` | Creates a security group in a VPC, optionally with initial rules. |
 | `updateSecurityGroupRules` | Replaces a security group's ingress and egress rules. |
 | `deleteSecurityGroup` | Deletes a security group. |
-| `createDnsPolicy` | Creates a DNS policy in a project. |
-| `updateDnsPolicy` | Replaces a DNS policy's relaying setting and upstream servers. |
-| `attachDnsPolicy` | Attaches a DNS policy to a VPC. |
-| `setDefaultDnsPolicy` | Makes a DNS policy the project's default. |
-| `deleteDnsPolicy` | Deletes a DNS policy. |
+| `createResolverPolicy` | Creates a resolver policy in a project. |
+| `updateResolverPolicy` | Replaces a resolver policy's relaying setting and upstream servers. |
+| `attachResolverPolicy` | Attaches a resolver policy to a VPC. |
+| `setDefaultResolverPolicy` | Makes a resolver policy the project's default. |
+| `deleteResolverPolicy` | Deletes a resolver policy. |
 
 ## Errors and limits
 
