@@ -24,13 +24,13 @@ A DNS policy decides where a VPC relays queries it can't answer itself. Use your
 1. Create the policy with its upstream servers and relaying turned on, and note its id:
 
    ```sh
-   origin network create-dns-policy --relay-enabled true \
+   origin network create-resolver-policy --relay-enabled true \
      --upstream-server 192.0.2.53 --upstream-server 192.0.2.54
    ```
 
    Servers are tried in the order you give them, at most five. To create a policy that refuses every query outside the VPC, use `--relay-enabled false` with no upstream servers. Relaying with no upstream servers is refused.
 
-2. Verify it with `list-dns-policies`.
+2. Verify it with `list-resolver-policies`.
 
 A new policy isn't the project's default. Associate it with a VPC, or make it the default.
 
@@ -39,11 +39,11 @@ A new policy isn't the project's default. Associate it with a VPC, or make it th
 1. Associate the policy. It must belong to the VPC's project and region, and a VPC has at most one DNS policy association.
 
    ```sh
-   origin network create-dns-policy-association --vpc <vpc-id> \
-     --dns-policy //network.origincloudapis.eu/projects/<project>/regions/<region>/dnsPolicies/<dns-policy-id>
+   origin network create-resolver-policy-association --vpc <vpc-id> \
+     --resolver-policy //network.origincloudapis.eu/projects/<project>/regions/<region>/resolverPolicies/<resolver-policy-id>
    ```
 
-2. Verify that the VPC's `dnsPolicy` names the policy:
+2. Verify that the VPC's `resolverPolicy` names the policy:
 
    ```sh
    origin network get-vpc --vpc <vpc-id>
@@ -52,8 +52,8 @@ A new policy isn't the project's default. Associate it with a VPC, or make it th
 While it has the association, the VPC relays through that policy and doesn't follow the project's default. To make it follow the default again, delete the association. Its id is the DNS policy's id:
 
 ```sh
-origin network delete-dns-policy-association --vpc <vpc-id> \
-  --dns-policy-association <dns-policy-id> --yes
+origin network delete-resolver-policy-association --vpc <vpc-id> \
+  --resolver-policy-association <resolver-policy-id> --yes
 ```
 
 To move a VPC to another policy, delete its association, then create a new one.
@@ -63,11 +63,11 @@ To move a VPC to another policy, delete its association, then create a new one.
 1. Change what you name. `--upstream-server` replaces the whole server list, so give every server to keep; `--relay-enabled` alone leaves the servers as they are.
 
    ```sh
-   origin network update-dns-policy --dns-policy <dns-policy-id> \
+   origin network update-resolver-policy --resolver-policy <resolver-policy-id> \
      --relay-enabled true --upstream-server 192.0.2.53
    ```
 
-2. Verify with `get-dns-policy --dns-policy <dns-policy-id>`.
+2. Verify with `get-resolver-policy --resolver-policy <resolver-policy-id>`.
 
 The change applies to every VPC that relays through the policy within seconds, while instances keep running; no restart is needed.
 
@@ -76,10 +76,10 @@ The change applies to every VPC that relays through the policy within seconds, w
 1. Make another policy the default in its region:
 
    ```sh
-   origin network set-default-dns-policy --dns-policy <dns-policy-id>
+   origin network set-default-resolver-policy --resolver-policy <resolver-policy-id>
    ```
 
-2. Verify with `list-dns-policies`: the policy's `projectDefault` is `true`.
+2. Verify with `list-resolver-policies`: the policy's `projectDefault` is `true`.
 
 Every VPC of the region with no DNS policy association, which is every VPC you create until you associate one, relays through the new default from then on. A VPC with an association, such as your default VPC, keeps its policy; delete or replace the association to move it.
 
@@ -90,10 +90,10 @@ Every VPC of the region with no DNS policy association, which is every VPC you c
 2. Delete the policy:
 
    ```sh
-   origin network delete-dns-policy --dns-policy <dns-policy-id> --yes
+   origin network delete-resolver-policy --resolver-policy <resolver-policy-id> --yes
    ```
 
-3. Verify that `list-dns-policies` no longer shows it.
+3. Verify that `list-resolver-policies` no longer shows it.
 
 Deleting a VPC doesn't delete its DNS policy. Deleting the project deletes its default policy; see [Delete a project](../../platform/organizations/projects.md#delete-a-project).
 
@@ -101,6 +101,6 @@ Deleting a VPC doesn't delete its DNS policy. Deleting the project deletes its d
 
 - [DNS](index.md)
 - [How rules, routes and lists change](../traffic-control/replace-rule-sets.md)
-- [`create-dns-policy` reference](../reference/cli.md#create-dns-policy)
-- [`update-dns-policy` reference](../reference/cli.md#update-dns-policy)
-- [`create-dns-policy-association` reference](../reference/cli.md#create-dns-policy-association)
+- [`create-resolver-policy` reference](../reference/cli.md#create-resolver-policy)
+- [`update-resolver-policy` reference](../reference/cli.md#update-resolver-policy)
+- [`create-resolver-policy-association` reference](../reference/cli.md#create-resolver-policy-association)
