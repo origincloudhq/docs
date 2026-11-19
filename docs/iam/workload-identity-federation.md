@@ -7,7 +7,7 @@ page_type: concept
 parent: home
 nav_order: 52
 tags: [iam, service-accounts, security]
-last_reviewed: 2026-11-12
+last_reviewed: 2026-11-19
 ---
 
 # Workload identity federation
@@ -63,6 +63,8 @@ The STS finds an issuer's keys through OIDC discovery at `<issuer>/.well-known/o
 - it signs tokens with RS256. A key in its key set that names no algorithm is taken as RS256.
 
 GitHub Actions meets these. A self-hosted provider that can't be reached from the internet doesn't: the STS never fetches keys from a private address.
+
+Every availability zone of the region answers at `sts.origincloudapis.eu`, and the name gives out only the zones whose STS is healthy. If a zone goes down, the jobs' exchanges are answered by the others, and tokens a job already holds keep working. Each zone signs with its own key and names itself in the token's `iss` claim (for example `origincloud:sts:eu-central1-az2`). The API accepts a token from any of them, so a job doesn't need to know which zone answered.
 
 ## Revocation and audit
 
