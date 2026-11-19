@@ -7,7 +7,7 @@ page_type: task
 parent: home
 nav_order: 50
 tags: [iam, service-accounts, cli, api]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-19
 ---
 
 # Use service accounts
@@ -172,7 +172,7 @@ Software holding a matching token exchanges it for the service account's access 
 
 A federated credential is refused unless:
 
-- **At least one condition names an identity that never changes.** For GitHub Actions' issuer, `https://token.actions.githubusercontent.com`, that is `repository_id` or `repository_owner_id`. For GitLab.com's, `https://gitlab.com`, it is `project_id` or `namespace_id`. For any other issuer, it is `sub`. A repository's or project's name alone isn't enough: a renamed one, or a new one created under an old name, would inherit the trust.
+- **At least one condition names an identity that never changes.** For GitHub Actions' issuer, `https://token.actions.githubusercontent.com`, that is `repository_id` or `repository_owner_id`. For GitLab.com's, `https://gitlab.com`, it is `project_id` or `namespace_id`. For HCP Terraform's, `https://app.terraform.io`, it is `terraform_organization_id`. For any other issuer, it is `sub`. A repository's, project's or workspace's name alone isn't enough: a renamed one, or a new one created under an old name, would inherit the trust.
 - **No value contains `*`.** Values are matched exactly, never as patterns.
 - **The service account is an active `WORKLOAD` one.** An `EXTERNAL` account authenticates with its own secret.
 
