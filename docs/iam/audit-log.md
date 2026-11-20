@@ -28,9 +28,11 @@ The audit log records these fourteen actions. Each one is recorded when the chan
 | `iam.service_account.revoke` | A service account is revoked | The service account's principal |
 | `iam.service_account.rotate_secret` | A service account's client secret is rotated | The service account's principal; `details` holds the new secret's expiry |
 | `iam.service_account.secret_expired` | A service account's client secret expired and the platform stopped accepting it; the actor is the platform | The service account's principal; `details` holds the expiry |
+| `iam.service_account_key.create` | A key is created for a service account | The key's full name, `//iam.origincloudapis.eu/organizations/…/serviceAccounts/…/keys/…`; `details` names its service account and algorithm |
+| `iam.service_account_key.delete` | A key is deleted | The key's full name; `details` names its service account |
 | `iam.federated_credential.create` | A federated credential is created on a service account | The federated credential's name; `details` holds its issuer, audience, conditions and service account |
 | `iam.federated_credential.delete` | A federated credential is deleted | The federated credential's name; `details` names its service account |
-| `iam.federated_credential.exchange` | A CI job's OIDC token is exchanged for the service account's access token through a federated credential; the actor is the service account | The federated credential's name; `details` holds the job token's issuer and subject, the run's claims (`run`), and the access token's id and expiry |
+| `iam.federated_credential.exchange` | A CI job's OIDC token is exchanged for the service account's access token through a federated credential; the actor is the service account | The federated credential's name; `details` holds the job token's issuer and subject, the run's claims (`run`), and the access token's id, audience (`audience`) and expiry |
 | `compute.instance.service_account.attach` | An instance is launched as a service account, or updated to run as one (replacing one records a detach, then an attach) | The instance's full name, `//compute.origincloudapis.eu/projects/…/zones/…/instances/…`; `details` names the service account |
 | `compute.instance.service_account.detach` | An instance's service account is removed or replaced | The instance's full name; `details` names the service account |
 
