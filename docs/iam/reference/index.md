@@ -59,7 +59,7 @@ A role is named `roles/<role>`, such as `roles/iam.editor`. A role binding takes
 | `GetFederatedCredential` | `GET /v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>/federatedCredentials/<id>` | One federated credential, deleted or not. |
 | `CreateFederatedCredential` | `POST /v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>/federatedCredentials` | Trusts tokens of an issuer and audience that carry the given claims. Needs `iam.service_account.create` and `iam.service_account.act_as`. |
 | `DeleteFederatedCredential` | `DELETE /v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>/federatedCredentials/<id>` | Stops trusting them: no token is exchanged for it from then on, and those exchanged before are refused at their next call. |
-| `ListServiceAccountKeys`, `GetServiceAccountKey` | `GET /v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>/keys` | A service account's keys: `name`, `algorithm`, `createTime`, `lastUseTime` (unset until a key is used) and `state`, never a private key. `showDeleted` includes deleted ones. Needs `iam.service_account_key.list` or `iam.service_account_key.get`. |
+| `ListServiceAccountKeys`, `GetServiceAccountKey` | `GET /v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>/keys` | A service account's keys: `name`, `algorithm`, `createTime`, `lastUseTime` (when the security token service last exchanged an assertion signed with it, to within an hour; unset until then) and `state`, never a private key. `showDeleted` includes deleted ones. Needs `iam.service_account_key.list` or `iam.service_account_key.get`. |
 | `CreateServiceAccountKey` | `POST /v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>/keys` with the body `{}` | Generates an `ES256` key for an `EXTERNAL` service account. Its `credentialsFile`, a JSON document with the key's and the account's full names and the private key, is in this response only: the platform keeps only the public key. Needs `iam.service_account_key.create` and `iam.service_account.act_as`. An account has at most 10 keys that aren't deleted: an 11th is refused with `CONFLICT`. A `WORKLOAD` service account is refused with `INVALID_ARGUMENT`. A retry with the same `requestId` is refused with `CONFLICT`, its `ErrorInfo` metadata naming the key under `serviceAccountKey`: delete that key and create a new one. |
 | `DeleteServiceAccountKey` | `DELETE /v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>/keys/<id>` | Deletes a key. It stays readable as `DELETED`. Deleting a service account deletes its keys. |
 | `GetUser` | `GET /v1beta1/users/me` | Your own profile. |
@@ -70,13 +70,38 @@ Invites and members are in the GraphQL API only.
 
 ## Security token service
 
-The security token service answers at `https://sts.origincloudapis.eu`. It's a preview (`v1beta1`). It authenticates no caller: the token in the request is the proof. See [Workload identity federation](../workload-identity-federation.md) for what it checks.
+The security token service answers at `https://sts.origincloudapis.eu`. It's a preview (`v1beta1`). It authenticates no caller: the token or assertion in the request is the proof. See [Workload identity federation](../workload-identity-federation.md) for what it checks of an OIDC token, and [Service account keys](#service-account-keys) below for a key's assertion.
 
 | Method | HTTP | Does |
 |---|---|---|
 | `AssumeServiceAccount` | `POST /v1beta1:assumeServiceAccount` | Exchanges an OIDC token (`oidcToken`) for the access token of the `WORKLOAD` service account one of whose federated credentials trusts it. `serviceAccount`, the account's full name, `//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>`, limits it to that account's credentials; a relative name is refused with `BAD_REQUEST`. `lifetime`, such as `"900s"`, from 60 seconds to an hour, sets the access token's lifetime. `audience` is who the access token is for: `origincloud:api`, the platform's APIs, when unset, or `https://mcp.origincloudapis.eu`, the hosted MCP server, whose token the APIs refuse; any other is refused with `INVALID_ARGUMENT` (400). Answers `accessToken`, `expireTime`, and `serviceAccount` and `federatedCredential` as full names. A token no credential trusts is refused with `PERMISSION_DENIED` (403), without saying why. |
 
 The same exchange is an OAuth 2.0 token exchange request (RFC 8693) at `POST /v1/token`, for OAuth clients: the form fields `grant_type=urn:ietf:params:oauth:grant-type:token-exchange`, `subject_token` and `subject_token_type=urn:ietf:params:oauth:token-type:jwt`, optionally `requested_token_lifetime` in seconds and `audience`, as above; an audience it issues no token for is answered `invalid_target`. [Authenticate from GitHub Actions](../github-actions.md#exchange-the-token-yourself) shows it with curl.
+
+### Service account keys
+
+An `EXTERNAL` service account exchanges an assertion signed with one of its [keys](#rest-api) for its access token with an OAuth 2.0 JWT bearer grant (RFC 7523) at `POST /v1/token`: the form fields `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer` and `assertion`, optionally `requested_token_lifetime` in seconds and `audience`, as for `AssumeServiceAccount`.
+
+The assertion is a JWT signed `ES256` with the key's private key from the credentials file:
+
+| Part | Value |
+|---|---|
+| Header `alg` | `ES256` |
+| Header `kid` | The key's full name, `//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>/keys/<key-id>` (the credentials file's `name`) |
+| `iss` and `sub` | The service account's full name, `//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>` (the credentials file's `service_account`) |
+| `aud` | `https://sts.origincloudapis.eu` (the credentials file's `sts_endpoint`) or `https://sts.origincloudapis.eu/v1/token` |
+| `iat` and `exp` | When it was made and when it expires, in seconds since the epoch: at most an hour apart. `iat` may be up to a minute ahead of the service's clock. An optional `nbf` is checked the same way. |
+| `jti` | An ID you never use again with this key, up to 128 bytes |
+
+The security token service refuses the assertion when the key is deleted or isn't the account's, the signature doesn't verify, `aud` isn't one of the two above, it has expired or lives longer than an hour, its `jti` was used before, or the account is deleted or isn't an `EXTERNAL` one. A refusal is answered `invalid_grant` (400) without saying why; the [audit log](../audit-log.md) records the reason.
+
+A token is answered as RFC 6749 answers one: `access_token`, `token_type` `Bearer` and `expires_in`, by default 15 minutes, between 60 seconds and an hour with `requested_token_lifetime`. Its `sub` is the service account's full name. The platform's APIs accept it as the service account while the key isn't deleted and the account is an active `EXTERNAL` one, so deleting the key or the account stops its access tokens at their next call.
+
+```bash
+curl -s https://sts.origincloudapis.eu/v1/token \
+  -d grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer \
+  -d assertion="$ASSERTION"
+```
 
 ## GraphQL queries
 
