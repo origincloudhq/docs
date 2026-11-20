@@ -7,7 +7,7 @@ page_type: concept
 parent: home
 nav_order: 52
 tags: [iam, service-accounts, security]
-last_reviewed: 2026-11-19
+last_reviewed: 2026-11-20
 ---
 
 # Workload identity federation
@@ -54,7 +54,11 @@ A job assumes the service account with the STS's `AssumeServiceAccount` method, 
 - a pull request's job, a GitHub token whose `event_name` is `pull_request` or `pull_request_target`, matches only a credential that names that `event_name`. Trusting a repository never trusts its pull requests by itself;
 - that credential's service account is an active `WORKLOAD` account.
 
-The access token it issues lasts 15 minutes, or between one minute and one hour if the request asks. It names the federated credential it was exchanged through and the job's run. A refused exchange is answered `PERMISSION_DENIED` (`invalid_grant` at `/v1/token`) without saying which check failed, so that it gives nothing away to someone guessing at a trust policy.
+The access token it issues lasts 15 minutes, or between one minute and one hour if the request asks. It names the federated credential it was exchanged through and the job's run.
+
+The access token is for the platform's APIs (audience `origincloud:api`) unless the request names another `audience`. The only other one is the hosted MCP server's, `https://mcp.origincloudapis.eu`: a token for it is otherwise the same token, and is presented to the hosted MCP server, never to the API, which refuses it. A request naming any other audience is refused with `INVALID_ARGUMENT` (`invalid_target` at `/v1/token`) before the job's token is checked, and nothing is issued or recorded.
+
+A refused exchange is answered `PERMISSION_DENIED` (`invalid_grant` at `/v1/token`) without saying which check failed, so that it gives nothing away to someone guessing at a trust policy.
 
 The STS finds an issuer's keys through OIDC discovery at `<issuer>/.well-known/openid-configuration`. So a CI provider qualifies if:
 
@@ -70,7 +74,7 @@ Every availability zone of the region answers at `sts.origincloudapis.eu`, and t
 
 Every API call made with an exchanged token checks again that its federated credential and its service account still exist. Deleting either stops the tokens already exchanged through it at their next call, not when they expire.
 
-The [audit log](audit-log.md) records the creation and deletion of federated credentials, and every exchange, as `iam.federated_credential.exchange`. That entry has the service account as its actor and the credential as its target. It holds the job's repository, workflow, ref, commit and run, or an HCP Terraform run's organization, project, workspace, run ID and phase, and the access token's id and expiry. Each change the job then makes with that access token is recorded with the federated credential and the access token's id in its `details`, so it can be traced back to the run (see [Changes made by a CI job](audit-log.md#changes-made-by-a-ci-job)).
+The [audit log](audit-log.md) records the creation and deletion of federated credentials, and every exchange, as `iam.federated_credential.exchange`. That entry has the service account as its actor and the credential as its target. It holds the job's repository, workflow, ref, commit and run, or an HCP Terraform run's organization, project, workspace, run ID and phase, and the access token's id, audience and expiry. Each change the job then makes with that access token is recorded with the federated credential and the access token's id in its `details`, so it can be traced back to the run (see [Changes made by a CI job](audit-log.md#changes-made-by-a-ci-job)).
 
 ## Where the token comes from
 

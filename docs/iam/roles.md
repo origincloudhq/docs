@@ -57,6 +57,7 @@ Full control of the organization's projects, resources and access. Owner doesn't
 | `iam.permission` | `query` |
 | `iam.role` | `get`, `list`, `update`, `create`, `delete`, `assign`, `revoke` |
 | `iam.service_account` | `list`, `create`, `revoke`, `act_as` |
+| `iam.service_account_key` | `get`, `list`, `create`, `delete` |
 | `kms.grant` | `get`, `list`, `create`, `update`, `delete` |
 | `kms.key` | `get`, `list`, `create`, `update`, `delete`, `rotate`, `encrypt`, `decrypt`, `generate_data_key`, `sign`, `get_public_key` |
 | `network.acl` | `get`, `list`, `create`, `update`, `delete` |
@@ -97,6 +98,7 @@ Read-only access: every `get` and `list` permission that Owner holds. A Viewer c
 | `iam.member` | `list` |
 | `iam.role` | `get`, `list` |
 | `iam.service_account` | `list` |
+| `iam.service_account_key` | `get`, `list` |
 | `kms.grant` | `get`, `list` |
 | `kms.key` | `get`, `list` |
 | `network.acl` | `get`, `list` |
