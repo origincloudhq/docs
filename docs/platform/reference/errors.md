@@ -110,7 +110,7 @@ The codes below are ordered the same way: refusals first, then faults.
 
 ## FORBIDDEN
 
-**Meaning:** Your credentials are valid, but you lack the permission the operation needs. The message names the permission and the resource, for example ``This operation requires permission `compute.instance.launch` on `<project-urn>` ``.
+**Meaning:** Your credentials are valid, but you lack the permission the operation needs. The message names the permission and the resource, for example ``This operation requires permission `compute.instance.launch` on `<project-full-name>` ``.
 
 **Common causes:**
 
@@ -127,8 +127,8 @@ The codes below are ordered the same way: refusals first, then faults.
 
 **Common causes:**
 
-- A query that doesn't run as written: a syntax error, a field or argument that doesn't exist, a missing required argument, or an argument value the API can't read, such as a malformed URN in a `Urn` argument or a malformed ID in an `OrgId` argument. The message names the type or argument, for example `Failed to parse "Urn": ...`.
-- A value that fails validation, such as a malformed URN, an invalid email address, or a size below the minimum.
+- A query that doesn't run as written: a syntax error, a field or argument that doesn't exist, a missing required argument, or an argument value the API can't read, such as a malformed resource name in an `ID` argument. The message names the type or argument.
+- A value that fails validation, such as a malformed resource name, an invalid email address, or a size below the minimum.
 - A request the resource can't accept in its current form, such as changing the type of an instance that isn't stopped, or deleting a VPC's default security group.
 - An exhausted quota. The field is `quota`, and the message names the scope, the dimension, the current usage and the limit. See [Limits](limits.md).
 - An organization that isn't `ACTIVE`. The field is `org_id`. See [Organization review status](../organizations/review-status.md).
@@ -145,11 +145,11 @@ The codes below are ordered the same way: refusals first, then faults.
 
 **Common causes:**
 
-- A typo in an ID or URN, or a URN from another project or organization.
+- A typo in a resource name, or the name of a resource in another project or organization.
 - A resource that was deleted.
 - A resource in a project you have no role in.
 
-**What to do:** Check the ID or URN against a fresh list of your resources. Don't send the identical request again.
+**What to do:** Check the resource name against a fresh list of your resources. Don't send the identical request again.
 
 ## CONFLICT
 
