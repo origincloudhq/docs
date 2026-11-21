@@ -28,6 +28,7 @@ An instance's network interface is a resource of its own: you create it in a sub
 
 With the API, you can instead launch from a recipe that holds the interface's spec, and the launch creates the interface for you. See [Launch from a recipe with the API](#launch-from-a-recipe-with-the-api).
 
+The recipe can also be a version of a [launch template](../launch-templates/index.md) you keep in the project.
 
 ```mermaid
 flowchart LR
@@ -196,6 +197,7 @@ An interface created from a spec belongs to its instance. It is deleted when you
 
 A launch refused before the instance exists creates no instance and no interface. A refusal names the recipe's field, such as `launchTemplateData.networkInterfaces[0].spec.subnet`.
 
+To launch from a recipe you keep instead of sending it each time, name a launch template's version as `launchTemplate`, and set in `launchTemplateData` only the fields to change for this launch. See [Launch an instance from a launch template](../launch-templates/launch.md).
 
 ## If the launch is refused
 

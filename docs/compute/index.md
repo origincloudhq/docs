@@ -44,6 +44,8 @@ Platform-provided images and image families, plus your own images made from a sn
 **Key pairs**  
 SSH key pairs you import or have the platform generate. The public half goes into every instance you launch with it. See [Key pairs](key-pairs/index.md).
 
+**Launch templates**  
+Recipes for instances kept under a name in a project, as numbered versions that never change. See [Launch templates](launch-templates/index.md).
 
 ## Ways to access Compute
 
