@@ -6,7 +6,7 @@ page_type: task
 parent: vpcs
 nav_order: 40
 tags: [networking, vpc, cli]
-last_reviewed: 2026-11-18
+last_reviewed: 2026-11-21
 ---
 
 # Create a VPC and subnets
@@ -57,7 +57,7 @@ The VPC has no subnet, route table, network ACL, security group or Internet Gate
 
    In a VPC you created, the subnet's `routeTable` and `acl` are empty: it has no route out of the VPC, isn't reachable from the internet, and isn't filtered at its edge. Internet access is decided per subnet by its own route table; see [How internet access is decided](../internet-access/route-tables.md#how-internet-access-is-decided). In your default VPC, a new subnet is associated with the VPC's main route table and default ACL.
 
-`--auto-assign-public-ip true` on `create-subnet` gives a Floating IP to each instance whose launch creates its network interface in the subnet, as the GraphQL API's `launchInstance` does. An instance you launch with `origin compute create-instance` uses a network interface you created, which gets no address this way: associate a Floating IP with the interface, as in the next section. For how auto-assigned addresses behave, see [Default VPC](default-vpc.md#auto-assigned-public-ips).
+`--auto-assign-public-ip true` on `create-subnet` gives a Floating IP to each instance whose launch creates its network interface in the subnet, as [a launch from a recipe](../../compute/instances/launch.md#launch-from-a-recipe-with-the-api) with an interface spec does. An instance you launch with `origin compute create-instance` uses a network interface you created, which gets no address this way: associate a Floating IP with the interface, as in the next section. For how auto-assigned addresses behave, see [Default VPC](default-vpc.md#auto-assigned-public-ips).
 
 ## Build a network that reaches the internet
 

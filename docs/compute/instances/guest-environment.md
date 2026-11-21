@@ -7,7 +7,7 @@ parent: instances
 nav_order: 50
 tags: [compute, instances, images]
 related: [images, key-pairs, images-create]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-21
 ---
 
 # Guest environment
@@ -24,7 +24,7 @@ The name comes from one of two places:
 Every image carries one. The platform-provided images use `cloud`. When you create your own image you can set a different one. See [Images](../images/index.md).
 
 **A `loginUser` override at launch**  
-Set `--login-user` on `origin compute create-instance`, or `loginUser` on the `launchInstance` mutation, to use a different name for one instance without publishing an image for it.
+Set `--login-user` on `origin compute create-instance`, or `loginUser` in [a recipe through the API](../instances/launch.md#launch-from-a-recipe-with-the-api), to use a different name for one instance without publishing an image for it.
 
 A login user name is a POSIX user name: lowercase letters, digits, underscores and hyphens, at most 32 characters, starting with a letter or underscore, and not `root`.
 

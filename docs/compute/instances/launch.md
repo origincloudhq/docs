@@ -195,28 +195,6 @@ An interface created from a spec belongs to its instance. It is deleted when you
 
 A launch refused before the instance exists creates no instance and no interface. A refusal names the recipe's field, such as `launchTemplateData.networkInterfaces[0].spec.subnet`.
 
-## Using the GraphQL API
-
-The `launchInstance` mutation takes the project, the image, instance type, key pair and boot volume; the project, the image, the key pair and the subnet are named by their full resource names. Without a subnet, it launches into your project's default subnet, and the platform creates the default VPC the first time a launch needs it; see [Default VPC](../../network/vpcs/default-vpc.md). It also accepts `imageFamily` in place of `image`, which launches the image currently designated for that family. Set exactly one of the two. See [Image families](../images/image-families.md).
-
-```graphql
-mutation {
-  compute {
-    launchInstance(input: {
-      project: "//resourcemanager.origincloudapis.eu/projects/<project-id>"
-      imageFamily: "<family-slug>"
-      instanceType: "gp1.core.2"
-      keyPair: "//compute.origincloudapis.eu/projects/<project-id>/keyPairs/<key-pair-id>"
-      bootVolume: { sizeInGib: 40 }
-    }) {
-      id
-      status
-      loginUser
-    }
-  }
-}
-```
-
 ## If the launch is refused
 
 A refused launch creates nothing and costs nothing.

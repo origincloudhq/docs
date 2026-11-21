@@ -6,7 +6,7 @@ page_type: concept
 parent: traffic-control
 nav_order: 10
 tags: [networking, security]
-last_reviewed: 2026-11-16
+last_reviewed: 2026-11-21
 ---
 
 # Security groups
@@ -39,7 +39,7 @@ Group references match private addresses only. Traffic that arrives through a Fl
 
 ## Default security group
 
-Your project's default VPC has a default security group, its `vpcDefault` field `true`. A launch through the GraphQL API without a subnet puts the instance's interface in it. An interface you create with `create-network-interface` starts in no group, in any VPC, and passes no traffic except address resolution until you associate a group with it. A VPC you create has no default group: create one with `create-security-group`.
+Your project's default VPC has a default security group, its `vpcDefault` field `true`. [a launch from a recipe](../../compute/instances/launch.md#launch-from-a-recipe-with-the-api) whose interface spec names no subnet and no security groups puts the instance's interface in it. An interface you create with `create-network-interface` starts in no group, in any VPC, and passes no traffic except address resolution until you associate a group with it. A VPC you create has no default group: create one with `create-security-group`.
 
 The default security group has:
 
