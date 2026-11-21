@@ -2,48 +2,51 @@
 id: service-accounts
 title: Use service accounts
 nav_title: Service accounts
-description: Create a service account for CI and scripts, exchange its client ID and secret for an access token, rotate the secret before it expires, and delete the account to revoke it.
+description: Create a service account for CI and scripts, choose how it authenticates (federation first, a key as the last resort), and delete it to revoke it.
 page_type: task
 parent: home
 nav_order: 50
 tags: [iam, service-accounts, cli, api]
-last_reviewed: 2026-11-19
+last_reviewed: 2026-11-21
 ---
 
 # Use service accounts
 
-A service account is a non-interactive credential for automation such as CI pipelines, scripts and infrastructure-as-code tools. It belongs to one organization and acts as its own principal: the member `//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>` in the `origin iam` commands and the REST API, its `id` in the GraphQL API. Its access is checked exactly like a user's: it can do what its role bindings allow, and nothing else.
+A service account is a non-interactive identity for automation such as CI pipelines, scripts and infrastructure-as-code tools. It belongs to one organization and acts as its own principal: the member `//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>` in the `origin iam` commands and the REST API, its `id` in the GraphQL API. Its access is checked exactly like a user's: it can do what its role bindings allow, and nothing else.
 
-A service account authenticates with an OAuth 2.0 client ID and client secret, using the client credentials grant against the platform's identity provider. The resulting access token is sent to the API like a user's.
+A service account never holds a password or a client secret. Software acts as it with an access token from the security token service, `https://sts.origincloudapis.eu`, which exchanges a proof for it: a CI job's own OIDC token, an instance's credential, or an assertion signed with one of the account's keys.
 
-A client secret expires: 90 days after it is issued unless you ask for a shorter or longer lifetime, and never more than 365 days. From its expiry on, the identity provider refuses it, and you [rotate the secret](#rotate-the-client-secret) to get a new one. For a CI pipeline, prefer a `WORKLOAD` service account that [trusts the CI provider's tokens](#trust-a-ci-providers-tokens): no secret is stored in the pipeline, so none can leak or expire.
+## Choose how the software authenticates
+
+Pick the first of these that fits. Only the last stores a secret you have to keep.
+
+1. **A CI job, or anything with an OIDC token of its own**, such as GitHub Actions, GitLab CI, HCP Terraform or a Kubernetes service account token: a `WORKLOAD` service account that [trusts the provider's tokens](#trust-a-ci-providers-tokens). See [Workload identity federation](workload-identity-federation.md).
+2. **Software on an Origin Cloud instance**: launch the instance as a `WORKLOAD` service account. See [Run an instance as a service account](../compute/instances/service-account.md).
+3. **You, running a tool on your own machine**, Terraform included: your own login, `origin id login`. See [Use the CLI](../platform/access/cli.md#log-in).
+4. **Anything else**, such as a job on a server of your own with no identity provider: an `EXTERNAL` service account with a [key](#create-a-key). The key's private key is a long-lived secret: store it like one, and prefer any of the above.
 
 Every service account has a type, set when it's created. It never changes.
 
 | Type | Credential |
 | --- | --- |
-| `EXTERNAL` | An OAuth 2.0 client ID and client secret, for software outside Origin Cloud. The type a create uses when none is given, and the one this page describes. |
-| `WORKLOAD` | None. It has no client ID or secret and can't be given one, so no copied credential ever authenticates as it. An instance runs as one: software on it gets a short-lived credential from the instance's metadata service. Launching it needs `iam.service_account.act_as` on the organization, which [`roles/iam.service-account-user`](roles.md#rolesiamservice-account-user) grants. See [Run an instance as a service account](../compute/instances/service-account.md). |
+| `EXTERNAL` | A key, for software outside Origin Cloud that has no identity of its own to federate. The type a create uses when none is given. |
+| `WORKLOAD` | No key, ever, so no copied credential authenticates as it. A CI job acts as it through a [federated credential](#trust-a-ci-providers-tokens), an instance through the instance's credential. Launching an instance as one needs `iam.service_account.act_as` on the organization, which [`roles/iam.service-account-user`](roles.md#rolesiamservice-account-user) grants. |
 
 ## Before you begin
 
-- To create or delete a service account: an org-wide `roles/owner` assignment.
+- To create or delete a service account, its federated credentials or its keys: an org-wide `roles/owner` assignment.
 - To list service accounts: an org-wide `roles/owner` or `roles/viewer` assignment.
 - Your organization ID (`<org-id>`).
 
 ## Create a service account
 
-1. Create the service account with a display name that tells you what uses it.
+1. Create the service account with a display name that tells you what uses it, and the type its credential needs.
 
    ```sh
-   origin iam create-service-account --organization <org-id> --display-name ci-deploy
+   origin iam create-service-account --organization <org-id> --display-name ci-deploy --type WORKLOAD
    ```
 
-   The output contains the service account's resource name, `organizations/<org-id>/serviceAccounts/<service-account-id>`, its `member`, and the credential: `clientId` and `clientSecret`.
-
-   > **Important:** The client secret is shown only once. Store it in your secret manager now. No API returns it again; if you lose it, [rotate the secret](#rotate-the-client-secret) to get a new one.
-
-   The secret expires after 90 days. To ask for another lifetime, more than zero and at most 365 days, create the service account with the REST API's `CreateServiceAccount` and set `secretLifetime`, such as `"2592000s"` for 30 days. Its `secretExpireTime` says when the secret expires.
+   The output contains the service account's resource name, `organizations/<org-id>/serviceAccounts/<service-account-id>`, and its `member`. The account has no credential yet.
 
 2. Grant the service account the roles it needs. A new service account holds no roles and can't do anything until you bind one. Use the `member` from the previous step.
 
@@ -62,80 +65,72 @@ Every service account has a type, set when it's created. It never changes.
    origin iam list-service-accounts --organization <org-id>
    ```
 
-## Get an access token
+4. Give it its credential: a [federated credential](#trust-a-ci-providers-tokens) for a `WORKLOAD` account, a [key](#create-a-key) for an `EXTERNAL` one. An instance needs neither.
 
-Every `origin` command that calls a service runs as a service account when its credential is in the environment; the CLI requests and renews the access token itself:
+## Create a key
 
-```sh
-export ORIGINCLOUD_CLIENT_ID=<client-id>
-export ORIGINCLOUD_CLIENT_SECRET=<client-secret>
-origin pvs list-volumes --project <project-id>
-```
+A key is the credential of an `EXTERNAL` service account. The platform generates its key pair, an `ES256` (ECDSA P-256) key, returns the private key once, in a credentials file, and keeps only the public key. An account has at most 10 keys that aren't deleted. A `WORKLOAD` account never has one.
 
-See [Run commands as a service account](../platform/access/cli.md#run-commands-as-a-service-account).
+Whoever holds the credentials file acts as the service account. So creating a key needs `iam.service_account_key.create` and `iam.service_account.act_as` on the organization, which `roles/owner` holds. The CLI has no command for keys yet; call the REST API.
 
-To call the [GraphQL API](../platform/access/api.md) as the service account, get an access token yourself:
-
-1. Request an access token from the token endpoint with the client credentials grant.
-
-   ```sh
-   curl -s \
-     https://auth.origincloud.eu/realms/origincloud/protocol/openid-connect/token \
-     -d grant_type=client_credentials \
-     -d client_id=<client-id> \
-     -d client_secret=<client-secret>
-   ```
-
-   The response is JSON with an `access_token` and its lifetime in seconds, `expires_in`. A service account's token lives five minutes. Request a new token when it expires.
-
-2. Send the token as a bearer token with each API request.
-
-   ```sh
-   curl -s https://graph.origincloudapis.eu/graphql \
-     -H "Authorization: Bearer <access-token>" \
-     -H "Content-Type: application/json" \
-     -d '{"query":"{ iam { permissions { key } } }"}'
-   ```
-
-3. Verify that the token is accepted: the response contains a `data` object rather than an authentication error.
-
-## Rotate the client secret
-
-Rotating issues a new client secret for an `EXTERNAL` service account and refuses the old one from that moment on. The new secret is accepted at once, also when the old one had already expired, and expires after its own lifetime: 90 days unless you ask for another, at most 365 days. An access token issued with the old secret stays valid until it expires, within five minutes. The service account keeps its ID, client ID and role bindings.
-
-There is no overlap: anything still using the old secret fails once you rotate. Rotate when you can update every place that holds the secret right away.
-
-Rotating needs `iam.service_account.create` on the organization, which `roles/owner` holds. The CLI has no command for it yet; call the REST API.
-
-1. Rotate the secret. The body may set `secretLifetime`; leave it out for 90 days.
+1. Create the key.
 
    ```sh
    curl -s -X POST \
-     "https://iam.origincloudapis.eu/v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>:rotateSecret" \
+     "https://iam.origincloudapis.eu/v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>/keys" \
      -H "Authorization: Bearer $(origin id token --raw)" \
      -H "Content-Type: application/json" \
-     -d '{"secretLifetime": "7776000s", "requestId": "<uuid>"}'
+     -d '{}'
    ```
 
-   The response is the service account with the new secret in `clientSecret` and its expiry in `secretExpireTime`. As at creation, the secret is in this response only.
+   The response is the key, with its `name` and, in this response only, its `credentialsFile`: a JSON document with these fields.
 
-2. Store the new secret where the old one was, such as in your CI system's secret store.
+   | Field | Value |
+   | --- | --- |
+   | `type` | `service_account_key` |
+   | `name` | The key's full name, `//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>/keys/<key-id>` |
+   | `service_account` | The service account's full name |
+   | `algorithm` | `ES256` |
+   | `private_key` | The private key, a PKCS 8 private key in PEM |
+   | `sts_endpoint` | `https://sts.origincloudapis.eu`, where its assertions are exchanged |
 
-3. Verify that the new secret works: request an access token with it, as in [Get an access token](#get-an-access-token).
+   > **Important:** The private key is shown only once. Save the credentials file as it is, readable only by the software that uses it, or store it in your secret manager. No API returns it again; if you lose it, delete the key and create a new one.
 
-A repeat of the request with the same `requestId` within 24 hours issues no secret and is refused with `CONFLICT`, because the new secret went to the first response only. Rotate again with a new `requestId` to get a working secret.
+2. Verify that the key is listed with the state `ACTIVE`. A listed key shows its `lastUseTime`, never its private key.
 
-### Secret expiry
+   ```sh
+   curl -s \
+     "https://iam.origincloudapis.eu/v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>/keys" \
+     -H "Authorization: Bearer $(origin id token --raw)"
+   ```
 
-Each `EXTERNAL` service account shows when its secret expires in `secretExpireTime`, in `GetServiceAccount` and `ListServiceAccounts`. Within about a minute of that time, the secret stops being accepted: a request for an access token with it is refused. The service account itself is still `ACTIVE` and keeps its role bindings, and rotating the secret gives it a working one again. An access token issued before the expiry stays valid until it runs out, within five minutes.
+### Get an access token with a key
 
-A secret issued before secrets expired got an expiry 90 days from when expiry was introduced, as if it was issued then. Check `secretExpireTime` and rotate before it.
+The software signs a JWT assertion with the key's private key, naming the key and the service account, and exchanges it at the security token service for the account's access token, by default for 15 minutes. [Service account keys](reference/index.md#service-account-keys) lists the assertion's fields and shows the exchange:
 
-A `WORKLOAD` service account has no secret, so it has no `secretExpireTime` and can't be rotated.
+```sh
+curl -s https://sts.origincloudapis.eu/v1/token \
+  -d grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer \
+  -d assertion=<assertion>
+```
+
+The response is JSON with an `access_token` and its lifetime in seconds, `expires_in`. Send the token as a bearer token with each API request, or to the CLI as `ORIGINCLOUD_ACCESS_TOKEN`, and make a new assertion when it expires. Each assertion needs its own `jti`.
+
+### Replace or delete a key
+
+A key never expires and is never changed. To replace one, create the new key, move the software to its credentials file, check that the old key's `lastUseTime` stops moving, then delete the old key. An account's keys can overlap for as long as you need.
+
+Deleting a key refuses its assertions from then on, and the access tokens already exchanged with it at their next API call. It stays readable, with the state `DELETED`. Deleting the service account deletes its keys.
+
+```sh
+curl -s -X DELETE \
+  "https://iam.origincloudapis.eu/v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>/keys/<key-id>" \
+  -H "Authorization: Bearer $(origin id token --raw)"
+```
 
 ## Revoke a service account
 
-Deleting a service account revokes it: it disables its credential and removes every role binding it holds, in every organization and at every scope. From that moment, every request for a new access token is refused, and an access token issued before is refused on its next request.
+Deleting a service account revokes it: it deletes its federated credentials and keys and removes every role binding it holds, in every organization and at every scope. From that moment, every exchange for a new access token is refused, and an access token issued before is refused on its next request.
 
 Deleting is permanent. A deleted service account can't be reactivated or bound to a role again; create a new service account instead. It stays readable, with the state `DELETED`.
 
@@ -174,7 +169,7 @@ A federated credential is refused unless:
 
 - **At least one condition names an identity that never changes.** For GitHub Actions' issuer, `https://token.actions.githubusercontent.com`, that is `repository_id` or `repository_owner_id`. For GitLab.com's, `https://gitlab.com`, it is `project_id` or `namespace_id`. For HCP Terraform's, `https://app.terraform.io`, it is `terraform_organization_id`. For any other issuer, it is `sub`. A repository's, project's or workspace's name alone isn't enough: a renamed one, or a new one created under an old name, would inherit the trust.
 - **No value contains `*`.** Values are matched exactly, never as patterns.
-- **The service account is an active `WORKLOAD` one.** An `EXTERNAL` account authenticates with its own secret.
+- **The service account is an active `WORKLOAD` one.** An `EXTERNAL` account authenticates with a key.
 
 Whoever matches a federated credential acts as the service account. So creating one needs `iam.service_account.create` and `iam.service_account.act_as` on the organization: the right to act as the account yourself. `roles/owner` holds both.
 
@@ -195,20 +190,19 @@ origin iam create-federated-credential \
 
 ## Using the API
 
-In the REST API, these are `CreateServiceAccount`, `ListServiceAccounts`, `GetServiceAccount`, `RotateServiceAccountSecret` and `DeleteServiceAccount`, and for federated credentials `CreateFederatedCredential`, `ListFederatedCredentials`, `GetFederatedCredential` and `DeleteFederatedCredential`; see the [IAM reference](reference/index.md#rest-api). The GraphQL mutations are `createServiceAccount` and `revokeServiceAccount`, which takes the account's full name as `serviceAccount`; an account's `id` is its member; the query is `serviceAccounts`, all in the `iam` namespace. Neither API returns a client secret after the create, except the REST API's `RotateServiceAccountSecret`, which returns the new one. The secret's expiry, `secretExpireTime`, and the create's `secretLifetime` are in the REST API only.
+In the REST API, these are `CreateServiceAccount`, `ListServiceAccounts`, `GetServiceAccount` and `DeleteServiceAccount`; for keys `CreateServiceAccountKey`, `ListServiceAccountKeys`, `GetServiceAccountKey` and `DeleteServiceAccountKey`; and for federated credentials `CreateFederatedCredential`, `ListFederatedCredentials`, `GetFederatedCredential` and `DeleteFederatedCredential`; see the [IAM reference](reference/index.md#rest-api). The GraphQL mutations are `createServiceAccount`, `revokeServiceAccount`, which takes the account's full name as `serviceAccount`, `createServiceAccountKey`, whose `credentialsFile` is the one-time credentials file, and `deleteServiceAccountKey`; an account's `id` is its member; the queries are `serviceAccounts` and `serviceAccountKeys`, all in the `iam` namespace. No response but a key's create carries its private key.
 
-The type is the service account's `type` field in both APIs: set it in the create to make a `WORKLOAD` service account, whose `clientId` and `clientSecret` are then empty in the REST API and null in GraphQL.
+The type is the service account's `type` field in both APIs: set it in the create to make a `WORKLOAD` service account.
 
 ```graphql
 mutation {
   iam {
     createServiceAccount(input: {
       organisation: "//resourcemanager.origincloudapis.eu/organizations/<org-id>"
-      name: "ci-deploy"
+      name: "nightly-backup"
+      type: EXTERNAL
     }) {
       id
-      clientId
-      clientSecret
     }
   }
 }
@@ -218,7 +212,8 @@ mutation {
 
 - [Access model](access-model.md)
 - [Built-in roles](roles.md)
+- [Workload identity federation](workload-identity-federation.md)
+- [Authenticate from GitHub Actions](github-actions.md)
 - [API access](../platform/access/api.md)
 - [`create-service-account`](reference/cli.md#create-service-account) and [`delete-service-account`](reference/cli.md#delete-service-account) commands
-- [Authenticate from GitHub Actions](github-actions.md)
-- [Audit log](audit-log.md) – creation, secret rotation, a secret's expiry and revocation are recorded, and so is the removal of a revoked account's role assignments; so are the creation and deletion of federated credentials, and every exchange through one
+- [Audit log](audit-log.md) – creation and revocation are recorded, and so is the removal of a revoked account's role assignments; so are the creation and deletion of federated credentials and keys, and every exchange through either

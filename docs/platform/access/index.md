@@ -7,7 +7,7 @@ page_type: overview
 parent: home
 nav_order: 20
 tags: [cli, api, overview]
-last_reviewed: 2026-11-04
+last_reviewed: 2026-11-21
 ---
 
 # Ways to access Origin Cloud
@@ -19,12 +19,13 @@ The following diagram shows how a person and an automated job reach the GraphQL 
 ```mermaid
 flowchart LR
   accTitle: Paths to the GraphQL API
-  accDescr: A person signs in on the Origin Cloud login page and then uses the console, the origin CLI or direct API calls with their access token. An automated job uses a service account's client credentials to get an access token and calls the API directly. Every path ends at the GraphQL API.
+  accDescr: A person signs in on the Origin Cloud login page and then uses the console, the origin CLI or direct API calls with their access token. An automated job exchanges its own OIDC token, or an assertion signed with a service account's key, at the security token service for an access token and calls the API directly. Every path ends at the GraphQL API.
   person[Person] -->|signs in| login[Login page]
   login --> console[Console]
   login --> cli[origin CLI]
   login --> token[Access token]
-  job[Automated job] -->|client credentials| token
+  job[Automated job] -->|OIDC token or key| sts[Security token service]
+  sts --> token
   console --> api[GraphQL API]
   cli --> api
   token --> api
@@ -39,7 +40,7 @@ Where people authenticate, with whatever sign-in methods your account has, inclu
 A short-lived bearer token that every API request carries in its `Authorization` header. The CLI gets and renews one for you. See [Use the GraphQL API](api.md#authenticate).
 
 **Service account**  
-A credential for automation, such as CI jobs and scripts, that authenticates as itself rather than as a person. See [Service accounts](../../iam/service-accounts.md).
+An identity for automation, such as CI jobs and scripts, that acts as itself rather than as a person. It has no password: a CI job's own token or a key is exchanged for its access token. See [Service accounts](../../iam/service-accounts.md).
 
 **Resource name**  
 The identifier the GraphQL API uses for a resource: its full resource name, such as `//resourcemanager.origincloudapis.eu/projects/<project-id>`. See [Use the GraphQL API](api.md#resource-names).

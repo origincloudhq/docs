@@ -8,7 +8,7 @@ parent: access
 nav_order: 30
 tags: [cli, getting-started]
 related: [access-cli, access-api]
-last_reviewed: 2026-11-04
+last_reviewed: 2026-11-21
 ---
 
 # Use Origin Cloud from an AI agent
@@ -53,7 +53,7 @@ After you update the CLI, restart the server in your MCP client, or start a new 
 ## How the agent works with Origin Cloud
 
 **Tools**  
-One tool for every `billing`, `compute`, `dns`, `iam`, `location`, `network`, `observability`, `pvs`, `resourcemanager` and `support` command, named after the service and the method, such as `pvs_create_volume` or `location_list_zones`. Each takes the method's request in JSON and answers with its response, or with the API's error. There is no tool for `iam create-service-account`, so a new client secret never reaches the agent.
+One tool for every `billing`, `compute`, `dns`, `iam`, `location`, `network`, `observability`, `pvs`, `resourcemanager` and `support` command, named after the service and the method, such as `pvs_create_volume` or `location_list_zones`. Each takes the method's request in JSON and answers with its response, or with the API's error. There is no tool for `iam create-service-account`.
 
 **Your context**  
 The `current_context` tool tells the agent your profile's `default-project` and `default-zone`, the region your commands use, the toolsets the server serves, and whether it is read-only. The agent uses the defaults to build resource names such as `projects/my-project-123/zones/eu-central1-az1/volumes/vol-a1b2c3d4`. Without them, the agent finds your projects through the `resourcemanager` tools.
@@ -65,7 +65,7 @@ Tools that delete something, or change it in a way that can't be undone, such as
 A tool that changes a resource waits up to 30 seconds for the change to finish, and answers with the API's error if it fails. If the change takes longer, the tool returns an operation that isn't done yet, and the agent waits for it with the service's `_wait_operation` tool, such as `pvs_wait_operation`.
 
 **Credentials**  
-The server uses your CLI login. For an agent running unattended, set a service account's `ORIGINCLOUD_CLIENT_ID` and `ORIGINCLOUD_CLIENT_SECRET`, or an `ORIGINCLOUD_ACCESS_TOKEN`, in the server's environment instead. See [Run commands as a service account](cli.md#run-commands-as-a-service-account). The agent can do only what the login or the service account's roles allow, and a call without the permission fails with `PERMISSION_DENIED`.
+The server uses your CLI login. For an agent running unattended, set a service account's access token as `ORIGINCLOUD_ACCESS_TOKEN` in the server's environment instead, or run it in a CI job whose token a federated credential trusts. See [Run commands as a service account](cli.md#run-commands-as-a-service-account). The agent can do only what the login or the service account's roles allow, and a call without the permission fails with `PERMISSION_DENIED`.
 
 ## Related
 

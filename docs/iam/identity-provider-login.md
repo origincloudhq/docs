@@ -2,7 +2,7 @@
 id: identity-provider-login
 title: Log in as a service account with your identity provider's token
 nav_title: Your identity provider
-description: Run the origin CLI, or any tool, as a WORKLOAD service account with an OIDC token from your own identity provider, with no client secret stored.
+description: Run the origin CLI, or any tool, as a WORKLOAD service account with an OIDC token from your own identity provider, with no secret stored.
 page_type: task
 parent: home
 nav_order: 57
@@ -12,7 +12,7 @@ last_reviewed: 2026-11-15
 
 # Log in as a service account with your identity provider's token
 
-A person or a script outside CI can act as a `WORKLOAD` service account with an OIDC token from an identity provider you run or use, such as your company's single sign-on. One of the account's federated credentials trusts that provider's tokens, and the security token service (STS) exchanges a token for the account's access token. No client secret is stored anywhere. [Workload identity federation](workload-identity-federation.md) explains what the exchange checks.
+A person or a script outside CI can act as a `WORKLOAD` service account with an OIDC token from an identity provider you run or use, such as your company's single sign-on. One of the account's federated credentials trusts that provider's tokens, and the security token service (STS) exchanges a token for the account's access token. No secret is stored anywhere. [Workload identity federation](workload-identity-federation.md) explains what the exchange checks.
 
 ```mermaid
 sequenceDiagram
