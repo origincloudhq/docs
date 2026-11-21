@@ -28,6 +28,7 @@ An instance's network interface is a resource of its own: you create it in a sub
 
 With the API, you can instead launch from a recipe that holds the interface's spec, and the launch creates the interface for you. See [Launch from a recipe with the API](#launch-from-a-recipe-with-the-api).
 
+
 ```mermaid
 flowchart LR
   accTitle: Steps of a launch with the CLI
@@ -194,6 +195,7 @@ A recipe with no `networkInterfaces` launches with one interface, as from an emp
 An interface created from a spec belongs to its instance. It is deleted when you terminate the instance. An instance that ends `FAILED` keeps it, so starting the instance again can use it. An existing interface you named is only released when the instance is terminated, and stays.
 
 A launch refused before the instance exists creates no instance and no interface. A refusal names the recipe's field, such as `launchTemplateData.networkInterfaces[0].spec.subnet`.
+
 
 ## If the launch is refused
 
