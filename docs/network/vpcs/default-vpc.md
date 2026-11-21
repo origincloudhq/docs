@@ -6,12 +6,12 @@ page_type: concept
 parent: vpcs
 nav_order: 20
 tags: [networking, vpc, internet-access]
-last_reviewed: 2026-11-18
+last_reviewed: 2026-11-21
 ---
 
 # Default VPC
 
-A project's default VPC is ready to launch into: the platform builds it with a subnet, an Internet Gateway, routing and filtering in place. The platform creates it the first time an instance is launched in the project without naming a subnet, through the GraphQL API's `launchInstance`. Every later launch without a subnet reuses the same default VPC and its subnet.
+A project's default VPC is ready to launch into: the platform builds it with a subnet, an Internet Gateway, routing and filtering in place. The platform creates it the first time an instance is launched in the project without naming a subnet, through [a launch from a recipe](../../compute/instances/launch.md#launch-from-a-recipe-with-the-api) whose interface spec names none. Every later launch without a subnet reuses the same default VPC and its subnet.
 
 `origin compute create-instance` always names a network interface you created, so it never creates the default VPC. Once your project has one, you can create network interfaces in its subnet and launch with them. Its `projectDefault` field is `true`:
 

@@ -6,7 +6,7 @@ page_type: overview
 parent: home
 nav_order: 20
 tags: [overview, compute, storage, volumes]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-21
 ---
 
 # Instance storage
@@ -44,7 +44,7 @@ A host-local drive lives on the disk of the machine the instance runs on, like a
 
 ## Sizing the root disk
 
-By default the root disk is exactly as large as the image, which for a platform-provided image is enough for the operating system and little else. Ask for more at launch with `--boot-volume` on `origin compute create-instance`, such as `--boot-volume size_gib=40,storage_class=//pvs.origincloudapis.eu/storageClasses/gp1`, or `bootVolume` on the `launchInstance` mutation. Size and storage class are independent, and both are optional.
+By default the root disk is exactly as large as the image, which for a platform-provided image is enough for the operating system and little else. Ask for more at launch with `--boot-volume` on `origin compute create-instance`, such as `--boot-volume size_gib=40,storage_class=//pvs.origincloudapis.eu/storageClasses/gp1`, or `bootVolume` in [a recipe through the API](../instances/launch.md#launch-from-a-recipe-with-the-api). Size and storage class are independent, and both are optional.
 
 **The image's size is the minimum**  
 A smaller size is refused rather than raised. The error names the field and the smallest size that works.

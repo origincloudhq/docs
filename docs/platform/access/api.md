@@ -113,7 +113,7 @@ Operations are grouped by service. Every query and mutation sits under one of th
 | `dns` | yes | yes | Hosted zones, record sets, VPC attachments |
 | `observability` | yes | no | Metrics |
 
-For example, launching an instance is `mutation { compute { launchInstance(...) { ... } } }`.
+For example, stopping an instance is `mutation { compute { stopInstance(...) { ... } } }`. Launching an instance is a REST API call only; see [Launch an instance](../../compute/instances/launch.md#launch-from-a-recipe-with-the-api).
 
 ## Resource names
 

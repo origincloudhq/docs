@@ -7,7 +7,7 @@ page_type: troubleshooting
 parent: home
 nav_order: 60
 tags: [troubleshooting, compute, instances]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-21
 ---
 
 # Troubleshoot Compute
@@ -36,17 +36,6 @@ Each section starts from what you see. The CLI prints an instance's status as `s
 
 1. Retry the same request later.
 2. Or choose a smaller type, or a type of another kind. See [Instance types](../instances/instance-types.md).
-
-## Launch refused because the name is an image family's
-
-**Symptom:** The `launchInstance` mutation fails with `BAD_REQUEST` and the message a message that says the name is an image family's, not an image's, and to launch from the family with `imageFamily`.
-
-**Cause:** The name passed as `image` is an image family's full name, `//compute.origincloudapis.eu/imageFamilies/<slug>`. `image` takes an image's full name only.
-
-**Resolution:**
-
-1. Launch by family with the family's slug, as `imageFamily`. With the CLI, use `--image-family //compute.origincloudapis.eu/imageFamilies/<family-id>` on `origin compute create-instance`. See [Image families](../images/image-families.md).
-2. Or, to pin one image, take it from `origin compute list-public-images`.
 
 ## Launch, start or type change refused with PRODUCT_UNAVAILABLE
 

@@ -6,7 +6,7 @@ page_type: concept
 parent: vpcs
 nav_order: 30
 tags: [networking, vpc]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-21
 ---
 
 # Network interfaces
@@ -37,7 +37,7 @@ An interface's subnet decides the instance's subnet, and its security groups are
 
 When you terminate the instance, an interface you created is released: it's `AVAILABLE` again, with its addresses, security groups and Floating IP associations, ready for another instance. Delete it with `delete-network-interface --yes` when you no longer need it. Deleting a subnet deletes its unattached interfaces.
 
-A launch through the GraphQL API's `launchInstance` creates the instance's interface itself, in the subnet it names or in the default VPC's subnet, and deletes that interface with the instance.
+[a launch from a recipe](../../compute/instances/launch.md#launch-from-a-recipe-with-the-api) whose interface is a spec creates the instance's interface itself, in the subnet the spec names or in the default VPC's subnet, and deletes that interface with the instance.
 
 ## Interface states
 
