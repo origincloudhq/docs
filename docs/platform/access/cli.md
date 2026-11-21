@@ -8,7 +8,7 @@ parent: access
 nav_order: 10
 tags: [cli, getting-started]
 related: [reference-cli, access-api]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-21
 ---
 
 # Use the CLI
@@ -205,14 +205,13 @@ The session is stored in `~/.local/share/origincloud/session.json`, or under `$X
 
 ### Run commands as a service account
 
-Scripts and CI jobs, which can't log in interactively, use a service account instead. Every command that calls a service, `origin mcp serve` included, uses these environment variables in place of the login session when they are set:
+Scripts and CI jobs, which can't log in interactively, use a service account instead. Every command that calls a service, `origin mcp serve` included, uses this environment variable in place of the login session when it is set:
 
 | Variable | Effect |
 |---|---|
-| `ORIGINCLOUD_CLIENT_ID` and `ORIGINCLOUD_CLIENT_SECRET` | Authenticate as the service account with this client ID and secret. |
-| `ORIGINCLOUD_ACCESS_TOKEN` | Use this access token. |
+| `ORIGINCLOUD_ACCESS_TOKEN` | Use this access token, such as one a service account's key was exchanged for. See [Get an access token with a key](../../iam/service-accounts.md#get-an-access-token-with-a-key). |
 
-A CI job needs no secret at all. In a GitHub Actions job granted `permissions: id-token: write`, every command exchanges the job's OIDC token for the access token of the service account a federated credential trusts the job as, and renews it as it expires. That token comes after the variables above and before the login session; see [Authenticate from GitHub Actions without a secret](../../iam/github-actions.md). On an instance that runs as a service account, with no login session, every command uses that service account's credential from the instance's metadata service.
+A CI job needs no secret at all. In a GitHub Actions job granted `permissions: id-token: write`, every command exchanges the job's OIDC token for the access token of the service account a federated credential trusts the job as, and renews it as it expires. That token comes after `ORIGINCLOUD_ACCESS_TOKEN` and before the login session; see [Authenticate from GitHub Actions without a secret](../../iam/github-actions.md). On an instance that runs as a service account, with no login session, every command uses that service account's credential from the instance's metadata service.
 
 `origin id token` prints the access token the commands use: the CI job's, else the login session's, else the instance's. The other `origin id` commands use the login session, and the `origin config` commands call no service. For creating a service account and giving it access, see [Service accounts](../../iam/service-accounts.md).
 
@@ -326,7 +325,7 @@ curl -sS https://graph.origincloudapis.eu/graphql \
 { "mcpServers": { "origincloud": { "command": "origin", "args": ["mcp", "serve"] } } }
 ```
 
-The server has a tool for every `billing`, `compute`, `dns`, `iam`, `location`, `network`, `observability`, `pvs`, `resourcemanager` and `support` command, except `iam create-service-account`: a client secret stays out of the agent's reach. It acts with your login session, or the service account variables above, in the region your commands use, and tells the agent your default project and zone.
+The server has a tool for every `billing`, `compute`, `dns`, `iam`, `location`, `network`, `observability`, `pvs`, `resourcemanager` and `support` command, except `iam create-service-account`. It acts with your login session, or the access token above, in the region your commands use, and tells the agent your default project and zone.
 
 - Tools that delete something or change it for good are marked as destructive, for the MCP client to have you confirm them.
 - `--read-only` serves only the tools that change nothing:

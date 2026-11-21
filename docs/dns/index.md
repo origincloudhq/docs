@@ -70,7 +70,7 @@ The DNS API answers at `https://dns.origincloudapis.eu`, the same host for every
 
 ## Access
 
-Each method needs a `dns.*` permission on the project: `dns.hosted_zone.*`, `dns.record_set.*` or `dns.vpc_attachment.*`. Owner holds them all and Viewer the reads. For a program that only keeps records in step, such as [external-dns](record-sets/external-dns.md) or an ACME client, assign [`roles/dns.editor`](../iam/roles.md#rolesdnseditor) to its service account: it manages record sets and reads zones, but can't create or delete a zone. See [Built-in roles](../iam/roles.md).
+Each method needs a `dns.*` permission on the project: `dns.hosted_zone.*`, `dns.record_set.*` or `dns.vpc_attachment.*`. Owner holds them all and Viewer the reads. For a program that only keeps records in step, such as external-dns or an ACME client, assign [`roles/dns.editor`](../iam/roles.md#rolesdnseditor) to its service account: it manages record sets and reads zones, but can't create or delete a zone. See [Built-in roles](../iam/roles.md).
 
 ## Quotas
 
@@ -94,6 +94,7 @@ The rates are in the [price list](../pricing/reference/price-list-api.md), under
 
 - [Create a public zone and verify it](hosted-zones/create-public.md)
 - [Add, change and delete record sets](record-sets/manage.md)
-- [Use external-dns with Origin Cloud DNS](record-sets/external-dns.md)
+
+
 - [Create a private zone and attach it to a VPC](private-zones/create.md)
 - [Troubleshoot DNS](troubleshooting/index.md)

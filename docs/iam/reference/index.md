@@ -32,8 +32,7 @@ Error codes shared by every API operation. See [Errors](../../platform/reference
 The IAM REST API answers at `https://iam.origincloudapis.eu`. It's a preview (`v1beta1`): names and fields may still change. Every request carries an access token, as for the GraphQL API; see [Use the GraphQL API](../../platform/access/api.md#authenticate).
 
 - A change's response carries an `Origin-Consistency-Token` header. Send it back with your next reads and they show the change; see [Read what you just changed](../../platform/access/api.md#read-what-you-just-changed).
-- `CreateRoleBinding`, `DeleteRoleBinding`, `CreateServiceAccount`, `RotateServiceAccountSecret` and `CreateServiceAccountKey` take an optional `requestId`, a UUID. A retry with the same `requestId` within 24 hours changes nothing. A role binding retry returns what the first request did; a `CreateServiceAccount`, `RotateServiceAccountSecret` or `CreateServiceAccountKey` retry is refused, because the client secret or the private key was in the first response only (see the table). The same `requestId` with a different request is refused with `CONFLICT`.
-- A duration, such as `secretLifetime`, is written in seconds with an `s` suffix, such as `"7776000s"` for 90 days.
+- `CreateRoleBinding`, `DeleteRoleBinding`, `CreateServiceAccount` and `CreateServiceAccountKey` take an optional `requestId`, a UUID. A retry with the same `requestId` within 24 hours changes nothing. A role binding or `CreateServiceAccount` retry returns what the first request did; a `CreateServiceAccountKey` retry is refused, because the private key was in the first response only (see the table). The same `requestId` with a different request is refused with `CONFLICT`.
 
 In the REST API, a role binding and the `member` and `actor` filters take a member by its full name, and only by it: `//iam.origincloudapis.eu/users/<user-id>` for a user, `//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>` for one of the organization's own service accounts, or `//iam.origincloudapis.eu/serviceAgents/<name>` for a [service agent](../service-agents.md) of the platform, bound in any organization but only to a role its service needs. Responses show every member, `creator`, audit `actor` and `target` the same way. A binding stays with the account, so it follows a later change of address.
 
@@ -51,9 +50,8 @@ A role is named `roles/<role>`, such as `roles/iam.editor`. A role binding takes
 | `ListRoleBindings`, `GetRoleBinding` | `GET /v1beta1/organizations/<org-id>/roleBindings` | The organization's role bindings, optionally one member's or one project's. `organizations/-` lists your own, in every organization. |
 | `CreateRoleBinding` | `POST /v1beta1/organizations/<org-id>/roleBindings` | Grants a role to a member, org-wide or in one project. |
 | `DeleteRoleBinding` | `DELETE /v1beta1/organizations/<org-id>/roleBindings/<id>` | Removes one role binding. |
-| `ListServiceAccounts`, `GetServiceAccount` | `GET /v1beta1/organizations/<org-id>/serviceAccounts` | The organization's service accounts; deleted ones with `showDeleted`. An `EXTERNAL` one's `secretExpireTime` says when its client secret expires. |
-| `CreateServiceAccount` | `POST /v1beta1/organizations/<org-id>/serviceAccounts` | Creates a service account. Its `clientSecret` is in this response only. The secret expires after `secretLifetime`: 90 days when it's left out, at most 365 days; a `WORKLOAD` service account takes none. A retry with the same `requestId` is refused with `CONFLICT`, and the `metadata` of its `ErrorInfo` detail names the account under `serviceAccount`: delete that account and create a new one, or rotate its secret, to get a working secret. |
-| `RotateServiceAccountSecret` | `POST /v1beta1/organizations/<org-id>/serviceAccounts/<id>:rotateSecret` | Issues a new client secret for an `EXTERNAL` service account, in this response only, and refuses the old one at once. The new secret expires after `secretLifetime`, 90 days when it's left out, at most 365 days. Needs `iam.service_account.create`. See [Rotate the client secret](../service-accounts.md#rotate-the-client-secret). |
+| `ListServiceAccounts`, `GetServiceAccount` | `GET /v1beta1/organizations/<org-id>/serviceAccounts` | The organization's service accounts; deleted ones with `showDeleted`. |
+| `CreateServiceAccount` | `POST /v1beta1/organizations/<org-id>/serviceAccounts` | Creates a service account with no credential: give a `WORKLOAD` one a federated credential, an `EXTERNAL` one a key. A retry with the same `requestId` returns the account the first request created. |
 | `DeleteServiceAccount` | `DELETE /v1beta1/organizations/<org-id>/serviceAccounts/<id>` | Revokes a service account for good, with every role binding it holds. |
 | `ListFederatedCredentials` | `GET /v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>/federatedCredentials` | A `WORKLOAD` service account's trust policies for CI providers' OIDC tokens. `showDeleted` includes deleted ones. |
 | `GetFederatedCredential` | `GET /v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>/federatedCredentials/<id>` | One federated credential, deleted or not. |
@@ -119,7 +117,7 @@ All queries are fields of the `iam` namespace of the query root. They name an or
 | `orgMembers` | Every principal with a role assignment in the organization, with its roles' full names. |
 | `orgRoleAssignments` | Every role assignment in the organization, with its scope and creation time. |
 | `orgInvites` | Pending invites in the organization. |
-| `serviceAccounts` | Every service account in the organization, active or revoked, without secrets. |
+| `serviceAccounts` | Every service account in the organization, active or revoked. |
 | `serviceAccountKeys`, `serviceAccountKey` | A service account's keys, active or deleted, without private keys. |
 | `auditLogEntries` | One page of the organization's audit log. See [Audit log](../audit-log.md). |
 
@@ -134,7 +132,7 @@ All mutations are fields of the `iam` namespace of the mutation root.
 | `inviteMember` | Invites a person by email with one org-wide role, which you must be able to assign. |
 | `removeMember` | Revokes every role a principal holds in the organization, if you could revoke each of them. |
 | `revokeInvite` | Cancels a pending invite. |
-| `createServiceAccount` | Creates a service account and returns its client ID and one-time client secret. |
-| `revokeServiceAccount` | Disables a service account's credential and removes every role assignment it holds. Permanent. |
+| `createServiceAccount` | Creates a service account, with no credential yet. |
+| `revokeServiceAccount` | Deletes a service account's federated credentials and keys and removes every role assignment it holds. Permanent. |
 | `createServiceAccountKey` | Generates a key for an `EXTERNAL` service account and returns its one-time `credentialsFile`. |
 | `deleteServiceAccountKey` | Deletes a service account key. |

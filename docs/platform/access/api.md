@@ -17,7 +17,7 @@ The GraphQL API is the complete interface to Origin Cloud: the console and the `
 
 ## Before you begin
 
-- A user account, with the `origin` CLI installed and logged in, or a service account with its client ID and secret. See [Use the CLI](cli.md) and [Service accounts](../../iam/service-accounts.md).
+- A user account, with the `origin` CLI installed and logged in, or a service account with a credential: a federated credential its software's OIDC token matches, or a key. See [Use the CLI](cli.md) and [Service accounts](../../iam/service-accounts.md).
 - An HTTP client, such as `curl`, or a GraphQL client library.
 
 ## Endpoint
@@ -41,7 +41,7 @@ Authorization: Bearer <access-token>
 A request without a token, or with an expired or invalid one, fails with the error code [`UNAUTHORIZED`](../reference/errors.md#unauthorized). Get a token in one of two ways:
 
 - **As yourself:** log in with the CLI, then print the token with `origin id token --raw`. The CLI renews it when it expires. See [Use the CLI](cli.md#use-your-access-token-outside-the-cli).
-- **As a service account:** request a token with the OAuth 2.0 client credentials grant, using the service account's client ID and secret. See [Service accounts](../../iam/service-accounts.md).
+- **As a service account:** exchange a proof for its token at the security token service, `https://sts.origincloudapis.eu`: a CI job's OIDC token through a federated credential, or an assertion signed with one of the account's keys. See [Choose how the software authenticates](../../iam/service-accounts.md#choose-how-the-software-authenticates).
 
 Access tokens are short-lived. When a request fails with `UNAUTHORIZED`, get a new token and send the request again.
 
