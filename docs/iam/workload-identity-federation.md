@@ -7,7 +7,7 @@ page_type: concept
 parent: home
 nav_order: 52
 tags: [iam, service-accounts, security]
-last_reviewed: 2026-11-20
+last_reviewed: 2026-11-21
 ---
 
 # Workload identity federation
@@ -117,9 +117,15 @@ Give every credential of one workspace a phase once one of them has it. A plan's
 
 ### Have the workspace issue its tokens
 
-In the workspace's **Variables**, add the environment variable `TFC_WORKLOAD_IDENTITY_AUDIENCE` with the value `https://sts.origincloudapis.eu`. HCP Terraform then gives the plan and the apply a token for that audience in `TFC_WORKLOAD_IDENTITY_TOKEN`. For a token per configuration, add the variable with a tag instead, such as `TFC_WORKLOAD_IDENTITY_AUDIENCE_ORIGINCLOUD`, and the token comes in `TFC_WORKLOAD_IDENTITY_TOKEN_ORIGINCLOUD`. No secret is stored in the workspace.
+In the workspace's **Variables**, add the environment variable `TFC_WORKLOAD_IDENTITY_AUDIENCE` with the value `https://sts.origincloudapis.eu`. HCP Terraform then gives the plan and the apply a token for that audience in `TFC_WORKLOAD_IDENTITY_TOKEN`. No secret is stored in the workspace.
 
-The Terraform provider doesn't read `TFC_WORKLOAD_IDENTITY_TOKEN` yet; the release that does says so in the provider's changelog. Until then, the token can be exchanged by a tool that calls the STS itself, as [Exchange the token yourself](github-actions.md#exchange-the-token-yourself) shows.
+The Origin Cloud Terraform provider reads that token from v0.21.0 on, exchanges it at the STS for the service account's access tokens, and needs no other configuration. Leave `ORIGINCLOUD_ACCESS_TOKEN`, `ORIGINCLOUD_CLIENT_ID` and `ORIGINCLOUD_CLIENT_SECRET` unset in the workspace: they come before any CI token.
+
+A workspace that also asks for tokens for other audiences tags this one. Add `TFC_WORKLOAD_IDENTITY_AUDIENCE_<TAG>` instead, such as `TFC_WORKLOAD_IDENTITY_AUDIENCE_ORIGINCLOUD`, and HCP Terraform puts the token in `TFC_WORKLOAD_IDENTITY_TOKEN_ORIGINCLOUD`. Then add the environment variable `ORIGINCLOUD_TFC_WORKLOAD_IDENTITY_TAG` with the tag, `ORIGINCLOUD` here, so the provider reads that token. With a tag set, the provider reads only the tagged token, and fails naming the variable if the run doesn't have it.
+
+If several CI tokens are present, the provider takes the first of: the file `ORIGINCLOUD_OIDC_TOKEN_FILE` names, `ORIGINCLOUD_OIDC_TOKEN`, HCP Terraform's token, then a GitHub Actions job's token. `ORIGINCLOUD_OIDC_DISABLED=true` makes it ignore all of them.
+
+The provider reads the token through the Go SDK, which does so from v0.48.0 on. The `origin` CLI and the Rust and TypeScript SDKs don't read `TFC_WORKLOAD_IDENTITY_TOKEN`. In a run that uses one of those, pass the token in `ORIGINCLOUD_OIDC_TOKEN`, or call the STS yourself, as [Exchange the token yourself](github-actions.md#exchange-the-token-yourself) shows.
 
 Each exchange is recorded in the [audit log](audit-log.md) with the run's organization, workspace, run ID and phase under `run`, so every change the run makes can be traced back to it.
 
