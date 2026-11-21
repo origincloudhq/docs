@@ -7,7 +7,7 @@ page_type: reference
 parent: home
 nav_order: 80
 tags: [iam, reference, cli, api]
-last_reviewed: 2026-11-20
+last_reviewed: 2026-11-21
 ---
 
 # IAM reference
@@ -22,7 +22,7 @@ Look up exact commands, roles and API operations here. For how IAM works, see [A
 Every `origin iam` command with its options. See [`origin iam` commands](cli.md).
 
 **Built-in roles**  
-Every role with its URN and permissions. See [Built-in roles](../roles.md).
+Every role with its ID, full name and permissions. See [Built-in roles](../roles.md).
 
 **Errors**  
 Error codes shared by every API operation. See [Errors](../../platform/reference/errors.md).

@@ -7,7 +7,7 @@ page_type: reference
 parent: reference
 nav_order: 20
 tags: [reference, observability, metrics, api, errors]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-21
 ---
 
 # Metrics reference
@@ -219,7 +219,7 @@ GraphQL errors carry their code in `extensions.code`. For the general meaning of
 
 | Code | Cause | What to do |
 |---|---|---|
-| [`BAD_REQUEST`](../../platform/reference/errors.md#bad_request) | A name in `metricNames` isn't one of the metrics on this page (message: ``metric `<name>` is not in the catalog``), or `resource` isn't the full resource name of a compute instance, volume, or network interface (a URN, a name without its host, a bare ID and another kind of resource are refused). | Correct the metric name or the resource name. |
+| [`BAD_REQUEST`](../../platform/reference/errors.md#bad_request) | A name in `metricNames` isn't one of the metrics on this page (message: ``metric `<name>` is not in the catalog``), or `resource` isn't the full resource name of a compute instance, volume, or network interface (a name without its host, a bare ID and another kind of resource are refused). | Correct the metric name or the resource name. |
 | [`NOT_FOUND`](../../platform/reference/errors.md#not_found) | The project in `resource` doesn't exist. | Correct the project ID. |
 | [`FORBIDDEN`](../../platform/reference/errors.md#forbidden) | You don't have `observability.metric.get` on the resource. | Ask for a role that includes it, such as Viewer. See [Roles](../../iam/roles.md). |
 | [`CONFLICT`](../../platform/reference/errors.md#conflict) | The query exceeds the data point limit, the per-minute limit, or the concurrency limit. All three return the message `metric query rate limit exceeded; please retry later`. | Check that the query has at most 11,000 data points. If it does, wait a few seconds and retry. |

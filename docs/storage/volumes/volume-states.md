@@ -6,7 +6,7 @@ page_type: concept
 parent: volumes
 nav_order: 20
 tags: [storage, volumes]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-21
 ---
 
 # Volume states
@@ -94,7 +94,7 @@ A state that has settled stays settled. Only something you do next changes it:
 
 ## Deleted volumes
 
-A deleted volume drops out of your volume list immediately. For 24 hours you can still look it up by its name with `origin pvs get-volume`, or by its URN with the `pvs.volume` query, and it reports `DELETED`; after that the lookup finds nothing.
+A deleted volume drops out of your volume list immediately. For 24 hours you can still look it up by its name with `origin pvs get-volume`, or by its full name with the `pvs.volume` query, and it reports `DELETED`; after that the lookup finds nothing.
 
 In the GraphQL API, a change of state can take a few seconds to show in a list or a lookup. To read your own change at once, send back the token its response carried; see [Read what you just changed](../../platform/access/api.md#read-what-you-just-changed).
 

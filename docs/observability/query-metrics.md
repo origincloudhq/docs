@@ -6,7 +6,7 @@ page_type: task
 parent: home
 nav_order: 20
 tags: [observability, metrics, api]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-21
 ---
 
 # Query metrics
@@ -81,7 +81,7 @@ If the request fails, look up its HTTP status and `error.status` in [REST errors
 
 ## Query metrics with the GraphQL API
 
-1. Find the full resource name of the resource, such as `//compute.origincloudapis.eu/projects/<project-id>/zones/eu-central1-az1/instances/<instance-id>`: the `id` of the instance, volume or network interface in the GraphQL API, or its `name` in the output of the same commands with the host `//compute.origincloudapis.eu/`, `//pvs.origincloudapis.eu/` or `//network.origincloudapis.eu/` put in front. A URN, a name without its host or a bare ID is refused.
+1. Find the full resource name of the resource, such as `//compute.origincloudapis.eu/projects/<project-id>/zones/eu-central1-az1/instances/<instance-id>`: the `id` of the instance, volume or network interface in the GraphQL API, or its `name` in the output of the same commands with the host `//compute.origincloudapis.eu/`, `//pvs.origincloudapis.eu/` or `//network.origincloudapis.eu/` put in front. A name without its host or a bare ID is refused.
 
 2. Pick the metric names and the window, as [above](#choose-the-window-and-the-period). In the GraphQL API, the window is `from` to `to` and the period is `periodSeconds`.
 

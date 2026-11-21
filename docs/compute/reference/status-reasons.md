@@ -7,7 +7,7 @@ parent: reference
 nav_order: 20
 tags: [reference, compute, instances, troubleshooting]
 related: [instances-lifecycle, instances-host-failure]
-last_reviewed: 2026-11-05
+last_reviewed: 2026-11-21
 ---
 
 # Status reasons
@@ -19,7 +19,7 @@ It's set in two cases:
 - Every `FAILED` instance carries one.
 - A `STOPPED` instance carries one when the platform stopped it because its machine failed. A `STOPPED` instance you stopped yourself, that shut itself down, or that the platform stopped to move it to another machine carries none.
 
-For every other status it's empty (`null` in the GraphQL API), and starting the instance clears it. A reason starts with one of the fixed texts below. Some texts are followed by a colon and a detail, such as a quota refusal you can act on. A reason never contains raw host errors, file paths or machine names. If the reason isn't enough to act on, contact Origin Cloud support and quote the instance URN.
+For every other status it's empty (`null` in the GraphQL API), and starting the instance clears it. A reason starts with one of the fixed texts below. Some texts are followed by a colon and a detail, such as a quota refusal you can act on. A reason never contains raw host errors, file paths or machine names. If the reason isn't enough to act on, contact Origin Cloud support and quote the instance's full name, such as `//compute.origincloudapis.eu/projects/<project>/zones/<zone>/instances/<instance-id>`.
 
 The texts are listed in the order an instance can meet them: launch, start, stop, and machine failure.
 

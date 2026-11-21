@@ -8,7 +8,7 @@ parent: instances
 nav_order: 10
 tags: [compute, instances]
 related: [instances-stop-start, instances-terminate, reference-status-reasons]
-last_reviewed: 2026-11-04
+last_reviewed: 2026-11-21
 ---
 
 # Instance lifecycle
@@ -104,7 +104,7 @@ You can't change a `FAILED` instance's type. Don't leave one sitting indefinitel
 
 ## Terminated instances
 
-A terminated instance stays in `list-instances` for 2 hours after it terminates, then drops out of the default list. You can still read it by its URN with `get-instance`, however long ago it terminated.
+A terminated instance stays in `list-instances` for 2 hours after it terminates, then drops out of the default list. You can still read it by its name with `origin compute get-instance`, however long ago it terminated.
 
 ## Related
 
