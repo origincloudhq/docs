@@ -48,7 +48,8 @@ Full control of the organization's projects, resources and access. Owner doesn't
 | `admin.usage` | `list` |
 | `compute.image` | `get`, `list`, `create`, `delete`, `update` |
 | `compute.instance` | `get`, `list`, `update`, `launch`, `terminate`, `start`, `stop`, `attach`, `detach` |
-| `compute.key_pair` | `get`, `list`, `create`, `delete` |
+| `compute.key_pair` | `get`, `list`, `create`, `delete`, `update` |
+| `compute.launch_template` | `get`, `list`, `create`, `update`, `delete` |
 | `dns.hosted_zone` | `get`, `list`, `create`, `update`, `delete`, `verify` |
 | `dns.record_set` | `get`, `list`, `create`, `update`, `delete` |
 | `dns.vpc_attachment` | `get`, `list`, `create`, `delete` |
@@ -91,6 +92,7 @@ Read-only access: every `get` and `list` permission that Owner holds. A Viewer c
 | `compute.image` | `get`, `list` |
 | `compute.instance` | `get`, `list` |
 | `compute.key_pair` | `get`, `list` |
+| `compute.launch_template` | `get`, `list` |
 | `dns.hosted_zone` | `get`, `list` |
 | `dns.record_set` | `get`, `list` |
 | `dns.vpc_attachment` | `get`, `list` |

@@ -44,6 +44,7 @@ Platform-provided images and image families, plus your own images made from a sn
 **Key pairs**  
 SSH key pairs you import or have the platform generate. The public half goes into every instance you launch with it. See [Key pairs](key-pairs/index.md).
 
+
 ## Ways to access Compute
 
 **CLI**  
