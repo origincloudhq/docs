@@ -6,7 +6,7 @@ page_type: concept
 parent: home
 nav_order: 70
 tags: [iam, audit, api]
-last_reviewed: 2026-11-20
+last_reviewed: 2026-11-21
 ---
 
 # Audit log
@@ -144,7 +144,7 @@ It differs from the GraphQL query in three ways:
 
 - It serves a recent window of the log: 90 days by default, which the platform can set longer. Each response says where the window starts in `windowStartTime`, and an older entry is answered with `NOT_FOUND`. The GraphQL query serves the whole log.
 - The actor and a target that is a principal are full names, as a role binding's `member` is: `//iam.origincloudapis.eu/users/<user-id>`, `//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<id>`, `//iam.origincloudapis.eu/serviceAgents/<name>` for a platform service agent acting in your organization ([Service agents](service-agents.md)), or `//iam.origincloudapis.eu/services/<service>` for a change the platform made itself, such as `//iam.origincloudapis.eu/services/kms` for the KMS destroying a deleted key's material. An entry names an account, never an address, so a later change of address doesn't change it. The `project` is the project's full name, `//resourcemanager.origincloudapis.eu/projects/<project-id>`, and so is the `project` filter.
-- A role in `details` has its role name, such as `roles/iam.editor`, not its URN.
+- A role in `details` has its role name, such as `roles/iam.editor`.
 
 ## Related
 

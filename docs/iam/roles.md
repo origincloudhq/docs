@@ -6,7 +6,7 @@ page_type: reference
 parent: home
 nav_order: 20
 tags: [iam, roles, reference]
-last_reviewed: 2026-11-18
+last_reviewed: 2026-11-21
 ---
 
 # Built-in roles
@@ -14,7 +14,7 @@ last_reviewed: 2026-11-18
 <!-- Source of truth: the built-in role and permission catalog in the IAM service.
      Check every table against `origin iam list-roles` when roles change. -->
 
-Origin Cloud has twelve built-in roles. You can't create your own. Each section lists the role's ID, where you can assign it, and every permission it grants. A role's full name is `//iam.origincloudapis.eu/` followed by its ID, such as `//iam.origincloudapis.eu/roles/iam.editor`; the `origin iam` commands take a role by its ID, and the REST API by either. The GraphQL API takes a role by its URN, which its `roles` query lists. Permission keys have the form `<service>.<resource>.<action>`; the tables group them by `<service>.<resource>`. For how roles, scopes and permissions work together, see [Access model](access-model.md).
+Origin Cloud has twelve built-in roles. You can't create your own. Each section lists the role's ID, where you can assign it, and every permission it grants. A role's full name is `//iam.origincloudapis.eu/` followed by its ID, such as `//iam.origincloudapis.eu/roles/iam.editor`; `origin iam get-role` and the REST API's `GetRole` take a role by its ID, and a role binding's `role`, in the CLI, the REST API and the GraphQL API, takes its full name, which the GraphQL `roles` query lists as each role's `id`. Permission keys have the form `<service>.<resource>.<action>`; the tables group them by `<service>.<resource>`. For how roles, scopes and permissions work together, see [Access model](access-model.md).
 
 | ID | Name | For |
 |---|---|---|

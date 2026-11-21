@@ -7,7 +7,7 @@ page_type: reference
 parent: home
 nav_order: 50
 tags: [networking, reference, cli, api]
-last_reviewed: 2026-11-18
+last_reviewed: 2026-11-21
 ---
 
 # Network reference
@@ -26,7 +26,7 @@ A network resource's `name` is its relative name, such as `projects/<project>/re
 - the `vpc` and `subnet` filters of the list commands;
 - an operation's `target`.
 
-A relative name or an id there is refused with `BAD_REQUEST`. `creator` is the full name of the principal that created the resource, such as `//iam.origincloudapis.eu/users/<user-id>`, or a platform service's, `//iam.origincloudapis.eu/services/<service>`, for what the platform created. Network resources have no `urn` field in the CLI and REST API.
+A relative name or an id there is refused with `BAD_REQUEST`. `creator` is the full name of the principal that created the resource, such as `//iam.origincloudapis.eu/users/<user-id>`, or a platform service's, `//iam.origincloudapis.eu/services/<service>`, for what the platform created.
 
 ## GraphQL queries
 

@@ -8,7 +8,7 @@ parent: instances
 nav_order: 40
 tags: [compute, instances]
 related: [instances-health-checks, instances-stop-start]
-last_reviewed: 2026-10-19
+last_reviewed: 2026-11-21
 ---
 
 # When the machine under an instance fails
@@ -51,7 +51,7 @@ Starting it is an ordinary start. Its volumes, network interface, addresses and 
 ## What survives
 
 **Survives**  
-Everything on the instance's volumes. Volumes aren't tied to a machine, so they come back attached to the same instance with the same contents. Nothing is rebuilt from the image. The instance URN, network interface, private and public addresses, and security groups also stay the same.
+Everything on the instance's volumes. Volumes aren't tied to a machine, so they come back attached to the same instance with the same contents. Nothing is rebuilt from the image. The instance's name, network interface, private and public addresses, and security groups also stay the same.
 
 **Doesn't survive**  
 Anything only in memory, and anything on a temporary file system. Treat a machine failure the way you'd treat a sudden power loss.

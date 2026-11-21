@@ -7,7 +7,7 @@ page_type: reference
 parent: home
 nav_order: 50
 tags: [dns, reference, cli, api]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-21
 availability: preview
 ---
 
@@ -61,11 +61,11 @@ Requests and responses are JSON, with fields in lower camel case, such as `dnsNa
 | Record set | `projects/<project-id>/hostedZones/<zone-id>/recordSets/<record-set-id>` |
 | VPC attachment | `projects/<project-id>/hostedZones/<zone-id>/vpcAttachments/<vpc-id>` |
 
-A resource's full name is `//dns.origincloudapis.eu/` followed by its name. Every reference to another resource is a full name, in what the API takes and in what it shows: an attachment's `vpc` and the `vpc` filter, an alias's `floatingIp`, a batch's `deletions`. A relative name or an id there is refused with `BAD_REQUEST`. Zones, record sets and attachments have no `urn` field in the CLI and REST API.
+A resource's full name is `//dns.origincloudapis.eu/` followed by its name. Every reference to another resource is a full name, in what the API takes and in what it shows: an attachment's `vpc` and the `vpc` filter, an alias's `floatingIp`, a batch's `deletions`. A relative name or an id there is refused with `BAD_REQUEST`.
 
 ## GraphQL API
 
-The GraphQL API's `dns` namespace works on the same resources, which it names by their full resource names: an `id` is `//dns.origincloudapis.eu/` followed by the resource name above, such as `//dns.origincloudapis.eu/projects/<project-id>/hostedZones/<zone-id>`, and an argument that names a resource takes the same form: `project`, `hostedZone`, `recordSet`, `vpc` and, for an alias, `floatingIp`. Copy a full name from a response's `id` rather than assembling it. A URN, a name without its host, a bare ID or the name of another kind of resource is refused with `BAD_REQUEST`, naming the argument.
+The GraphQL API's `dns` namespace works on the same resources, which it names by their full resource names: an `id` is `//dns.origincloudapis.eu/` followed by the resource name above, such as `//dns.origincloudapis.eu/projects/<project-id>/hostedZones/<zone-id>`, and an argument that names a resource takes the same form: `project`, `hostedZone`, `recordSet`, `vpc` and, for an alias, `floatingIp`. Copy a full name from a response's `id` rather than assembling it. A name without its host, a bare ID or the name of another kind of resource is refused with `BAD_REQUEST`, naming the argument.
 
 - A project that doesn't exist is `NOT_FOUND`; a `hostedZone(id)` query answers `null` for a zone that isn't there.
 - A `vpc` and a `floatingIp` must be in the zone's project: the full name of a VPC (`//network.origincloudapis.eu/projects/<project-id>/regions/<region>/vpcs/<vpc-id>`) carries its region, and that of a Floating IP its zone, so neither is given separately.

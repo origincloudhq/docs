@@ -6,7 +6,7 @@ page_type: concept
 parent: home
 nav_order: 10
 tags: [iam, roles, security]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-21
 ---
 
 # Access model
@@ -33,7 +33,7 @@ A service agent is the identity one of the platform's own services acts as in yo
 
 ## Roles
 
-A role is a named, fixed set of permissions. Every role is built in: you can assign and revoke them, but you can't create, change or delete a role. Each role has a short ID such as `roles/owner` or `roles/iam.editor`. The `origin iam` commands take a role by its ID, and the REST API by its ID or its full name, such as `//iam.origincloudapis.eu/roles/iam.editor`; the GraphQL API takes its URN, which its `roles` query lists. The [`list-roles`](reference/cli.md#list-roles) command shows every role with its permissions. For the full catalog, see [Built-in roles](roles.md).
+A role is a named, fixed set of permissions. Every role is built in: you can assign and revoke them, but you can't create, change or delete a role. Each role has a short ID such as `roles/owner` or `roles/iam.editor`. `origin iam get-role` and the REST API's `GetRole` take a role by its ID; a role binding's `role`, in the CLI, the REST API and the GraphQL API, takes its full name, such as `//iam.origincloudapis.eu/roles/iam.editor`, which the GraphQL `roles` query lists as each role's `id`. The [`list-roles`](reference/cli.md#list-roles) command shows every role with its permissions. For the full catalog, see [Built-in roles](roles.md).
 
 ## Permissions
 
