@@ -7,7 +7,7 @@ parent: instances
 nav_order: 60
 tags: [compute, instances, cli, api]
 related: [instances-instance-types, instances-lifecycle, reference-cli]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-21
 ---
 
 # Launch an instance
@@ -25,6 +25,8 @@ Launch an instance to get a running Linux machine you can log in to over SSH. Yo
 ## How a launch fits together
 
 An instance's network interface is a resource of its own: you create it in a subnet, open it with a security group, and name it at launch. It keeps its addresses for the instance's whole life, and stays when the instance is terminated.
+
+With the API, you can instead launch from a recipe that holds the interface's spec, and the launch creates the interface for you. See [Launch from a recipe with the API](#launch-from-a-recipe-with-the-api).
 
 ```mermaid
 flowchart LR
@@ -150,7 +152,50 @@ ssh -i <private-key-file> <login-user>@<public-address>
 
 One of the interface's security groups must allow inbound TCP port 22 from your address. The default VPC's default security group allows SSH from anywhere. In a VPC you created, the subnet also needs a route to the internet gateway; see [Create a VPC and subnets](../../network/vpcs/create.md#build-a-network-that-reaches-the-internet).
 
-## Using the API
+## Launch from a recipe with the API
+
+A launch can also take a recipe of the instance: its type, image or image family, key pair, and optionally its login user, boot volume, service account, tags, and network interface. Where the recipe gives the interface as a spec, a subnet and security groups, the launch creates the interface for the instance. You don't create one beforehand.
+
+Send the recipe as `launchTemplateData` to the `:launch` method of the zone's instances:
+
+```sh
+curl -s -X POST \
+  "https://compute.origincloudapis.eu/v1beta1/projects/<project-id>/zones/eu-central1-az1/instances:launch" \
+  -H "Authorization: Bearer $(origin id token --raw)" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "launchTemplateData": {
+      "instanceType": "//compute.origincloudapis.eu/instanceTypes/gp1.core.2",
+      "imageFamily": "//compute.origincloudapis.eu/imageFamilies/<family>",
+      "keyPair": "//compute.origincloudapis.eu/projects/<project-id>/keyPairs/<key-pair-id>",
+      "bootVolume": {"sizeGib": 40},
+      "tags": {"origin:name": "web-1"},
+      "networkInterfaces": [{
+        "spec": {
+          "subnet": "//network.origincloudapis.eu/projects/<project-id>/zones/eu-central1-az1/subnets/<subnet-id>",
+          "securityGroups": ["//network.origincloudapis.eu/projects/<project-id>/regions/eu-central1/securityGroups/<security-group-id>"]
+        }
+      }]
+    }
+  }'
+```
+
+The answer is the launch's operation, done once the instance is `RUNNING`, as for a launch with an interface you created.
+
+Each entry of `networkInterfaces` holds exactly one of these, and a recipe holds at most one entry:
+
+| Entry | What the launch does |
+|---|---|
+| `spec` | Creates an interface in `subnet`, in the security groups of `securityGroups`. Without a `subnet`, it uses your project's default subnet, and creates the [default VPC](../../network/vpcs/default-vpc.md) and its subnet the first time a launch needs them. A default subnet gives the interface a public address. Without `securityGroups`, the interface gets its VPC's default security group. |
+| `networkInterface` | Takes the existing interface of that full name, which must be free and in the instance's project and zone. It brings its own subnet and security groups. |
+
+A recipe with no `networkInterfaces` launches with one interface, as from an empty `spec`.
+
+An interface created from a spec belongs to its instance. It is deleted when you terminate the instance. An instance that ends `FAILED` keeps it, so starting the instance again can use it. An existing interface you named is only released when the instance is terminated, and stays.
+
+A launch refused before the instance exists creates no instance and no interface. A refusal names the recipe's field, such as `launchTemplateData.networkInterfaces[0].spec.subnet`.
+
+## Using the GraphQL API
 
 The `launchInstance` mutation takes the project, the image, instance type, key pair and boot volume; the project, the image, the key pair and the subnet are named by their full resource names. Without a subnet, it launches into your project's default subnet, and the platform creates the default VPC the first time a launch needs it; see [Default VPC](../../network/vpcs/default-vpc.md). It also accepts `imageFamily` in place of `image`, which launches the image currently designated for that family. Set exactly one of the two. See [Image families](../images/image-families.md).
 
@@ -180,7 +225,9 @@ A refused launch creates nothing and costs nothing.
 - **`PRODUCT_UNAVAILABLE`**: the instance type or storage class isn't offered. Pick one whose `available` is `true`. See [`PRODUCT_UNAVAILABLE`](../../platform/reference/errors.md#product_unavailable).
 - **Quota**: the launch would take the organization or project past an instance, vCPU or storage limit. The error names the quota. See [Limits](../../platform/reference/limits.md#compute).
 - **Root disk too small**: the boot volume's `size_gib` is smaller than the image. The error names the smallest size that works.
-- **Network interface in use or elsewhere**: the interface is attached to another instance, or isn't in the instance's project and zone. Create a new one in a subnet of the instance's zone.
+- **Network interface in use or elsewhere**: the interface is attached to another instance, or isn't in the instance's project and zone. Create a new one in a subnet of the instance's zone, or launch from a recipe with an interface spec.
+- **Subnet full**: the subnet of an interface spec has no free address left. Name another subnet of the zone.
+- **Subnet or security group elsewhere**: a spec's subnet isn't in the instance's project and zone, or one of its security groups isn't in the instance's project and region.
 
 For other problems, see [Troubleshoot Compute](../troubleshooting/index.md).
 
