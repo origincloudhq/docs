@@ -202,14 +202,15 @@ The codes below are ordered the same way: refusals first, then faults.
 
 ## INSUFFICIENT_CAPACITY
 
-**Meaning:** The platform has no room for the request right now: no machine can place an instance of the requested type. Nothing about the request is wrong; the platform is full, not broken. The message names the instance type and what was short, such as vCPU or memory.
+**Meaning:** The platform has no room for the request right now: no machine can place an instance of the requested type, or the zone has no public IPv4 address free. Nothing about the request is wrong; the platform is full, not broken. The message names what was short: the instance type and its vCPU or memory, or the zone without a free address.
 
 **Common causes:**
 
 - Launching or starting an instance of a type whose machines are full.
 - Launching a type that no machine serves.
+- Allocating a Floating IP, or launching into a subnet that assigns public IPs, in a zone with no public IPv4 address free.
 
-**What to do:** Send the identical request again later, or choose a smaller instance type. Nothing was created by the refused request.
+**What to do:** Send the identical request again later, or choose a smaller instance type. For a public address, allocate the Floating IP in another zone, or launch into a subnet that doesn't assign public IPs. Nothing was created by the refused request.
 
 ## SERVICE_UNAVAILABLE
 
