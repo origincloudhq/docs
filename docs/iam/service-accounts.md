@@ -2,12 +2,12 @@
 id: service-accounts
 title: Use service accounts
 nav_title: Service accounts
-description: Create a service account for CI and scripts, choose how it authenticates (federation first, a key as the last resort), and delete it to revoke it.
+description: Create a service account, choose how it authenticates (federation first, a key last), use a key's credentials file with the CLI, SDKs and Terraform provider, and revoke it.
 page_type: task
 parent: home
 nav_order: 50
 tags: [iam, service-accounts, cli, api]
-last_reviewed: 2026-11-21
+last_reviewed: 2026-11-22
 ---
 
 # Use service accounts
@@ -71,19 +71,19 @@ Every service account has a type, set when it's created. It never changes.
 
 A key is the credential of an `EXTERNAL` service account. The platform generates its key pair, an `ES256` (ECDSA P-256) key, returns the private key once, in a credentials file, and keeps only the public key. An account has at most 10 keys that aren't deleted. A `WORKLOAD` account never has one.
 
-Whoever holds the credentials file acts as the service account. So creating a key needs `iam.service_account_key.create` and `iam.service_account.act_as` on the organization, which `roles/owner` holds. The CLI has no command for keys yet; call the REST API.
+Whoever holds the credentials file acts as the service account. So creating a key needs `iam.service_account_key.create` and `iam.service_account.act_as` on the organization, which `roles/owner` holds.
 
-1. Create the key.
+1. Create the key, and name the file its credentials file is written to.
 
    ```sh
-   curl -s -X POST \
-     "https://iam.origincloudapis.eu/v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>/keys" \
-     -H "Authorization: Bearer $(origin id token --raw)" \
-     -H "Content-Type: application/json" \
-     -d '{}'
+   origin iam create-service-account-key \
+     --service-account //iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id> \
+     --credentials-file deploy-key.json
    ```
 
-   The response is the key, with its `name` and, in this response only, its `credentialsFile`: a JSON document with these fields.
+   The CLI creates the file readable by you alone and never prints the private key: standard output shows the key without it, and standard error names the file and the key. An existing file is refused before the key is created; `--overwrite` replaces it once the key is in. If the request fails, nothing is written.
+
+   The credentials file is a JSON document with these fields.
 
    | Field | Value |
    | --- | --- |
@@ -94,19 +94,104 @@ Whoever holds the credentials file acts as the service account. So creating a ke
    | `private_key` | The private key, a PKCS 8 private key in PEM |
    | `sts_endpoint` | `https://sts.origincloudapis.eu`, where its assertions are exchanged |
 
-   > **Important:** The private key is shown only once. Save the credentials file as it is, readable only by the software that uses it, or store it in your secret manager. No API returns it again; if you lose it, delete the key and create a new one.
+   > **Important:** The private key is shown only once. Keep the credentials file as it is, readable only by the software that uses it, or store it in your secret manager, and keep it out of version control. No API returns it again; if you lose it, delete the key and create a new one.
 
 2. Verify that the key is listed with the state `ACTIVE`. A listed key shows its `lastUseTime`, never its private key.
 
    ```sh
-   curl -s \
-     "https://iam.origincloudapis.eu/v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>/keys" \
-     -H "Authorization: Bearer $(origin id token --raw)"
+   origin iam list-service-account-keys \
+     --service-account //iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>
    ```
 
-### Get an access token with a key
+3. Hand the file to the software that uses it, as [Use a credentials file](#use-a-credentials-file) shows.
 
-The software signs a JWT assertion with the key's private key, naming the key and the service account, and exchanges it at the security token service for the account's access token, by default for 15 minutes. [Service account keys](reference/index.md#service-account-keys) lists the assertion's fields and shows the exchange:
+In the REST API, `CreateServiceAccountKey` returns the credentials file once, as `credentialsFile`; see [Using the API](#using-the-api).
+
+## Use a credentials file
+
+The `origin` CLI, the Go, Rust and TypeScript SDKs and the Terraform provider all read a credentials file. Each signs an assertion with the key, exchanges it at the security token service for the service account's access token, and exchanges a new one about a minute before that token expires, so a long-running job or a long `terraform apply` isn't cut off. Every call is made as the service account, and the [audit log](audit-log.md) names it.
+
+A file that is named but can't be read, or isn't a credentials file, is an error: the client doesn't fall back to another identity.
+
+### The CLI
+
+Point `ORIGINCLOUD_CREDENTIALS_FILE` at the file for one command or a whole script, or store it in the profile's `credentials-file` for every command. `origin config profile-set` checks the file first and stores its absolute path. Use the CLI from version 2.0.0.
+
+```sh
+ORIGINCLOUD_CREDENTIALS_FILE=deploy-key.json origin resourcemanager list-projects --organization //resourcemanager.origincloudapis.eu/organizations/<org-id>
+
+origin config profile-set credentials-file deploy-key.json
+```
+
+The environment variable overrides the profile while a command runs. `origin id token` prints the service account's access token for a tool that isn't built on the CLI or an SDK. See [Run commands as a service account](../platform/access/cli.md#run-commands-as-a-service-account).
+
+### The SDKs
+
+Every SDK reads `ORIGINCLOUD_CREDENTIALS_FILE` without any code: set it where the program runs. To name the file in code, or to pass the file's content from a secret manager, give the client the credentials explicitly. Use sdk-go and sdk-typescript from version 0.49.0, sdk-rust from 0.48.0.
+
+Go:
+
+```go
+credentials, err := core.CredentialsFromFile("/etc/myapp/origincloud-key.json") // or core.CredentialsFromJSON(secret)
+if err != nil {
+	log.Fatal(err)
+}
+client, err := core.NewClient(ctx, core.WithCredentials(credentials))
+```
+
+Rust:
+
+```rust
+use origincloud_core::{Client, ServiceAccount};
+
+let client = Client::builder()
+    .credentials(ServiceAccount::from_file("/etc/myapp/origincloud-key.json")?) // or ServiceAccount::from_json(..)
+    .build()?;
+```
+
+TypeScript:
+
+```ts
+import { Client, credentialsFile } from "@origincloud/core";
+
+const client = new Client({ credentials: credentialsFile("/etc/myapp/origincloud-key.json") });
+// or ServiceAccountKeyCredentials.fromJSON(secret)
+```
+
+The credentials never print the private key, and their errors never quote the file.
+
+### The Terraform provider
+
+Give the provider the file's path in `credentials_file`, or set `ORIGINCLOUD_CREDENTIALS_FILE` where Terraform runs. Use the provider from version 0.22.0.
+
+```hcl
+provider "origincloud" {
+  region           = "eu-central1"
+  credentials_file = "/etc/origincloud/deployer.json"
+}
+```
+
+Set, `credentials_file` comes before every credential of the environment. Keep the file readable only by the user that runs Terraform. In CI, use no key: the job's OIDC token is exchanged instead; see [Workload identity federation](workload-identity-federation.md).
+
+#### Why the provider has no key resource
+
+The API returns a key's private key once, in the answer to its creation. A Terraform resource that created a key would have to keep that private key in the state, where everyone who can read the state, and every backend that stores it, could act as the service account. So the provider has no resource that creates a key, and no data source returns one: `origincloud_iam_service_account_key` and `origincloud_iam_service_account_keys` read a key's metadata only. Create the key with the CLI or the console, and hand its file to the system that runs Terraform.
+
+### Which credential a client uses
+
+The CLI, the SDKs and the Terraform provider look for credentials in the same order, and use the first they find. Credentials given explicitly come before all of these: the Terraform provider's `credentials_file`, or the credentials an SDK client is built with.
+
+1. `ORIGINCLOUD_ACCESS_TOKEN`, an access token, sent as it is.
+2. `ORIGINCLOUD_CREDENTIALS_FILE`, then, in the CLI, the profile's `credentials-file`.
+3. A CI job's OIDC token, exchanged for a `WORKLOAD` service account's access token: the file `ORIGINCLOUD_OIDC_TOKEN_FILE` names, `ORIGINCLOUD_OIDC_TOKEN`, an HCP Terraform run's token (the Go SDK and the Terraform provider only), then a GitHub Actions job's token. `ORIGINCLOUD_OIDC_DISABLED=true` leaves this step out. See [Workload identity federation](workload-identity-federation.md).
+4. Your own login, the session `origin id login` stored.
+5. On an instance that runs as a service account, that account's credential from the instance's metadata service. Off an instance this step gives up within about two seconds; `ORIGINCLOUD_METADATA_DISABLED=true` leaves it out.
+
+A credentials file comes before a CI job's token, so leave it unset in a job that federates.
+
+### Exchange the key yourself
+
+A tool that isn't built on the CLI or an SDK signs a JWT assertion with the key's private key, naming the key and the service account, and exchanges it at the security token service for the account's access token, by default for 15 minutes. [Service account keys](reference/index.md#service-account-keys) lists the assertion's fields and shows the exchange:
 
 ```sh
 curl -s https://sts.origincloudapis.eu/v1/token \
@@ -114,18 +199,17 @@ curl -s https://sts.origincloudapis.eu/v1/token \
   -d assertion=<assertion>
 ```
 
-The response is JSON with an `access_token` and its lifetime in seconds, `expires_in`. Send the token as a bearer token with each API request, or to the CLI as `ORIGINCLOUD_ACCESS_TOKEN`, and make a new assertion when it expires. Each assertion needs its own `jti`.
+The response is JSON with an `access_token` and its lifetime in seconds, `expires_in`. Send the token as a bearer token with each API request, and make a new assertion before it expires. Each assertion needs its own `jti`.
 
-### Replace or delete a key
+## Replace or delete a key
 
 A key never expires and is never changed. To replace one, create the new key, move the software to its credentials file, check that the old key's `lastUseTime` stops moving, then delete the old key. An account's keys can overlap for as long as you need.
 
-Deleting a key refuses its assertions from then on, and the access tokens already exchanged with it at their next API call. It stays readable, with the state `DELETED`. Deleting the service account deletes its keys.
+Deleting a key refuses its assertions from then on, and the access tokens already exchanged with it at their next API call. It stays readable, with the state `DELETED`. Deleting the service account deletes its keys. Deleting can't be undone, so the command needs `--yes`.
 
 ```sh
-curl -s -X DELETE \
-  "https://iam.origincloudapis.eu/v1beta1/organizations/<org-id>/serviceAccounts/<service-account-id>/keys/<key-id>" \
-  -H "Authorization: Bearer $(origin id token --raw)"
+origin iam delete-service-account-key \
+  --key //iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>/keys/<key-id> --yes
 ```
 
 ## Revoke a service account

@@ -8,7 +8,7 @@ parent: access
 nav_order: 10
 tags: [cli, getting-started]
 related: [reference-cli, access-api]
-last_reviewed: 2026-11-21
+last_reviewed: 2026-11-22
 ---
 
 # Use the CLI
@@ -205,15 +205,16 @@ The session is stored in `~/.local/share/origincloud/session.json`, or under `$X
 
 ### Run commands as a service account
 
-Scripts and CI jobs, which can't log in interactively, use a service account instead. Every command that calls a service, `origin mcp serve` included, uses this environment variable in place of the login session when it is set:
+Scripts and CI jobs, which can't log in interactively, use a service account instead. Every command that calls a service, `origin mcp serve` included, uses these in place of the login session when one is set, the first in this order:
 
 | Variable | Effect |
 |---|---|
-| `ORIGINCLOUD_ACCESS_TOKEN` | Use this access token, such as one a service account's key was exchanged for. See [Get an access token with a key](../../iam/service-accounts.md#get-an-access-token-with-a-key). |
+| `ORIGINCLOUD_ACCESS_TOKEN` | Use this access token as it is. |
+| `ORIGINCLOUD_CREDENTIALS_FILE`, or the profile's `credentials-file` | Act as the `EXTERNAL` service account whose key's credentials file this names: the CLI exchanges an assertion signed with the key for the account's access token, and renews it before it expires. A named file that can't be read is an error. From version 2.0.0; see [Use a credentials file](../../iam/service-accounts.md#use-a-credentials-file). |
 
-A CI job needs no secret at all. In a GitHub Actions job granted `permissions: id-token: write`, every command exchanges the job's OIDC token for the access token of the service account a federated credential trusts the job as, and renews it as it expires. That token comes after `ORIGINCLOUD_ACCESS_TOKEN` and before the login session; see [Authenticate from GitHub Actions without a secret](../../iam/github-actions.md). On an instance that runs as a service account, with no login session, every command uses that service account's credential from the instance's metadata service.
+A CI job needs no secret at all. In a GitHub Actions job granted `permissions: id-token: write`, every command exchanges the job's OIDC token for the access token of the service account a federated credential trusts the job as, and renews it as it expires. That token comes after `ORIGINCLOUD_ACCESS_TOKEN` and a credentials file, and before the login session; see [Authenticate from GitHub Actions without a secret](../../iam/github-actions.md). On an instance that runs as a service account, with no login session, every command uses that service account's credential from the instance's metadata service.
 
-`origin id token` prints the access token the commands use: the CI job's, else the login session's, else the instance's. The other `origin id` commands use the login session, and the `origin config` commands call no service. For creating a service account and giving it access, see [Service accounts](../../iam/service-accounts.md).
+`origin id token` prints the access token the commands use: the credentials file's service account's, else the CI job's, else the login session's, else the instance's. The other `origin id` commands use the login session, and the `origin config` commands call no service. For creating a service account and giving it access, see [Service accounts](../../iam/service-accounts.md).
 
 ## Set a default project, zone and region
 
@@ -349,6 +350,7 @@ For connecting a client and how the tools behave, see [Use Origin Cloud from an 
 | `default-project` | `ORIGINCLOUD_PROJECT` | The project when `--project` isn't given. |
 | `default-zone` | `ORIGINCLOUD_ZONE` | The zone when `--zone` isn't given. Lists don't use it. |
 | `region` | `ORIGINCLOUD_REGION` | The region when `--region` isn't given, and the region whose API endpoint the `compute`, `network` and `pvs` commands call. Without it, the region of the default zone. |
+| `credentials-file` | `ORIGINCLOUD_CREDENTIALS_FILE` | A service account key's credentials file, as `origin iam create-service-account-key --credentials-file` writes it: every command calls the API as that service account. `profile-set` checks the file and stores its absolute path. |
 
 The profile is stored in `~/.config/origincloud/default-profile.json`, or under `$XDG_CONFIG_HOME/origincloud/` if you set that variable, or in the file `--config` names.
 
