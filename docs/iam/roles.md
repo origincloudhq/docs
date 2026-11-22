@@ -6,7 +6,7 @@ page_type: reference
 parent: home
 nav_order: 20
 tags: [iam, roles, reference]
-last_reviewed: 2026-11-21
+last_reviewed: 2026-11-22
 ---
 
 # Built-in roles
@@ -14,7 +14,7 @@ last_reviewed: 2026-11-21
 <!-- Source of truth: the built-in role and permission catalog in the IAM service.
      Check every table against `origin iam list-roles` when roles change. -->
 
-Origin Cloud has twelve built-in roles. You can't create your own. Each section lists the role's ID, where you can assign it, and every permission it grants. A role's full name is `//iam.origincloudapis.eu/` followed by its ID, such as `//iam.origincloudapis.eu/roles/iam.editor`; `origin iam get-role` and the REST API's `GetRole` take a role by its ID, and a role binding's `role`, in the CLI, the REST API and the GraphQL API, takes its full name, which the GraphQL `roles` query lists as each role's `id`. Permission keys have the form `<service>.<resource>.<action>`; the tables group them by `<service>.<resource>`. For how roles, scopes and permissions work together, see [Access model](access-model.md).
+Origin Cloud has fourteen built-in roles. You can't create your own. Each section lists the role's ID, where you can assign it, and every permission it grants. A role's full name is `//iam.origincloudapis.eu/` followed by its ID, such as `//iam.origincloudapis.eu/roles/iam.editor`; `origin iam get-role` and the REST API's `GetRole` take a role by its ID, and a role binding's `role`, in the CLI, the REST API and the GraphQL API, takes its full name, which the GraphQL `roles` query lists as each role's `id`. Permission keys have the form `<service>.<resource>.<action>`; the tables group them by `<service>.<resource>`. For how roles, scopes and permissions work together, see [Access model](access-model.md).
 
 | ID | Name | For |
 |---|---|---|
@@ -22,6 +22,7 @@ Origin Cloud has twelve built-in roles. You can't create your own. Each section 
 | [`roles/viewer`](#rolesviewer) | Viewer | Read-only access to everything Owner can change |
 | [`roles/iam.editor`](#rolesiameditor) | IAM Editor | Assigning and revoking roles within its own permissions |
 | [`roles/iam.service-account-user`](#rolesiamservice-account-user) | Service Account User | Launching instances that run as the organization's service accounts |
+| [`roles/iam.service-account-token-creator`](#rolesiamservice-account-token-creator) | Service Account Token Creator | Getting short-lived tokens of the organization's service accounts, by impersonating them |
 | [`roles/dns.editor`](#rolesdnseditor) | DNS Editor | Managing the record sets of a project's hosted zones |
 | [`roles/kms.admin`](#roleskmsadmin) | KMS Admin | Managing a project's KMS keys, without using them |
 | [`roles/kms.viewer`](#roleskmsviewer) | KMS Viewer | Reading a project's KMS keys and public keys |
@@ -57,7 +58,7 @@ Full control of the organization's projects, resources and access. Owner doesn't
 | `iam.member` | `list`, `create`, `revoke` |
 | `iam.permission` | `query` |
 | `iam.role` | `get`, `list`, `update`, `create`, `delete`, `assign`, `revoke` |
-| `iam.service_account` | `list`, `create`, `revoke`, `act_as` |
+| `iam.service_account` | `list`, `create`, `revoke`, `act_as`, `get_access_token` |
 | `iam.service_account_key` | `get`, `list`, `create`, `delete` |
 | `kms.grant` | `get`, `list`, `create`, `update`, `delete` |
 | `kms.key` | `get`, `list`, `create`, `update`, `delete`, `rotate`, `encrypt`, `decrypt`, `generate_data_key`, `sign`, `get_public_key` |
@@ -139,6 +140,20 @@ Lets a principal act as the organization's service accounts, and nothing else: l
 | Resource | Actions |
 |---|---|
 | `iam.service_account` | `act_as` |
+
+It doesn't let the principal get a service account's token; that is [`roles/iam.service-account-token-creator`](#rolesiamservice-account-token-creator).
+
+## roles/iam.service-account-token-creator
+
+Lets a principal get short-lived tokens of the organization's service accounts by impersonating them through the STS, and nothing else. A token it gets acts with the service account's roles, not the principal's, and names the principal as the one acting, so you can hand a tool such as an AI agent a service account with narrow roles instead of your own access. It doesn't let the principal launch an instance as a service account; that is [`roles/iam.service-account-user`](#rolesiamservice-account-user). Owner includes this permission.
+
+**Scope:** org-wide. Service accounts belong to the organization, so a project-scoped Service Account Token Creator can't impersonate any. An org-wide one may impersonate every active service account of the organization, so assign it only to principals you would trust with each of them.
+
+> **Note:** The STS exchange that issues these tokens isn't available yet. Until it is, the role can be assigned but grants nothing you can use.
+
+| Resource | Actions |
+|---|---|
+| `iam.service_account` | `get_access_token` |
 
 ## roles/dns.editor
 
