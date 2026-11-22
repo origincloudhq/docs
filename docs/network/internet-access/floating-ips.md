@@ -73,7 +73,7 @@ An instance can connect to the Floating IP of another instance in the same VPC, 
 
 ## When no address is available
 
-The public IPv4 pool is shared by the whole platform, so `create-floating-ip` can be refused because no address is left. That's separate from your organization's and project's public IP quota, which is refused with the limit you reached. Both messages say which one applies. Releasing Floating IPs you don't need frees quota and pool space.
+The zone's public IPv4 addresses are shared by the whole platform, so `create-floating-ip` can be refused because none is free. That refusal is [`INSUFFICIENT_CAPACITY`](../../platform/reference/errors.md#insufficient_capacity) and names the zone: send the same request again later, or allocate the Floating IP in another zone. It's separate from your organization's and project's public IP quota, which is refused with the limit you reached. Both messages say which one applies. Releasing Floating IPs you don't need frees quota.
 
 ## Billing
 
