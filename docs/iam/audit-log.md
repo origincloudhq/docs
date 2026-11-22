@@ -6,7 +6,7 @@ page_type: concept
 parent: home
 nav_order: 70
 tags: [iam, audit, api]
-last_reviewed: 2026-11-21
+last_reviewed: 2026-11-22
 ---
 
 # Audit log
@@ -65,7 +65,7 @@ A CI job that signs in through a [federated credential](workload-identity-federa
 | `credential` | The federated credential's name. |
 | `token_id` | The access token's ID. |
 
-The `iam.federated_credential.exchange` entry with the same `token_id` holds the job token's subject and the run's claims, such as the repository, workflow and run ID, so together the two entries name the run that made the change. Entries that follow from a change rather than record it don't carry `federated`: a role assigned when a pending invite is applied, and the revocations recorded when an organization is deleted. Neither do `iam.federated_credential.exchange` itself and `iam.service_account.secret_expired`, which the platform records.
+The `iam.federated_credential.exchange` entry with the same `token_id` holds the job token's subject and the run's claims, such as the repository, workflow and run ID, so together the two entries name the run that made the change. Entries that follow from a change rather than record it don't carry `federated`: a role assigned when a pending invite is applied, and the revocations recorded when an organization is deleted. Neither does `iam.federated_credential.exchange` itself.
 
 ```json
 {

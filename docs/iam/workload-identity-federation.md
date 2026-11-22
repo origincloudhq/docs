@@ -7,7 +7,7 @@ page_type: concept
 parent: home
 nav_order: 52
 tags: [iam, service-accounts, security]
-last_reviewed: 2026-11-21
+last_reviewed: 2026-11-22
 ---
 
 # Workload identity federation
@@ -119,7 +119,7 @@ Give every credential of one workspace a phase once one of them has it. A plan's
 
 In the workspace's **Variables**, add the environment variable `TFC_WORKLOAD_IDENTITY_AUDIENCE` with the value `https://sts.origincloudapis.eu`. HCP Terraform then gives the plan and the apply a token for that audience in `TFC_WORKLOAD_IDENTITY_TOKEN`. No secret is stored in the workspace.
 
-The Origin Cloud Terraform provider reads that token from v0.21.0 on, exchanges it at the STS for the service account's access tokens, and needs no other configuration. Leave `ORIGINCLOUD_ACCESS_TOKEN`, `ORIGINCLOUD_CLIENT_ID` and `ORIGINCLOUD_CLIENT_SECRET` unset in the workspace: they come before any CI token.
+The Origin Cloud Terraform provider reads that token from v0.21.0 on, exchanges it at the STS for the service account's access tokens, and needs no other configuration. Leave the provider's `credentials_file`, `ORIGINCLOUD_ACCESS_TOKEN` and `ORIGINCLOUD_CREDENTIALS_FILE` unset in the workspace: they come before any CI token.
 
 A workspace that also asks for tokens for other audiences tags this one. Add `TFC_WORKLOAD_IDENTITY_AUDIENCE_<TAG>` instead, such as `TFC_WORKLOAD_IDENTITY_AUDIENCE_ORIGINCLOUD`, and HCP Terraform puts the token in `TFC_WORKLOAD_IDENTITY_TOKEN_ORIGINCLOUD`. Then add the environment variable `ORIGINCLOUD_TFC_WORKLOAD_IDENTITY_TAG` with the tag, `ORIGINCLOUD` here, so the provider reads that token. With a tag set, the provider reads only the tagged token, and fails naming the variable if the run doesn't have it.
 
