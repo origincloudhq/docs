@@ -81,7 +81,7 @@ The `iam.federated_credential.exchange` entry with the same `token_id` holds the
 
 When you, or a service account, make a change through the [hosted MCP server](../platform/access/hosted-mcp.md), the MCP server calls the API with a token that keeps you as the caller. The change is yours, so you are its `actor`. The entry also names the MCP server as `actingParty`, by its workload's identity (`spiffe://…/workloads/mcp-server`), so you can tell a change an AI assistant made for you from one you made yourself.
 
-A change made without the MCP server, with the console, the CLI or the API directly, has no `actingParty`, and neither has an entry recorded before the audit log kept it. Today the access changes recorded by IAM (the `iam.*` actions) name the acting party. The compute and KMS entries don't name one yet.
+A change made without the MCP server, with the console, the CLI or the API directly, has no `actingParty`, and neither has an entry recorded before the audit log kept it. These entries name the acting party: the access changes recorded by IAM (the `iam.*` actions), an instance's service account attached or detached (`compute.instance.service_account.*`), and a KMS key's changes and uses (`kms.keys.*`), refused ones included. A command the platform refused because its sender may not send it names the acting party its caller asserted.
 
 The MCP server's own exchange of a service account's token is recorded as `sts.token.exchange`, with the MCP server as its target.
 
