@@ -53,6 +53,7 @@ Each entry has these fields.
 | `target` | What the action was applied to, as listed in the table above. |
 | `outcome` | `SUCCESS` for an action that was made; `FAILED` for one that was attempted and refused, such as a KMS decrypt under the wrong encryption context, with the reason in `details`. |
 | `occurredAt` | When the action happened, as an RFC 3339 timestamp. |
+| `actingParty` | Who acted for the actor, when the actor made the change through the [hosted MCP server](../platform/access/hosted-mcp.md): the MCP server, by its workload's identity (`spiffe://…/workloads/mcp-server`). `null` for a change made without it. See [Changes made through the hosted MCP server](#changes-made-through-the-hosted-mcp-server). |
 | `details` | Action-specific context as a JSON string, for example the role that was assigned, as `role`, by its public name such as `roles/viewer`. For a user actor or target, it also holds the verified email address the account had when the change was made, as `actor_verified_email` and `target_verified_email`, when one was verified. For a change made by a CI job, it also holds `federated` (see [Changes made by a CI job](#changes-made-by-a-ci-job)). |
 
 ## Changes made by a CI job
@@ -75,6 +76,14 @@ The `iam.federated_credential.exchange` entry with the same `token_id` holds the
   }
 }
 ```
+
+## Changes made through the hosted MCP server
+
+When you, or a service account, make a change through the [hosted MCP server](../platform/access/hosted-mcp.md), the MCP server calls the API with a token that keeps you as the caller. The change is yours, so you are its `actor`. The entry also names the MCP server as `actingParty`, by its workload's identity (`spiffe://…/workloads/mcp-server`), so you can tell a change an AI assistant made for you from one you made yourself.
+
+A change made without the MCP server, with the console, the CLI or the API directly, has no `actingParty`, and neither has an entry recorded before the audit log kept it. Today the access changes recorded by IAM (the `iam.*` actions) name the acting party. The compute and KMS entries don't name one yet.
+
+The MCP server's own exchange of a service account's token is recorded as `sts.token.exchange`, with the MCP server as its target.
 
 ## Who can read it
 
@@ -124,6 +133,7 @@ query {
         target
         outcome
         occurredAt
+        actingParty
         details
       }
       total
@@ -144,6 +154,8 @@ It differs from the GraphQL query in three ways:
 - It serves a recent window of the log: 90 days by default, which the platform can set longer. Each response says where the window starts in `windowStartTime`, and an older entry is answered with `NOT_FOUND`. The GraphQL query serves the whole log.
 - The actor and a target that is a principal are full names, as a role binding's `member` is: `//iam.origincloudapis.eu/users/<user-id>`, `//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<id>`, `//iam.origincloudapis.eu/serviceAgents/<name>` for a platform service agent acting in your organization ([Service agents](service-agents.md)), or `//iam.origincloudapis.eu/services/<service>` for a change the platform made itself, such as `//iam.origincloudapis.eu/services/kms` for the KMS destroying a deleted key's material. An entry names an account, never an address, so a later change of address doesn't change it. The `project` is the project's full name, `//resourcemanager.origincloudapis.eu/projects/<project-id>`, and so is the `project` filter.
 - A role in `details` has its role name, such as `roles/iam.editor`.
+
+The acting party is `actingParty` there too. It is left out of an entry no one acted for.
 
 ## Related
 
