@@ -6,7 +6,7 @@ page_type: reference
 parent: reference
 nav_order: 30
 tags: [quotas, reference, organizations, projects]
-last_reviewed: 2026-11-09
+last_reviewed: 2026-11-23
 ---
 
 # Limits
@@ -164,7 +164,7 @@ IAM has no quotas. The number of members, role assignments and service accounts 
 | Limit | Value |
 |---|---|
 | Projects per organization | No quota |
-| Project ID | 6 to 16 lowercase letters, digits and hyphens, starting with a letter |
+| Project ID | 6 to 16 lowercase letters, digits and hyphens, starting with a letter; generated when left out |
 | Support cases per page | 100 by default, 500 at most |
 
 ## Related

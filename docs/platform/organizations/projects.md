@@ -6,7 +6,7 @@ page_type: task
 parent: organizations
 nav_order: 30
 tags: [projects, organizations, cli]
-last_reviewed: 2026-11-18
+last_reviewed: 2026-11-23
 ---
 
 # Manage projects
@@ -24,6 +24,8 @@ You can't create projects while the organization is under review: it has to be a
 ## Create a project
 
 You choose the project's id. It's 6 to 16 lowercase letters, digits and hyphens, starts with a letter and doesn't end with a hyphen, such as `shop-prod`. The id is part of the name of every resource in the project, and is never used again once taken, even after the project is deleted.
+
+Over the REST API and the SDKs, the id is optional: a `CreateProject` request without `projectId` gets a generated one, such as `escots-052954863`, and the project it returns carries it in its `name`. A repeat of the request with the same `requestId` returns that project, under the same id, instead of creating a second one.
 
 1. Create the project:
 
