@@ -149,7 +149,7 @@ Lets a principal get short-lived tokens of the organization's service accounts b
 
 **Scope:** org-wide. Service accounts belong to the organization, so a project-scoped Service Account Token Creator can't impersonate any. An org-wide one may impersonate every active service account of the organization, so assign it only to principals you would trust with each of them.
 
-> **Note:** The STS exchange that issues these tokens isn't available yet. Until it is, the role can be assigned but grants nothing you can use.
+> **Note:** No tool asks for these tokens yet: the CLI, the SDKs, the Terraform provider and the hosted MCP server don't offer impersonation so far. Until they do, the role can be assigned but no tool uses it.
 
 | Resource | Actions |
 |---|---|
