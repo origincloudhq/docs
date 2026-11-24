@@ -6,7 +6,7 @@ page_type: task
 parent: home
 nav_order: 30
 tags: [iam, roles, cli, api]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-24
 ---
 
 # Assign and revoke roles
@@ -70,11 +70,26 @@ The platform refuses the binding, and changes nothing, in these cases:
 
 3. Optionally, run `list-role-bindings` again to check that the binding is gone.
 
-Deleting a binding removes that one binding only, whoever created it: another binding of the same role at another scope stays. Deleting a binding needs `iam.role.revoke` on the organization and every permission of its role at its scope, so a binding of a role with permissions you don't hold yourself is refused with [`FORBIDDEN`](../platform/reference/errors.md#forbidden).
+Deleting a pending binding withdraws the invitation; see [Pending role bindings](#pending-role-bindings). Deleting a binding removes that one binding only, whoever created it: another binding of the same role at another scope stays. Deleting a binding needs `iam.role.revoke` on the organization and every permission of its role at its scope, so a binding of a role with permissions you don't hold yourself is refused with [`FORBIDDEN`](../platform/reference/errors.md#forbidden).
 
 If the binding is the organization's last org-wide `roles/owner` binding, the platform refuses with [`CONFLICT`](../platform/reference/errors.md#conflict) and removes nothing. Bind `roles/owner` org-wide to someone else first. See [The last owner is protected](access-model.md#the-last-owner-is-protected).
 
 To take away every role a member holds in the organization, delete each of their bindings, or [remove the member](manage-members.md#remove-a-member) in the console.
+
+## Pending role bindings
+
+A role granted to an email address that has no account yet is a pending role binding. Today you create one with an invite in the console ([Manage organization members](manage-members.md#invite-a-member)). `list-role-bindings` and the REST API show it with `state` `PENDING` and the address as its member, `user:<email>`, such as `user:jane@example.com`. An active binding has `state` `ACTIVE`.
+
+A pending binding grants nothing and counts toward no permission check. It is always org-wide. When someone signs up with its address and verifies it, it becomes active: its member becomes the new user's full name, and its name stays the same. It activates only while whoever created it can still assign the role; otherwise it's dropped.
+
+To withdraw a pending binding, delete it as in [Revoke a role](#revoke-a-role). A sign-in with its address afterwards grants nothing. Withdrawing needs the same permissions as deleting an active binding: `iam.role.revoke` and every permission of its role on the organization.
+
+In the REST API, `ListRoleBindings` lists the pending bindings for one address when its `member` filter is `user:<email>`, matched without regard to case:
+
+```sh
+curl -H "Authorization: Bearer $TOKEN" \
+  "https://iam.origincloudapis.eu/v1beta1/organizations/<org-id>/roleBindings?member=user:jane@example.com"
+```
 
 ## Using the API
 

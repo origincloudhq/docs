@@ -15,7 +15,7 @@ The audit log records changes to access in your organization: who did what, to w
 
 ## What's recorded
 
-The audit log records these seventeen actions. Each one is recorded when the change succeeds.
+The audit log records these nineteen actions. Each one is recorded when the change succeeds.
 
 | Action | Recorded when | Target |
 |---|---|---|
@@ -24,6 +24,8 @@ The audit log records these seventeen actions. Each one is recorded when the cha
 | `iam.member.remove` | A member is removed, or a revoked service account's role assignments are removed (one entry in each organization it held roles in) | The principal |
 | `iam.org_invite.create` | A pending invite is stored for an email address without an account | The email address |
 | `iam.org_invite.revoke` | A pending invite is canceled, or deleted with its organization | The invite ID |
+| `iam.role_binding.activate` | A pending role binding becomes active when someone signs in with its verified email address. The actor is whoever created the binding | The new user; `details` holds the `role` and the `binding`'s full name, `//iam.origincloudapis.eu/organizations/…/roleBindings/…`, which is the same as before it activated |
+| `iam.role_binding.withdraw` | A pending role binding is deleted with `DeleteRoleBinding` in the REST API | The email address; `details` holds the `role` and the `binding`'s full name |
 | `iam.service_account.create` | A service account is created | The service account's principal |
 | `iam.service_account.revoke` | A service account is revoked | The service account's principal |
 | `iam.service_account_key.create` | A key is created for a service account | The key's full name, `//iam.origincloudapis.eu/organizations/…/serviceAccounts/…/keys/…`; `details` names its service account and algorithm |
@@ -67,7 +69,7 @@ A CI job that signs in through a [federated credential](workload-identity-federa
 | `credential` | The federated credential's name. |
 | `token_id` | The access token's ID. |
 
-The `iam.federated_credential.exchange` entry with the same `token_id` holds the job token's subject and the run's claims, such as the repository, workflow and run ID, so together the two entries name the run that made the change. Entries that follow from a change rather than record it don't carry `federated`: a role assigned when a pending invite is applied, and the revocations recorded when an organization is deleted. Neither does `iam.federated_credential.exchange` itself.
+The `iam.federated_credential.exchange` entry with the same `token_id` holds the job token's subject and the run's claims, such as the repository, workflow and run ID, so together the two entries name the run that made the change. Entries that follow from a change rather than record it don't carry `federated`: a pending role binding's activation, and the revocations recorded when an organization is deleted. Neither does `iam.federated_credential.exchange` itself.
 
 ```json
 {
