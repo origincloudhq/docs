@@ -2,12 +2,12 @@
 id: service-accounts
 title: Use service accounts
 nav_title: Service accounts
-description: Create a service account, choose how it authenticates (federation first, a key last), use a key's credentials file with the CLI, SDKs and Terraform provider, and revoke it.
+description: Create a service account, choose how it authenticates (federation first, a key last), use a key's credentials file, impersonate it with your own login, and revoke it.
 page_type: task
 parent: home
 nav_order: 50
 tags: [iam, service-accounts, cli, api]
-last_reviewed: 2026-11-22
+last_reviewed: 2026-11-24
 ---
 
 # Use service accounts
@@ -22,7 +22,7 @@ Pick the first of these that fits. Only the last stores a secret you have to kee
 
 1. **A CI job, or anything with an OIDC token of its own**, such as GitHub Actions, GitLab CI, HCP Terraform or a Kubernetes service account token: a `WORKLOAD` service account that [trusts the provider's tokens](#trust-a-ci-providers-tokens). See [Workload identity federation](workload-identity-federation.md).
 2. **Software on an Origin Cloud instance**: launch the instance as a `WORKLOAD` service account. See [Run an instance as a service account](../compute/instances/service-account.md).
-3. **You, running a tool on your own machine**, Terraform included: your own login, `origin id login`. See [Use the CLI](../platform/access/cli.md#log-in).
+3. **You, running a tool on your own machine**, Terraform included: your own login, `origin id login`. See [Use the CLI](../platform/access/cli.md#log-in). To run it with a service account's narrower roles instead of yours, such as a deploy account's or an AI agent's, [impersonate the account](#impersonate-a-service-account) with that login: no key needed.
 4. **Anything else**, such as a job on a server of your own with no identity provider: an `EXTERNAL` service account with a [key](#create-a-key). The key's private key is a long-lived secret: store it like one, and prefer any of the above.
 
 Every service account has a type, set when it's created. It never changes.
@@ -201,6 +201,109 @@ curl -s https://sts.origincloudapis.eu/v1/token \
 
 The response is JSON with an `access_token` and its lifetime in seconds, `expires_in`. Send the token as a bearer token with each API request, and make a new assertion before it expires. Each assertion needs its own `jti`.
 
+## Impersonate a service account
+
+A person can act as a service account with their own login, without a key: the client exchanges the person's token at the security token service for a short-lived token of the account, and calls the API with it. Every call then has the account's roles alone, not the person's. Use it to try what a deploy account may do, to run a local `terraform plan` with the pipeline's narrow rights, or to [restrict an AI agent](../platform/access/hosted-mcp.md#restrict-the-agent-to-a-service-accounts-roles) to a service account's roles.
+
+```mermaid
+sequenceDiagram
+  accTitle: Impersonating a service account
+  accDescr: A person's client sends the person's token and the service account's full name to the security token service. It checks that the person holds the token-creator role on the account and returns the account's token, which names the person as the acting party. The client calls the API with that token, and the API checks the account's roles.
+  participant P as Your client (CLI, SDK, Terraform)
+  participant S as Security token service
+  participant A as Origin Cloud API
+  P->>S: Your token and the service account's full name
+  S->>S: Check that you hold the token-creator role, and the account is active
+  S-->>P: The account's token, naming you as the acting party
+  P->>A: API call with the account's token
+  A->>A: Check the account's roles
+  A-->>P: Response
+```
+
+### Who may impersonate
+
+Impersonating needs `iam.service_account.get_access_token`, which [`roles/iam.service-account-token-creator`](roles.md#rolesiamservice-account-token-creator) grants, and `roles/owner` holds. Grant it org-wide, on the account's organization: a project-scoped grant lets its holder impersonate no account. An org-wide one lets its holder impersonate every active service account of the organization, `EXTERNAL` and `WORKLOAD` alike, so grant it only to people you would trust with each of them.
+
+```sh
+origin iam create-role-binding --organization <org-id> \
+  --member //iam.origincloudapis.eu/users/<user-id> \
+  --role //iam.origincloudapis.eu/roles/iam.service-account-token-creator
+```
+
+It is a different right from [`roles/iam.service-account-user`](roles.md#rolesiamservice-account-user):
+
+| Role | Lets its holder | Doesn't let its holder |
+| --- | --- | --- |
+| `roles/iam.service-account-token-creator` | Get a service account's token and call the API as the account | Launch an instance that runs as the account |
+| `roles/iam.service-account-user` | Launch an instance that runs as a `WORKLOAD` service account, with `compute.instance.launch` | Get the account's token |
+
+Only a person can impersonate. A service account's credentials file, a CI job's token or an instance's credential can't: a CI job acts as its own service account through [federation](workload-identity-federation.md) instead.
+
+### The token and its end
+
+The account's token lives at most 5 minutes, and never past the person's own token; the CLI, the SDKs and the Terraform provider exchange a new one about a minute before it expires. Revoking the person's token-creator binding refuses the next exchange: a token already issued stays valid until it expires. Revoking the service account refuses its tokens at their next call.
+
+A refused exchange, because the person lacks the role or the account doesn't exist or isn't active, is an error that names the account. No client falls back to calling the API as the person.
+
+### With the CLI
+
+From version 2.1.0, `--impersonate-service-account`, the variable `ORIGINCLOUD_IMPERSONATE_SERVICE_ACCOUNT` or the profile's `impersonate-service-account` name the account. Log in with `origin id login` first.
+
+```sh
+origin compute list-instances \
+  --impersonate-service-account //iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>
+```
+
+The flag overrides the variable, which overrides the profile; an empty flag impersonates no one. See [Act as a service account with your login](../platform/access/cli.md#act-as-a-service-account-with-your-login).
+
+### With the SDKs
+
+Every SDK reads `ORIGINCLOUD_IMPERSONATE_SERVICE_ACCOUNT` without any code, and wraps whichever credentials it finds, which must give a person's token, such as the `origin id login` session. To name the account in code, give the client the option, which overrides the variable; an empty name impersonates no one. Use sdk-go from version 0.52.0, sdk-rust from 0.51.0, sdk-typescript from 0.53.0.
+
+Go:
+
+```go
+client, err := core.NewClient(ctx,
+	core.WithImpersonateServiceAccount("//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>"))
+```
+
+Rust:
+
+```rust
+use origincloud_core::Client;
+
+let client = Client::builder()
+    .impersonate_service_account("//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>")
+    .build()?;
+```
+
+TypeScript:
+
+```ts
+import { Client } from "@origincloud/core";
+
+const client = new Client({
+  impersonateServiceAccount: "//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>",
+});
+```
+
+### With the Terraform provider
+
+From version 0.26.0, `impersonate_service_account`, or `ORIGINCLOUD_IMPERSONATE_SERVICE_ACCOUNT` where Terraform runs, names the account. With only your `origin id login` session, `terraform plan` and `terraform apply` then run with the account's roles, so you see on your own machine what the pipeline's account may change.
+
+```hcl
+provider "origincloud" {
+  region                      = "eu-central1"
+  impersonate_service_account = "//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>"
+}
+```
+
+The provider exchanges once as it is configured, so a refused impersonation fails the plan before any change, even one that would call no API. The argument overrides the variable; `""` runs with your own roles. The state holds the account's name, never a token.
+
+### In the audit log
+
+The exchange is recorded as `sts.token.impersonate` in the account's organization's log, with the person as its actor, whether it is issued or refused; a refusal carries its `reason`. A change made with the account's token names the account as its `actor` and the person in `actingParty`. See [Changes made by impersonating a service account](audit-log.md#changes-made-by-impersonating-a-service-account).
+
 ## Replace or delete a key
 
 A key never expires and is never changed. To replace one, create the new key, move the software to its credentials file, check that the old key's `lastUseTime` stops moving, then delete the old key. An account's keys can overlap for as long as you need.
@@ -296,6 +399,7 @@ mutation {
 
 - [Access model](access-model.md)
 - [Built-in roles](roles.md)
+- [Restrict the hosted MCP server's agent to a service account](../platform/access/hosted-mcp.md#restrict-the-agent-to-a-service-accounts-roles)
 - [Workload identity federation](workload-identity-federation.md)
 - [Authenticate from GitHub Actions](github-actions.md)
 - [API access](../platform/access/api.md)

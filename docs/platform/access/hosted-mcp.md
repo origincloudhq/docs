@@ -2,13 +2,13 @@
 id: access-hosted-mcp
 title: Connect an MCP client to Origin Cloud
 nav_title: Hosted MCP server
-description: Connect any MCP client, or an agent that runs as a service account, to Origin Cloud's hosted MCP server by URL, and choose which tools it serves with the URL's query parameters.
+description: Connect an MCP client to Origin Cloud's hosted MCP server by URL, restrict an agent to a service account's roles with service_account, and choose which tools it serves.
 page_type: task
 parent: access
 nav_order: 32
 tags: [getting-started]
 related: [access-mcp, access-coding-agents]
-last_reviewed: 2026-11-22
+last_reviewed: 2026-11-24
 ---
 
 # Connect an MCP client to Origin Cloud
@@ -39,6 +39,43 @@ The server serves a token of any client, as long as Origin Cloud's login issued 
 3. Verify the connection: ask the agent which zones Origin Cloud has. It answers by calling the `location_list_zones` tool.
 
 Your account must have a given name and a family name. A token without either, as an account signed in through an identity provider that sends no names may have, is refused as not a person's token: add the names to your account and sign in again.
+
+## Restrict the agent to a service account's roles
+
+Signed in as yourself, the agent can do everything you can. To give it less, connect it as a service account that holds only the roles the agent needs, such as `roles/viewer` on one project. You still sign in as yourself; the server then impersonates the service account for you, and every tool call reaches the API as the account, with the account's roles alone. The API enforces them: a call the account may not make is refused by the API, whatever tools the client sees.
+
+1. Create a service account for the agent and grant it the narrow roles, as [Use service accounts](../../iam/service-accounts.md#create-a-service-account) shows. Its type doesn't matter: an `EXTERNAL` or a `WORKLOAD` account both work, and it needs no key or federated credential for this.
+
+2. Grant yourself [`roles/iam.service-account-token-creator`](../../iam/roles.md#rolesiamservice-account-token-creator) on the account's organization, org-wide. A project-scoped grant lets you impersonate no account. `roles/owner` already includes it.
+
+   ```sh
+   origin iam create-role-binding --organization <org-id> \
+     --member //iam.origincloudapis.eu/users/<user-id> \
+     --role //iam.origincloudapis.eu/roles/iam.service-account-token-creator
+   ```
+
+3. Add the server with the account's full name in `service_account`. In Claude Code:
+
+   ```sh
+   claude mcp add --transport http --client-id origincloud-mcp --callback-port 33418 \
+     origincloud-agent \
+     "https://mcp.origincloudapis.eu/?service_account=//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>"
+   ```
+
+   The value may be URL-encoded or not. Anything but a service account's full name, an empty value or the parameter given twice is refused with `400`.
+
+4. Sign in as yourself, as in [Connect the client](#connect-the-client), and verify: a read, such as listing the project's volumes, works; a change the account's roles don't allow, such as creating a volume, fails with the API's `403`.
+
+What the agent can then do is exactly what the service account's roles allow, in the projects they're granted on. `toolsets` and `read_only` still [choose the tools](#choose-the-tools) the client sees, but they restrict nothing; the account's roles do.
+
+**When the server refuses the connection**  
+If you don't hold the token-creator role on the account, or the account doesn't exist or is revoked, the connection's first request is answered `403` with `WWW-Authenticate: Bearer error="insufficient_scope"`, naming the account and the role. The server never falls back to your own access. It can't tell you which of these causes it was, as the security token service doesn't say. The refusal is recorded in the audit log, and the server remembers it for 30 seconds, so a binding you add takes up to that long to be seen. Only a person can impersonate: a service account's own token on such a connection is refused the same way.
+
+**Taking the access back**  
+Revoke your token-creator binding, or the service account's roles. Without the binding, the next exchange for the account's token is refused. The server keeps a token it already holds until shortly before it expires, at most 5 minutes after it was issued and never past your own token, so an agent already connected may go on for up to that long. A role revoked from the account itself applies at the agent's next call.
+
+**Audit**  
+Each exchange for the account's token, issued or refused, is recorded as `sts.token.impersonate` in the account's organization's log, with you as its actor, the MCP server as its acting party and a refusal's `reason`, such as `no_binding`. A change the agent makes is recorded with the service account as its `actor`, and you, then the MCP server, in `actingParties`. See [Changes made by impersonating a service account](../../iam/audit-log.md#changes-made-by-impersonating-a-service-account).
 
 ## Connect an agent that runs as a service account
 
@@ -96,11 +133,11 @@ claude mcp add --transport http --client-id origincloud-mcp --callback-port 3341
 
 A misspelt parameter or toolset is refused with HTTP status `400`, which names the valid ones.
 
-**These parameters restrict nothing.** They choose which tools the server offers the client, to keep the agent's tool list short and its changes out of reach by mistake. They aren't permissions: the token behind them is the same, and whoever holds it can call the same API with every right its principal has, through another URL or directly. To limit what an agent may do, give the account it runs as only the [roles](../../iam/roles.md) it needs; for an agent that runs unattended, that is a service account of its own.
+**These parameters restrict nothing.** They choose which tools the server offers the client, to keep the agent's tool list short and its changes out of reach by mistake. They aren't permissions: the token behind them is the same, and whoever holds it can call the same API with every right its principal has, through another URL or directly. To limit what an agent may do, give the account it runs as only the [roles](../../iam/roles.md) it needs: for an agent you sign in for, [connect it as a service account](#restrict-the-agent-to-a-service-accounts-roles) with narrow roles; for an agent that runs unattended, give it a service account of its own.
 
 ## How the server calls the API
 
-The MCP server accepts only tokens issued for it. It never passes a token on: for each caller, it exchanges the caller's token at Origin Cloud's security token service for an API token, proving its own identity as it does, and calls the API with that. The API token keeps the caller, you or the service account, as its subject and names the MCP server as the party acting for it.
+The MCP server accepts only tokens issued for it. It never passes a token on: for each caller, it exchanges the caller's token at Origin Cloud's security token service for an API token, proving its own identity as it does, and calls the API with that. The API token keeps the caller, you or the service account, as its subject and names the MCP server as the party acting for it. On a connection with `service_account`, the server asks for that account's token instead: its subject is the account, and you, then the MCP server, are the parties acting for it.
 
 ```mermaid
 sequenceDiagram
@@ -119,7 +156,7 @@ sequenceDiagram
 ```
 
 **Audit**  
-A change made through the server is recorded in the [audit log](../../iam/audit-log.md) as one made by the caller, you or the service account, as its `actor`, with the MCP server as its `actingParty`. Not every service records the acting party yet: see [which entries name it](../../iam/audit-log.md#changes-made-through-the-hosted-mcp-server). For a service account, the exchange itself is recorded as `sts.token.exchange` in its organization's log.
+A change made through the server is recorded in the [audit log](../../iam/audit-log.md) as one made by the caller, you or the service account, as its `actor`, with the MCP server as its `actingParty`. Not every service records the acting party yet: see [which entries name it](../../iam/audit-log.md#changes-made-through-the-hosted-mcp-server). For a service account, the exchange itself is recorded as `sts.token.exchange` in its organization's log; for a connection that impersonates one, as `sts.token.impersonate`, as [above](#restrict-the-agent-to-a-service-accounts-roles).
 
 **Your context**  
 The hosted server knows no CLI profile, so `current_context` names no default project or zone. Tell the agent which project and zone to work in, or let it find your projects with the `resourcemanager` tools.
