@@ -7,7 +7,7 @@ page_type: reference
 parent: home
 nav_order: 80
 tags: [iam, reference, cli, api]
-last_reviewed: 2026-11-21
+last_reviewed: 2026-11-24
 ---
 
 # IAM reference
@@ -47,9 +47,9 @@ A role is named `roles/<role>`, such as `roles/iam.editor`. A role binding takes
 | `ListRoles`, `GetRole` | `GET /v1beta1/roles`, `GET /v1beta1/roles/<role>` | The built-in roles. Needs no permission. |
 | `ListPermissions`, `GetPermission` | `GET /v1beta1/permissions`, `GET /v1beta1/permissions/<key>` | Every permission. Needs no permission. |
 | `TestIamPermissions` | `POST /v1beta1/organizations/<org-id>:testIamPermissions`, `POST /v1beta1/projects/<project-id>:testIamPermissions` | Which of the permissions you send you hold there. |
-| `ListRoleBindings`, `GetRoleBinding` | `GET /v1beta1/organizations/<org-id>/roleBindings` | The organization's role bindings, optionally one member's or one project's. `organizations/-` lists your own, in every organization. |
+| `ListRoleBindings`, `GetRoleBinding` | `GET /v1beta1/organizations/<org-id>/roleBindings` | The organization's role bindings, active and pending, each with its `state`, optionally one member's or one project's. A pending binding's `member` is `user:<email>`, which `member` filters by too. `organizations/-` lists your own active bindings, in every organization. See [Pending role bindings](../assign-roles.md#pending-role-bindings). |
 | `CreateRoleBinding` | `POST /v1beta1/organizations/<org-id>/roleBindings` | Grants a role to a member, org-wide or in one project. |
-| `DeleteRoleBinding` | `DELETE /v1beta1/organizations/<org-id>/roleBindings/<id>` | Removes one role binding. |
+| `DeleteRoleBinding` | `DELETE /v1beta1/organizations/<org-id>/roleBindings/<id>` | Removes one role binding. Deleting a pending binding withdraws it. |
 | `ListServiceAccounts`, `GetServiceAccount` | `GET /v1beta1/organizations/<org-id>/serviceAccounts` | The organization's service accounts; deleted ones with `showDeleted`. |
 | `CreateServiceAccount` | `POST /v1beta1/organizations/<org-id>/serviceAccounts` | Creates a service account with no credential: give a `WORKLOAD` one a federated credential, an `EXTERNAL` one a key. A retry with the same `requestId` returns the account the first request created. |
 | `DeleteServiceAccount` | `DELETE /v1beta1/organizations/<org-id>/serviceAccounts/<id>` | Revokes a service account for good, with every role binding it holds. |
@@ -64,7 +64,7 @@ A role is named `roles/<role>`, such as `roles/iam.editor`. A role binding takes
 | `LookupUser` | `GET /v1beta1/users:lookup?email=<email>&organization=//resourcemanager.origincloudapis.eu/organizations/<org-id>` | The user whose account verified `email`, by their `name` and their full name, `member`, which a role binding takes. Needs `iam.role.assign` on the organization. `NOT_FOUND` when no enabled account verified the address, `CONFLICT` when more than one did. Given and family names are left empty. |
 | `ListAuditLogEntries`, `GetAuditLogEntry` | `GET /v1beta1/organizations/<org-id>/auditLogEntries` | The audit log's recent entries, 90 days by default. See [Audit log](../audit-log.md#in-the-rest-api). |
 
-Invites and members are in the GraphQL API only.
+Creating an invite, and members, are in the GraphQL API only; the REST API lists and withdraws invites as pending role bindings.
 
 ## Security token service
 

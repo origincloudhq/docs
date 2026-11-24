@@ -7,7 +7,7 @@ page_type: task
 parent: home
 nav_order: 40
 tags: [iam, organizations, cli, api]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-24
 ---
 
 # Manage organization members
@@ -30,7 +30,7 @@ Invites and member removal are in the console's **Access** page and the GraphQL 
    What happens next depends on whether the email address, matched exactly, already has an Origin Cloud account:
 
    - **Account exists:** the role is granted org-wide immediately. There's no separate step to accept.
-   - **No account yet:** the invite is stored as pending. It's applied the first time that address signs up and signs in, to the console or with `origin id login`. If by then you can no longer assign the role yourself, the invite is dropped instead.
+   - **No account yet:** the invite is stored as a [pending role binding](assign-roles.md#pending-role-bindings). It's applied the first time someone signs up with that address, verifies it and signs in, to the console or with `origin id login`. If by then you can no longer assign the role yourself, the invite is dropped instead.
 
    Either way, the platform emails the invitee. Delivery is best effort: a bounced or delayed email doesn't affect the grant or the pending invite.
 
