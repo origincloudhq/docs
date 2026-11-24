@@ -56,7 +56,7 @@ List every role a member holds in the organization, each binding with its projec
 origin iam list-role-bindings --organization <org-id> --member //iam.origincloudapis.eu/users/<user-id>
 ```
 
-Leave out `--member` to list every binding in the organization. The organization's list also holds its pending bindings: invitations to an email address without an account, with `state` `PENDING` and the address as `member`, `user:<email>`. They grant nothing until someone signs up with the address and verifies it. Your own list, `--organization -`, holds only your active bindings. See [Pending role bindings](assign-roles.md#pending-role-bindings) and [Manage organization members](manage-members.md#list-members-and-invites).
+Leave out `--member` to list every binding in the organization. The organization's list also holds its pending bindings: invitations to an email address without an account, with `state` `PENDING` and the address as `member`, `user:<email>`. They grant nothing until someone signs up with the address and verifies it. Your own list, `--organization -`, holds only your active bindings. See [Pending role bindings](assign-roles.md#pending-role-bindings) and [Manage organization members](manage-members.md#list-members-and-pending-role-bindings).
 
 ## Find a permission key
 

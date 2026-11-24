@@ -78,7 +78,7 @@ Full control of the organization's projects, resources and access. Owner doesn't
 
 ## roles/viewer
 
-Read-only access: every `get` and `list` permission that Owner holds. A Viewer can list members, pending invites, service accounts and the audit log, but can't change anything. Viewer includes no billing account permission.
+Read-only access: every `get` and `list` permission that Owner holds. A Viewer can list members, pending role bindings, service accounts and the audit log, but can't change anything. Viewer includes no billing account permission.
 
 **Scope:** org-wide or one project.
 
@@ -120,7 +120,7 @@ Read-only access: every `get` and `list` permission that Owner holds. A Viewer c
 
 ## roles/iam.editor
 
-Lets a principal list members and roles, and assign and revoke roles in the organization. An IAM Editor can't invite or remove members or manage service accounts; those need Owner.
+Lets a principal list members and roles, and assign and revoke roles in the organization. An IAM Editor can grant a role to a user by email address only when the address has an account: a pending role binding, which emails an invitation, needs `iam.member.create`, which Owner has. An IAM Editor can't remove members in the console or manage service accounts; those need Owner.
 
 An IAM Editor can only hand out what it already has. Like every principal, it can assign or revoke a role only if it holds every permission of that role itself at the scope of the grant; see [Who can assign a role](access-model.md#who-can-assign-a-role). With IAM Editor alone, that is IAM Editor itself. To let it assign Viewer as well, assign it Viewer too. An IAM Editor can never make anyone an Owner, itself included.
 

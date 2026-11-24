@@ -19,11 +19,12 @@ The audit log records these nineteen actions. Each one is recorded when the chan
 
 | Action | Recorded when | Target |
 |---|---|---|
-| `iam.role.assign` | A role is assigned, including when an invite grants a role to an existing account, and when a new organization binds a service agent (the platform is the actor) | The principal |
+| `iam.role.assign` | A role is assigned, including when a role is granted to the email address of an existing account, and when a new organization binds a service agent (the platform is the actor) | The principal |
 | `iam.role.revoke` | A role is revoked, including when its organization is deleted | The principal |
 | `iam.member.remove` | A member is removed, or a revoked service account's role assignments are removed (one entry in each organization it held roles in) | The principal |
-| `iam.org_invite.create` | A pending invite is stored for an email address without an account | The email address |
-| `iam.org_invite.revoke` | A pending invite is canceled, or deleted with its organization | The invite ID |
+| `iam.role_binding.create` | A pending role binding is created with `CreateRoleBinding` for an email address without an account | The email address; `details` holds the `role` and the `binding`'s full name |
+| `iam.org_invite.create` | A pending role binding is created through the older GraphQL path the console uses | The email address |
+| `iam.org_invite.revoke` | A pending role binding is withdrawn through the older GraphQL path the console uses, or deleted with its organization | Its internal ID, which is not the binding's ID |
 | `iam.role_binding.activate` | A pending role binding becomes active when someone signs in with its verified email address. The actor is whoever created the binding | The new user; `details` holds the `role` and the `binding`'s full name, `//iam.origincloudapis.eu/organizations/…/roleBindings/…`, which is the same as before it activated |
 | `iam.role_binding.withdraw` | A pending role binding is deleted with `DeleteRoleBinding` in the REST API | The email address; `details` holds the `role` and the `binding`'s full name |
 | `iam.service_account.create` | A service account is created | The service account's principal |
