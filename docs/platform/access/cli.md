@@ -8,7 +8,7 @@ parent: access
 nav_order: 10
 tags: [cli, getting-started]
 related: [reference-cli, access-api]
-last_reviewed: 2026-11-22
+last_reviewed: 2026-11-24
 ---
 
 # Use the CLI
@@ -216,6 +216,27 @@ A CI job needs no secret at all. In a GitHub Actions job granted `permissions: i
 
 `origin id token` prints the access token the commands use: the credentials file's service account's, else the CI job's, else the login session's, else the instance's. The other `origin id` commands use the login session, and the `origin config` commands call no service. For creating a service account and giving it access, see [Service accounts](../../iam/service-accounts.md).
 
+### Act as a service account with your login
+
+You can run commands with a service account's roles instead of your own, without a key, by impersonating it. This lets you try what a deploy account or an AI agent's account may do, or work with narrower rights than yours. From version 2.1.0, `--impersonate-service-account` names the account by its full name:
+
+```sh
+origin compute list-instances \
+  --impersonate-service-account //iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>
+```
+
+The CLI takes the credentials it would otherwise use, typically your `origin id login` session, and exchanges their token at the security token service for an access token of that service account. The command then calls the API as the account, with the account's roles alone. You need [`roles/iam.service-account-token-creator`](../../iam/roles.md#rolesiamservice-account-token-creator) in the account's organization, and the credentials found must be a person's: a service account's credentials file, a CI job's token or an instance's credential can't impersonate.
+
+Each command resolves the account to impersonate in this order, and uses the first one set:
+
+1. The `--impersonate-service-account` flag. An empty value, `--impersonate-service-account ""`, impersonates no one for this command.
+2. The `ORIGINCLOUD_IMPERSONATE_SERVICE_ACCOUNT` environment variable.
+3. The profile's `impersonate-service-account`.
+
+If the security token service refuses the exchange, for example because you lack the role or the account doesn't exist or isn't active, the command fails with an error that names the account and the reason the service gave. It never falls back to calling the API as you.
+
+The service account is the actor of every change made this way, and the audit log names you as the one who acted for it; see [Changes made by impersonating a service account](../../iam/audit-log.md#changes-made-by-impersonating-a-service-account). `origin id token` prints the service account's token while impersonation is set, and `origin mcp serve` gives the agent the account's roles. `origin id login` always reads your own user.
+
 ## Set a default project, zone and region
 
 Most commands work on resources in a project, and in a zone or a region. You name them with `--project`, `--zone` and `--region`, or set defaults once so you can leave the flags out. A zone is a location inside a region: the zone `eu-central1-az1` is in the region `eu-central1`.
@@ -300,7 +321,7 @@ origin pvs wait-operation --operation <operation-name>
 
 ## Use your access token outside the CLI
 
-`origin id token` prints the current access token, renewing it first if it has expired. Without a valid session, it fails and tells you to log in. Use it to call the [GraphQL API](api.md) with your own tools.
+`origin id token` prints the current access token, renewing it first if it has expired. Without a valid session, it fails and tells you to log in. While you [impersonate a service account](#act-as-a-service-account-with-your-login), it prints the account's token, or fails with the refusal if the exchange is refused. Use it to call the [GraphQL API](api.md) with your own tools.
 
 | Command | Prints |
 |---|---|
@@ -326,7 +347,7 @@ curl -sS https://graph.origincloudapis.eu/graphql \
 { "mcpServers": { "origincloud": { "command": "origin", "args": ["mcp", "serve"] } } }
 ```
 
-The server has a tool for every `billing`, `compute`, `dns`, `iam`, `location`, `network`, `observability`, `pvs`, `resourcemanager` and `support` command, except `iam create-service-account`. It acts with your login session, or the access token above, in the region your commands use, and tells the agent your default project and zone.
+The server has a tool for every `billing`, `compute`, `dns`, `iam`, `location`, `network`, `observability`, `pvs`, `resourcemanager` and `support` command, except `iam create-service-account`. It acts with your login session, or the access token above, in the region your commands use, and tells the agent your default project and zone. To give the agent a service account's narrow roles instead of yours, run it with `--impersonate-service-account`, `ORIGINCLOUD_IMPERSONATE_SERVICE_ACCOUNT` or the profile's `impersonate-service-account`; see [Act as a service account with your login](#act-as-a-service-account-with-your-login).
 
 - Tools that delete something or change it for good are marked as destructive, for the MCP client to have you confirm them.
 - `--read-only` serves only the tools that change nothing:
@@ -351,6 +372,7 @@ For connecting a client and how the tools behave, see [Use Origin Cloud from an 
 | `default-zone` | `ORIGINCLOUD_ZONE` | The zone when `--zone` isn't given. Lists don't use it. |
 | `region` | `ORIGINCLOUD_REGION` | The region when `--region` isn't given, and the region whose API endpoint the `compute`, `network` and `pvs` commands call. Without it, the region of the default zone. |
 | `credentials-file` | `ORIGINCLOUD_CREDENTIALS_FILE` | A service account key's credentials file, as `origin iam create-service-account-key --credentials-file` writes it: every command calls the API as that service account. `profile-set` checks the file and stores its absolute path. |
+| `impersonate-service-account` | `ORIGINCLOUD_IMPERSONATE_SERVICE_ACCOUNT` | A service account's full name: every command acts as that account with your credentials, as [`--impersonate-service-account`](#act-as-a-service-account-with-your-login) does, which overrides it. `profile-set` checks the name; an empty value removes it. |
 
 The profile is stored in `~/.config/origincloud/default-profile.json`, or under `$XDG_CONFIG_HOME/origincloud/` if you set that variable, or in the file `--config` names.
 
@@ -383,6 +405,7 @@ Commands that delete something, or change it in a way that can't be undone, such
 | `-c`, `--config <FILE>` | Reads the profile from this file instead of the default location, and `config profile-set` saves to it. Give it before the command group. |
 | `-a`, `--api <URL>` | The GraphQL endpoint `origin id login` reads your user from, which applies your pending invites. The default is `https://graph.origincloudapis.eu/graphql`. Give it before the command group. |
 | `--output <FORMAT>` | Overrides the profile's `output-format`. |
+| `--impersonate-service-account <SERVICE_ACCOUNT>` | Acts as this service account, by its full name. Overrides `ORIGINCLOUD_IMPERSONATE_SERVICE_ACCOUNT` and the profile's `impersonate-service-account`; see [Act as a service account with your login](#act-as-a-service-account-with-your-login). |
 | `-V`, `--version` | Prints the CLI version. `origin version` prints it as JSON. |
 | `-h`, `--help` | Prints help for the CLI, a command group or a command, for example `origin pvs create-volume --help`. |
 
