@@ -6,7 +6,7 @@ page_type: reference
 parent: home
 nav_order: 20
 tags: [iam, roles, reference]
-last_reviewed: 2026-11-22
+last_reviewed: 2026-11-24
 ---
 
 # Built-in roles
@@ -149,7 +149,7 @@ Lets a principal get short-lived tokens of the organization's service accounts b
 
 **Scope:** org-wide. Service accounts belong to the organization, so a project-scoped Service Account Token Creator can't impersonate any. An org-wide one may impersonate every active service account of the organization, so assign it only to principals you would trust with each of them.
 
-> **Note:** No tool asks for these tokens yet: the CLI, the SDKs, the Terraform provider and the hosted MCP server don't offer impersonation so far. Until they do, the role can be assigned but no tool uses it.
+Tools that impersonate with this role: the CLI's [`--impersonate-service-account`](../platform/access/cli.md#act-as-a-service-account-with-your-login) (from version 2.1.0), the impersonation option of the Rust, Go and TypeScript SDKs, the Terraform provider's `impersonate_service_account` (from version 0.26.0), and the [hosted MCP server](../platform/access/hosted-mcp.md) with `?service_account=`.
 
 | Resource | Actions |
 |---|---|
