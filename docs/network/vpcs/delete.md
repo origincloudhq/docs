@@ -6,7 +6,7 @@ page_type: task
 parent: vpcs
 nav_order: 50
 tags: [networking, vpc, cli]
-last_reviewed: 2026-11-18
+last_reviewed: 2026-11-22
 ---
 
 # Delete a subnet or VPC
@@ -18,11 +18,12 @@ You can delete a single subnet, or a VPC once you've deleted what it holds. Both
 - The `origin` CLI, logged in, with a default project, zone and region. See [Use the CLI](../../platform/access/cli.md#set-a-default-project-zone-and-region).
 - The id of the subnet or VPC.
 - Terminate the instances in it, or move your workload elsewhere. See [Terminate an instance](../../compute/instances/terminate.md).
+- Remove the association of every Floating IP you allocated that's still associated with an interface in it, with `delete-floating-ip-association`. The address stays allocated to you. See [Use a Floating IP](../internet-access/floating-ips.md#use-a-floating-ip).
 - Delete every NAT gateway in it. A NAT gateway holds one of your Floating IPs and is billed until you delete it, so it's never deleted with its subnet or VPC. See [NAT gateways](../internet-access/nat-gateways.md#delete-a-nat-gateway).
 
 ## What a deletion removes
 
-Deleting a subnet removes the subnet with its route table and network ACL associations and any unattached network interfaces in it. It's refused while an interface in it is attached to an instance, or a NAT gateway lives in it.
+Deleting a subnet removes the subnet with its route table and network ACL associations and any unattached network interfaces in it. It's refused while an interface in it is attached to an instance, a Floating IP you allocated is still associated with one of its interfaces, or a NAT gateway lives in it. A public IP the subnet assigned with an interface is released with that interface.
 
 `delete-vpc` deletes only a VPC that holds nothing you created. It's refused, naming what's left, while the VPC has a subnet, an Internet Gateway, a security group, a network ACL or a route table. Delete those first, in this order: subnets, which takes their associations and unattached network interfaces with them, then route tables with their routes, the Internet Gateway, network ACLs and security groups. What the platform created with your project's default VPC doesn't count: its default security group, default ACL, main route table and resolver policy association are deleted with it, and so is any VPC's resolver policy association.
 
@@ -38,7 +39,7 @@ Neither deletes a resolver policy, because a policy belongs to the project and c
    origin network delete-subnet --subnet <subnet-id> --yes
    ```
 
-   If the command is refused, the message names the network interface or NAT gateway that blocks it. Remove that and run the command again.
+   If the command is refused, the message names the network interface, Floating IP or NAT gateway that blocks it. Terminate the instance, remove the Floating IP's association or delete the NAT gateway, and run the command again.
 
 2. Verify that the subnet no longer appears:
 

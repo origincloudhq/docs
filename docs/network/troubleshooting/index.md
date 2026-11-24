@@ -7,7 +7,7 @@ page_type: troubleshooting
 parent: home
 nav_order: 60
 tags: [networking, troubleshooting]
-last_reviewed: 2026-11-18
+last_reviewed: 2026-11-22
 ---
 
 # Troubleshoot Network
@@ -59,14 +59,15 @@ last_reviewed: 2026-11-18
 
 **Symptom:** `delete-subnet` or `delete-vpc` fails, naming what's in the way.
 
-**Cause:** An attached network interface or a NAT gateway is still in the subnet or VPC. `delete-vpc` is also refused while the VPC holds a subnet, an Internet Gateway, a security group, a network ACL or a route table you created. See [What a deletion removes](../vpcs/delete.md#what-a-deletion-removes).
+**Cause:** An attached network interface, a Floating IP you allocated that's still associated with one of its interfaces, or a NAT gateway is still in the subnet or VPC. `delete-vpc` is also refused while the VPC holds a subnet, an Internet Gateway, a security group, a network ACL or a route table you created. See [What a deletion removes](../vpcs/delete.md#what-a-deletion-removes).
 
 **Resolution:**
 
 1. For a network interface, terminate the instance that uses it. See [Terminate an instance](../../compute/instances/terminate.md).
-2. For a NAT gateway, remove the routes that name it, then delete it. See [Delete a NAT gateway](../internet-access/nat-gateways.md#delete-a-nat-gateway).
-3. For a VPC, delete what it still holds. See [Delete a VPC](../vpcs/delete.md#delete-a-vpc).
-4. Run the delete again.
+2. For a Floating IP, remove its association with `delete-floating-ip-association`. The address stays allocated to you. See [Use a Floating IP](../internet-access/floating-ips.md#use-a-floating-ip).
+3. For a NAT gateway, remove the routes that name it, then delete it. See [Delete a NAT gateway](../internet-access/nat-gateways.md#delete-a-nat-gateway).
+4. For a VPC, delete what it still holds. See [Delete a VPC](../vpcs/delete.md#delete-a-vpc).
+5. Run the delete again.
 
 ## A connection to a Floating IP from inside the VPC hangs
 
