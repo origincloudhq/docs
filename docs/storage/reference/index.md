@@ -6,7 +6,7 @@ page_type: reference
 parent: home
 nav_order: 30
 tags: [storage, reference, cli, api]
-last_reviewed: 2026-11-21
+last_reviewed: 2026-11-24
 ---
 
 # Storage reference
@@ -53,6 +53,17 @@ Mutations live under `mutation { pvs { … } }`. Mutations that return `CommandR
 ## Performance fields
 
 `PvsVolume.iops` and `PvsVolume.throughputMibps` are the volume's own limits; `PvsStorageClass.baselineIops` and `PvsStorageClass.baselineThroughputMibps` are what a new volume of the class starts with. All four are read-only integers, and `null` means "no limit" on a volume and "not published" on a class. See [Performance limits](../volumes/storage-classes.md#performance-limits).
+
+## Encryption field
+
+In the REST API, a volume's `encryption` says how it is encrypted at rest. It is read-only, and absent for a volume that isn't encrypted.
+
+| Field | Value |
+|---|---|
+| `encryption.format` | `LUKS2` for a persistent volume, `QCOW_LUKS` for a host-local volume. |
+| `encryption.kmsKey` | The full name of the KMS key that wraps the volume's data key, such as `//kms.origincloudapis.eu/projects/<project-id>/regions/<region>/keys/<key-id>`. |
+
+The volume's data key itself is never shown. See [KMS](../../kms/index.md) for how keys and grants work.
 
 ## Status values
 
