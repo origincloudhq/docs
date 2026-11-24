@@ -6,7 +6,7 @@ page_type: concept
 parent: home
 nav_order: 70
 tags: [iam, audit, api]
-last_reviewed: 2026-11-22
+last_reviewed: 2026-11-24
 ---
 
 # Audit log
@@ -54,7 +54,8 @@ Each entry has these fields.
 | `target` | What the action was applied to, as listed in the table above. |
 | `outcome` | `SUCCESS` for an action that was made; `FAILED` for one that was attempted and refused, such as a KMS decrypt under the wrong encryption context, with the reason in `details`. |
 | `occurredAt` | When the action happened, as an RFC 3339 timestamp. |
-| `actingParty` | Who acted for the actor, when the actor made the change through the [hosted MCP server](../platform/access/hosted-mcp.md): the MCP server, by its workload's identity (`spiffe://…/workloads/mcp-server`). For a change made with a service account's token a person got by impersonating it, the actor is the service account and `actingParty` the person, by their full name (`//iam.origincloudapis.eu/users/…`), whether or not they asked through the MCP server. `null` for a change no one acted for. See [Changes made through the hosted MCP server](#changes-made-through-the-hosted-mcp-server). |
+| `actingParty` | Who acted for the actor: the first entry of `actingParties`. For a change the actor made through the [hosted MCP server](../platform/access/hosted-mcp.md), the MCP server, by its workload's identity (`spiffe://…/workloads/mcp-server`). For a change a person made as a service account by impersonating it, the person, by their full name (`//iam.origincloudapis.eu/users/…`), whether or not they asked through the MCP server. `null` for a change no one acted for. |
+| `actingParties` | Everyone who acted for the actor, outermost first. For a change made through the MCP server, the MCP server alone. For a change a person made as a service account by impersonating it, the person, then the MCP server when they asked through it. Empty for a change no one acted for, and on an entry recorded before the audit log kept the whole list, which names `actingParty` alone. See [Changes made through the hosted MCP server](#changes-made-through-the-hosted-mcp-server) and [Changes made by impersonating a service account](#changes-made-by-impersonating-a-service-account). |
 | `details` | Action-specific context as a JSON string, for example the role that was assigned, as `role`, by its public name such as `roles/viewer`. For a user actor or target, it also holds the verified email address the account had when the change was made, as `actor_verified_email` and `target_verified_email`, when one was verified. For a change made by a CI job, it also holds `federated` (see [Changes made by a CI job](#changes-made-by-a-ci-job)). |
 
 ## Changes made by a CI job
@@ -80,11 +81,45 @@ The `iam.federated_credential.exchange` entry with the same `token_id` holds the
 
 ## Changes made through the hosted MCP server
 
-When you, or a service account, make a change through the [hosted MCP server](../platform/access/hosted-mcp.md), the MCP server calls the API with a token that keeps you as the caller. The change is yours, so you are its `actor`. The entry also names the MCP server as `actingParty`, by its workload's identity (`spiffe://…/workloads/mcp-server`), so you can tell a change an AI assistant made for you from one you made yourself.
+When you, or a service account, make a change through the [hosted MCP server](../platform/access/hosted-mcp.md), the MCP server calls the API with a token that keeps you as the caller. The change is yours, so you are its `actor`. The entry also names the MCP server as `actingParty`, and as the only entry of `actingParties`, by its workload's identity (`spiffe://…/workloads/mcp-server`), so you can tell a change an AI assistant made for you from one you made yourself.
 
-A change made without the MCP server, with the console, the CLI or the API directly, has no `actingParty`, and neither has an entry recorded before the audit log kept it. These entries name the acting party: the access changes recorded by IAM (the `iam.*` actions), an instance's service account attached or detached (`compute.instance.service_account.*`), and a KMS key's changes and uses (`kms.keys.*`), refused ones included. A command the platform refused because its sender may not send it names the acting party its caller asserted.
+A change made without the MCP server, with the console, the CLI or the API directly, has no `actingParty` and an empty `actingParties`, and neither has an entry recorded before the audit log kept it. These entries name the acting party: the access changes recorded by IAM (the `iam.*` actions), an instance's service account attached or detached (`compute.instance.service_account.*`), and a KMS key's changes and uses (`kms.keys.*`), refused ones included. A command the platform refused because its sender may not send it names the acting party its caller asserted.
 
 The MCP server's own exchange of a service account's token is recorded as `sts.token.exchange`, with the MCP server as its target.
+
+## Changes made by impersonating a service account
+
+A person who may impersonate a service account gets an access token from the security token service that acts as the account. That exchange is recorded as `sts.token.impersonate`, with the person as its actor. A change the person then makes with that token is the service account's: the account is its `actor`, and its roles decide what the change may do. The entry names who acted for the account in `actingParties`, outermost first:
+
+- The person, by their full name (`//iam.origincloudapis.eu/users/<user-id>`).
+- Then the hosted MCP server, by its workload's identity, when the person asked through it.
+
+`actingParty` is the first of them, the person, so an entry of an impersonated change names the person in `actingParty` whether or not the MCP server was involved.
+
+```mermaid
+flowchart LR
+  accTitle: Who an impersonated change names
+  accDescr: A person calls the API as a service account, directly or through the hosted MCP server. The service account is the actor; the person, then the MCP server, are the acting parties.
+  P["Person<br/>actingParties[0]"] -->|asks through| M["Hosted MCP server<br/>actingParties[1]"]
+  M -->|calls the API as| S["Service account<br/>actor"]
+  P -.->|or calls the API directly as| S
+```
+
+For example, a role a person assigns as a service account through the MCP server is recorded as:
+
+```json
+{
+  "actor": "//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>",
+  "action": "iam.role.assign",
+  "actingParty": "//iam.origincloudapis.eu/users/<user-id>",
+  "actingParties": [
+    "//iam.origincloudapis.eu/users/<user-id>",
+    "spiffe://…/workloads/mcp-server"
+  ]
+}
+```
+
+The entries that name the acting party name the whole list: the `iam.*` actions, `compute.instance.service_account.*` and `kms.keys.*`.
 
 ## Who can read it
 
@@ -135,6 +170,7 @@ query {
         outcome
         occurredAt
         actingParty
+        actingParties
         details
       }
       total
@@ -156,7 +192,7 @@ It differs from the GraphQL query in three ways:
 - The actor and a target that is a principal are full names, as a role binding's `member` is: `//iam.origincloudapis.eu/users/<user-id>`, `//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<id>`, `//iam.origincloudapis.eu/serviceAgents/<name>` for a platform service agent acting in your organization ([Service agents](service-agents.md)), or `//iam.origincloudapis.eu/services/<service>` for a change the platform made itself, such as `//iam.origincloudapis.eu/services/kms` for the KMS destroying a deleted key's material. An entry names an account, never an address, so a later change of address doesn't change it. The `project` is the project's full name, `//resourcemanager.origincloudapis.eu/projects/<project-id>`, and so is the `project` filter.
 - A role in `details` has its role name, such as `roles/iam.editor`.
 
-The acting party is `actingParty` there too. It is left out of an entry no one acted for.
+The acting party is `actingParty` there too, and the whole list is `actingParties`. Both are left out of an entry no one acted for.
 
 ## Related
 
