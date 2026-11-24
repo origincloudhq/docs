@@ -8,7 +8,7 @@ parent: access
 nav_order: 30
 tags: [cli, getting-started]
 related: [access-cli, access-api]
-last_reviewed: 2026-11-21
+last_reviewed: 2026-11-24
 ---
 
 # Use Origin Cloud from an AI agent
@@ -65,7 +65,7 @@ Tools that delete something, or change it in a way that can't be undone, such as
 A tool that changes a resource waits up to 30 seconds for the change to finish, and answers with the API's error if it fails. If the change takes longer, the tool returns an operation that isn't done yet, and the agent waits for it with the service's `_wait_operation` tool, such as `pvs_wait_operation`.
 
 **Credentials**  
-The server uses your CLI login. For an agent running unattended, set a service account's access token as `ORIGINCLOUD_ACCESS_TOKEN` in the server's environment instead, or run it in a CI job whose token a federated credential trusts. See [Run commands as a service account](cli.md#run-commands-as-a-service-account). The agent can do only what the login or the service account's roles allow, and a call without the permission fails with `PERMISSION_DENIED`.
+The server uses your CLI login. For an agent running unattended, set a service account's access token as `ORIGINCLOUD_ACCESS_TOKEN` in the server's environment instead, or run it in a CI job whose token a federated credential trusts. See [Run commands as a service account](cli.md#run-commands-as-a-service-account). The agent can do only what the login or the service account's roles allow, and a call without the permission fails with `PERMISSION_DENIED`. To give the agent less than your own roles, start the server with `--impersonate-service-account` naming a service account with narrow roles: it then acts as that account with your login; see [Act as a service account with your login](cli.md#act-as-a-service-account-with-your-login).
 
 ## Related
 
