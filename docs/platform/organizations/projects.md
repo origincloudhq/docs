@@ -131,7 +131,7 @@ An organization can be deleted only when it has no projects and no active servic
 
 While a project or an active service account remains, the request fails with [`CONFLICT`](../reference/errors.md#conflict) and deletes nothing. For service accounts, the message names each one by its display name and ID.
 
-Its quotas, its pending invites and every role assignment in it are deleted with it, so no invite to it can be accepted afterwards. Deleted service accounts stay readable, with the state `DELETED`. Its billing accounts stay, with their spend limits, so the last period can still be invoiced; they don't block the deletion.
+Its quotas, its pending role bindings and every role assignment in it are deleted with it, so no pending binding in it can activate afterwards. Deleted service accounts stay readable, with the state `DELETED`. Its billing accounts stay, with their spend limits, so the last period can still be invoiced; they don't block the deletion.
 
 ## Related
 

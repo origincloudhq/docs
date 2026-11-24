@@ -50,7 +50,7 @@ The people and service accounts that hold a role in the organization. See [IAM](
 - [Check your organization's review status](review-status.md)
 - [Create, rename and delete projects](projects.md)
 - [Add a payment method](../billing/payment-method.md)
-- [Invite members and assign roles](../../iam/manage-members.md)
+- [Add members and assign roles](../../iam/manage-members.md)
 
 ## Limits and quotas
 

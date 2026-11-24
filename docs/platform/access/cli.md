@@ -163,7 +163,7 @@ Released versions never change: the files under a version's directory are the sa
 
 `origin id login` opens the Origin Cloud login page in your browser and waits for you to log in there. The CLI never sees your password. Whatever the login page offers works, including a second factor.
 
-Logging in also applies any pending invites to organizations for your email address. If the CLI can't do that, for example because it can't reach the API, it prints a warning and the login still succeeds; logging in again, or signing in to the console, applies the invites later.
+Logging in also activates any [pending role bindings](../../iam/assign-roles.md#pending-role-bindings) for your verified email address. If the CLI can't do that, for example because it can't reach the API, it prints a warning and the login still succeeds; logging in again, or signing in to the console, applies the invites later.
 
 1. Run the login command:
 
@@ -403,7 +403,7 @@ Commands that delete something, or change it in a way that can't be undone, such
 | Option | Effect |
 |---|---|
 | `-c`, `--config <FILE>` | Reads the profile from this file instead of the default location, and `config profile-set` saves to it. Give it before the command group. |
-| `-a`, `--api <URL>` | The GraphQL endpoint `origin id login` reads your user from, which applies your pending invites. The default is `https://graph.origincloudapis.eu/graphql`. Give it before the command group. |
+| `-a`, `--api <URL>` | The GraphQL endpoint `origin id login` reads your user from, which activates your pending role bindings. The default is `https://graph.origincloudapis.eu/graphql`. Give it before the command group. |
 | `--output <FORMAT>` | Overrides the profile's `output-format`. |
 | `--impersonate-service-account <SERVICE_ACCOUNT>` | Acts as this service account, by its full name. Overrides `ORIGINCLOUD_IMPERSONATE_SERVICE_ACCOUNT` and the profile's `impersonate-service-account`; see [Act as a service account with your login](#act-as-a-service-account-with-your-login). |
 | `-V`, `--version` | Prints the CLI version. `origin version` prints it as JSON. |

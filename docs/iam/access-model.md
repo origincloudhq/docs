@@ -6,7 +6,7 @@ page_type: concept
 parent: home
 nav_order: 10
 tags: [iam, roles, security]
-last_reviewed: 2026-11-21
+last_reviewed: 2026-11-24
 ---
 
 # Access model
@@ -23,7 +23,7 @@ A principal is whoever or whatever is granted access: a user, a service account,
 | Service account | `//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>` |
 | Service agent | `//iam.origincloudapis.eu/serviceAgents/<name>`, such as `//iam.origincloudapis.eu/serviceAgents/compute` |
 
-A user must have an enabled account, and a service account must be one of the organization's own: either is refused with `NOT_FOUND` otherwise. An email address names no member: to bind someone you know by address, look their full name up with [`origin iam lookup-user`](reference/cli.md#lookup-user).
+A user must have an enabled account, and a service account must be one of the organization's own: either is refused with `NOT_FOUND` otherwise. To bind someone you know by address, name them as `user:<email>`: the binding is made to the account that verified the address. An address no account has verified gets a [pending role binding](assign-roles.md#pending-role-bindings), which grants nothing until someone signs up with it. [`origin iam lookup-user`](reference/cli.md#lookup-user) answers the full name behind an address without granting anything.
 
 A binding holds on to the account, not to an address, so it follows a later change of address. Your own full name is the `member` of [`origin iam get-user --user me`](reference/cli.md#get-user), and a service account's is the `member` of [`get-service-account`](reference/cli.md#get-service-account).
 
@@ -66,7 +66,7 @@ Assigning and revoking roles needs `iam.role.assign` or `iam.role.revoke` on the
 This applies to every path that changes a grant:
 
 - [Assigning and revoking a role](assign-roles.md).
-- [Inviting a member](manage-members.md): you can only invite with a role you could assign. A pending invite is checked again when it's applied. If the person who sent it can no longer assign the role by then, the invite is dropped.
+- [Granting a role to an email address](manage-members.md#add-a-member) that has no account yet: you can only grant a role you could assign, and it also needs `iam.member.create`. The pending binding is checked again when it activates. If the person who created it can no longer assign the role by then, it's dropped.
 - [Removing a member](manage-members.md#remove-a-member): you must be able to revoke every role the member holds.
 
 A request that would go beyond your own permissions is refused with [`FORBIDDEN`](../platform/reference/errors.md#forbidden). The error names the role and some of the permissions you lack. For example, Owner holds no billing permission, so an Owner can assign a billing role only if it also holds `roles/billing.administrator`. An IAM Editor can't assign Owner.

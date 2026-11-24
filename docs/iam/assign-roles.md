@@ -1,7 +1,7 @@
 ---
 id: assign-roles
 title: Assign and revoke roles
-description: Bind a built-in role to a user or service account org-wide or for one project, and delete the binding to revoke it.
+description: Bind a built-in role to a user, an email address or a service account org-wide or for one project, and delete the binding to revoke it.
 page_type: task
 parent: home
 nav_order: 30
@@ -11,13 +11,17 @@ last_reviewed: 2026-11-24
 
 # Assign and revoke roles
 
-Assign a role to give a user or service account access, and revoke it to take that access away. In the `origin iam` commands and the REST API, each assignment is a role binding: one role for one member, org-wide or in one project. A change takes effect on the member's next request. A user needs an Origin Cloud account before you can bind a role to them; to give access to someone who hasn't signed up yet, [invite them](manage-members.md).
+Assign a role to give a user or service account access, and revoke it to take that access away. In the `origin iam` commands and the REST API, each assignment is a role binding: one role for one member, org-wide or in one project. A change takes effect on the member's next request. You can name a user by their email address: if they have no Origin Cloud account yet, the binding waits for them as a [pending role binding](#pending-role-bindings) and the platform emails them an invitation.
 
 ## Before you begin
 
 - An org-wide `roles/owner` or `roles/iam.editor` assignment, and every permission of the role you assign or revoke at the scope of the binding. For example, an Owner needs `roles/billing.administrator` as well to assign a billing role. See [Who can assign a role](access-model.md#who-can-assign-a-role).
 - Your organization ID (`<org-id>`) and, for a project-scoped binding, the project ID (`<project-id>`).
-- The member, by its full name: a user, `//iam.origincloudapis.eu/users/<user-id>`, one of the organization's service accounts, `//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>`, or a platform service agent such as `//iam.origincloudapis.eu/serviceAgents/compute`, which can hold only the roles its service needs. An email address names no member: find a user's full name by their verified address with `origin iam lookup-user --email jane@example.com --organization //resourcemanager.origincloudapis.eu/organizations/<org-id>`, the `member` it answers. See [Principals](access-model.md#principals) and [Service agents](service-agents.md).
+- The member, one of:
+  - A user by email address, `user:<email>`, such as `user:jane@example.com`. If one enabled account has verified the address, the binding is made to that account. If none has, the binding is pending until someone signs up with the address; see [Pending role bindings](#pending-role-bindings).
+  - A member by its full name: a user, `//iam.origincloudapis.eu/users/<user-id>`, one of the organization's service accounts, `//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>`, or a platform service agent such as `//iam.origincloudapis.eu/serviceAgents/compute`, which can hold only the roles its service needs.
+
+  To find a user's full name by their verified address without granting anything, run `origin iam lookup-user --email jane@example.com --organization //resourcemanager.origincloudapis.eu/organizations/<org-id>`. See [Principals](access-model.md#principals) and [Service agents](service-agents.md).
 
 ## Assign a role
 
@@ -37,6 +41,8 @@ Assign a role to give a user or service account access, and revoke it to take th
      --role //iam.origincloudapis.eu/roles/viewer
    ```
 
+   To name a user by email address, pass `--member user:jane@example.com`. The answer's `member` is the user's full name when the address has an account, and `user:jane@example.com` with `state` `PENDING` when it has none.
+
    To limit the binding to one project, add `--project //resourcemanager.origincloudapis.eu/projects/<project-id>`. A project-scoped binding applies only to resources in that project; it never allows IAM operations. See [Role assignments and scopes](access-model.md#role-assignments-and-scopes).
 
 3. Verify the binding. The output lists the member's bindings, each with its role and project.
@@ -48,7 +54,8 @@ Assign a role to give a user or service account access, and revoke it to take th
 The platform refuses the binding, and changes nothing, in these cases:
 
 - The user has no enabled account, or the service account is another organization's: [`NOT_FOUND`](../platform/reference/errors.md#not_found).
-- The member, role or project isn't a full name, such as `user:jane@example.com` or `roles/viewer`: [`BAD_REQUEST`](../platform/reference/errors.md#bad_request).
+- The member, role or project isn't a full name or, for the member, `user:<email>`, such as `roles/viewer` or a bare `jane@example.com`: [`BAD_REQUEST`](../platform/reference/errors.md#bad_request).
+- More than one account has verified the address: [`CONFLICT`](../platform/reference/errors.md#conflict). Bind the user by their full name instead.
 - The member already holds the role at that scope: [`CONFLICT`](../platform/reference/errors.md#conflict). A retry of the command with the same `--request-id` within a day returns the binding the first one created instead.
 - The role has permissions you don't hold yourself at that scope: [`FORBIDDEN`](../platform/reference/errors.md#forbidden).
 - The member is a deleted service account: [`BAD_REQUEST`](../platform/reference/errors.md#bad_request).
@@ -78,9 +85,34 @@ To take away every role a member holds in the organization, delete each of their
 
 ## Pending role bindings
 
-A role granted to an email address that has no account yet is a pending role binding. Today you create one with an invite in the console ([Manage organization members](manage-members.md#invite-a-member)). `list-role-bindings` and the REST API show it with `state` `PENDING` and the address as its member, `user:<email>`, such as `user:jane@example.com`. An active binding has `state` `ACTIVE`.
+A role granted to an email address that has no account yet is a pending role binding. You create one with `create-role-binding --member user:<email>` when no enabled account has verified the address. The platform then emails the address an invitation to sign up. Delivery is best effort: a bounced or delayed email doesn't affect the binding.
+
+```sh
+origin iam create-role-binding --organization <org-id> \
+  --member user:jane@example.com \
+  --role //iam.origincloudapis.eu/roles/viewer
+```
+
+`list-role-bindings` and the REST API show a pending binding with `state` `PENDING` and the address as its member, `user:<email>`, as you typed it. An active binding has `state` `ACTIVE`.
 
 A pending binding grants nothing and counts toward no permission check. It is always org-wide. When someone signs up with its address and verifies it, it becomes active: its member becomes the new user's full name, and its name stays the same. It activates only while whoever created it can still assign the role; otherwise it's dropped.
+
+```mermaid
+stateDiagram-v2
+    accTitle: Lifecycle of a role binding
+    accDescr: A pending binding becomes active when its address signs up and verifies it, or ends when withdrawn or dropped; an active binding ends when deleted.
+    [*] --> PENDING: create-role-binding user:<email>, no account has the address
+    PENDING --> ACTIVE: someone signs up with the address and verifies it
+    PENDING --> [*]: deleted (withdrawn), or creator can no longer assign the role
+    ACTIVE --> [*]: deleted (revoked)
+```
+
+Creating a pending binding needs, besides what any binding needs, `iam.member.create` on the organization, which `roles/owner` has and `roles/iam.editor` doesn't. So an IAM Editor can bind people who already have an account by their address, but can't make the platform email an address that has none. The platform also refuses a pending binding, and changes nothing, in these cases:
+
+- `--project` is set: [`BAD_REQUEST`](../platform/reference/errors.md#bad_request). Bind the role org-wide, or ask the person to sign up first.
+- The address already holds a pending binding of the role in the organization, in any spelling: [`CONFLICT`](../platform/reference/errors.md#conflict).
+
+A retry with the same `--request-id` within a day returns the binding the first request created, pending or since activated.
 
 To withdraw a pending binding, delete it as in [Revoke a role](#revoke-a-role). A sign-in with its address afterwards grants nothing. Withdrawing needs the same permissions as deleting an active binding: `iam.role.revoke` and every permission of its role on the organization.
 

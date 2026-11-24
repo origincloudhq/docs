@@ -7,7 +7,7 @@ page_type: overview
 parent: null
 nav_order: 0
 tags: [overview, iam, roles]
-last_reviewed: 2026-11-13
+last_reviewed: 2026-11-24
 ---
 
 # What is Origin Cloud IAM?
@@ -38,7 +38,7 @@ Owner, Viewer, IAM Editor and three billing roles, each with a fixed set of perm
 Grant a role to a user or service account org-wide or for one project, and revoke it again. See [Assign and revoke roles](assign-roles.md).
 
 **Organization members**  
-Invite people by email in the console, list who has access, and remove a member's access in one step. See [Manage organization members](manage-members.md).
+Grant a role to anyone by email address, even before they have an account, list who has access, and remove a member's access. See [Manage organization members](manage-members.md).
 
 **Service agents**  
 The platform's own services, such as compute, act in your organization as service agents. You see their role bindings and can remove them, but can't act as them. See [Service agents](service-agents.md).
@@ -86,5 +86,5 @@ For quotas, see [Limits](../platform/reference/limits.md#iam).
 ## Next steps
 
 - Read the [Access model](access-model.md) to understand scopes and permissions.
-- [Invite a member](manage-members.md) to your organization.
+- [Add a member](manage-members.md#add-a-member) to your organization by email.
 - [Create a service account](service-accounts.md) for automation.

@@ -337,5 +337,5 @@ To delete the project as well, see [Manage projects](../organizations/projects.m
 - [Compute](../../compute/index.md): instance lifecycle, images and instance types.
 - [Storage](../../storage/index.md): add volumes and take snapshots.
 - [Network](../../network/index.md): private subnets, NAT gateways and network ACLs.
-- [IAM](../../iam/index.md): invite your team and assign roles.
+- [IAM](../../iam/index.md): add your team by email and assign roles.
 - [Service accounts](../../iam/service-accounts.md): automate with the CLI and the API.
