@@ -6,7 +6,7 @@ page_type: concept
 parent: vpcs
 nav_order: 30
 tags: [networking, vpc]
-last_reviewed: 2026-11-21
+last_reviewed: 2026-11-22
 ---
 
 # Network interfaces
@@ -35,7 +35,7 @@ With the CLI, you create a network interface first and launch an instance with i
 
 An interface's subnet decides the instance's subnet, and its security groups are the instance's. You can add and remove security group associations while the interface is attached; a running instance picks the change up within seconds. See [Change an interface's security groups](../traffic-control/security-groups.md#change-an-interfaces-security-groups).
 
-When you terminate the instance, an interface you created is released: it's `AVAILABLE` again, with its addresses, security groups and Floating IP associations, ready for another instance. Delete it with `delete-network-interface --yes` when you no longer need it. Deleting a subnet deletes its unattached interfaces.
+When you terminate the instance, an interface you created is released: it's `AVAILABLE` again, with its addresses, security groups and Floating IP associations, ready for another instance. Delete it with `delete-network-interface --yes` when you no longer need it. Deleting a subnet deletes its unattached interfaces, and is refused while a Floating IP you allocated is still associated with one of them.
 
 [a launch from a recipe](../../compute/instances/launch.md#launch-from-a-recipe-with-the-api) whose interface is a spec creates the instance's interface itself, in the subnet the spec names or in the default VPC's subnet, and deletes that interface with the instance.
 

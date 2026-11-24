@@ -6,7 +6,7 @@ page_type: concept
 parent: internet-access
 nav_order: 20
 tags: [networking, internet-access, billing]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-22
 ---
 
 # Floating IPs
@@ -56,7 +56,7 @@ origin network delete-floating-ip-association --floating-ip <floating-ip-id> \
 
 ## When an address is released
 
-An address you allocated is never released for you. Terminating an instance releases the network interface you launched it with, which keeps its Floating IP association, so the address reaches the next instance you launch with that interface. An interface that a launch created for the instance is deleted with it, and an address you allocated and associated with it stays allocated, unassociated.
+An address you allocated is never released for you. Terminating an instance releases the network interface you launched it with, which keeps its Floating IP association, so the address reaches the next instance you launch with that interface. An interface that a launch created for the instance is deleted with it, and an address you allocated and associated with it stays allocated, unassociated. Deleting a subnet is refused while an address you allocated is still associated with one of its interfaces; remove the association first.
 
 An address the platform assigned at launch, because the subnet has auto-assign public IP turned on, is different: its `autoAssigned` is `true`, and it's part of the network interface the launch created. Disassociating or releasing it is refused with [`CONFLICT`](../../platform/reference/errors.md#conflict), naming the interface; the platform releases it with the interface when you terminate the instance. To keep an address across instances, allocate one yourself. See [Default VPC](../vpcs/default-vpc.md#auto-assigned-public-ips).
 
