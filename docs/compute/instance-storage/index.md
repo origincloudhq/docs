@@ -6,7 +6,7 @@ page_type: overview
 parent: home
 nav_order: 20
 tags: [overview, compute, storage, volumes]
-last_reviewed: 2026-11-21
+last_reviewed: 2026-11-24
 ---
 
 # Instance storage
@@ -41,6 +41,9 @@ Instance volumes use the `pvs` backend: durable, network-attached storage. A lau
 
 **Host-local drives are temporary**  
 A host-local drive lives on the disk of the machine the instance runs on, like an instance-store volume. Its data doesn't survive a stop and start, a shutdown from inside the instance, a reboot of that machine, or the instance's termination. Each start gives the drive back empty, on whichever machine the instance starts. A host-local drive is never a boot drive: the root disk is always a durable volume. Keep anything that must survive on a durable volume. See [Volumes](../../storage/volumes/index.md).
+
+**Host-local drives have their own price**  
+A host-local drive is billed per GiB-hour of its size for as long as it exists, under the product key `storage.host_local`, not at a storage class's volume price. See [`storage_host_local`](../../pricing/reference/price-list-api.md#storage_host_local) in the price list.
 
 ## Sizing the root disk
 

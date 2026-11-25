@@ -6,7 +6,7 @@ page_type: reference
 parent: reference
 nav_order: 10
 tags: [reference, pricing, api]
-last_reviewed: 2026-11-07
+last_reviewed: 2026-11-24
 ---
 
 # Price list API
@@ -110,6 +110,7 @@ The families appear in the following order. Traffic in `gb` is counted in decima
 | `network_vpc_internal` | `network.vpc_internal` | – | `gb` |
 | `storage_volume` | `storage.<storage_class>` | `storage_class` | `gib_hours` |
 | `storage_snapshot` | `storage.snapshot` | – | `gib_hours` |
+| `storage_host_local` | `storage.host_local` | – | `gib_hours` |
 | `observability_custom_metric` | `observability.custom_metric` | – | `metric_months` |
 | `observability_api_request` | `observability.api_request` | – | `requests` |
 | `observability_ingested_sample` | `observability.ingested_sample` | – | `samples` |
@@ -147,6 +148,10 @@ The provisioned size of a volume for the time it exists, priced per storage clas
 ### storage_snapshot
 
 The size of a snapshot's source volume for the time the snapshot exists. See [Snapshots](../../storage/snapshots/index.md).
+
+### storage_host_local
+
+The provisioned size of a host-local drive for the time it exists, whatever its storage class. A host-local drive is temporary storage on the machine an instance runs on, so it's never billed under `storage_volume`. See [Instance storage](../../compute/instance-storage/index.md).
 
 ### observability_custom_metric
 
