@@ -20,7 +20,7 @@ A grant names:
 
 - **The key**, an `ENCRYPT_DECRYPT` key of yours.
 - **The operation**: `DECRYPT`.
-- **The grantee**: one host, by the identity its certificate names.
+- **The grantee**: one platform host, or one platform service of the zone, by the identity its certificate names (it ends in `/zones/<zone>/hosts/<host>` or `/zones/<zone>/workloads/<workload>`).
 - **The encryption context** a decryption must carry, exactly, such as `volume=<the volume's name>`. A ciphertext made with another context doesn't decrypt under the grant.
 - **When it expires**: at most 60 minutes after it was made or last renewed.
 
