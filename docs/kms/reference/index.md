@@ -55,7 +55,7 @@ Paths are relative to `https://kms.origincloudapis.eu/v1beta1/`, and `<key>` sta
 | `CreateKey` | `POST projects/<project-id>/regions/<region>/keys` | `kms.key.create` | Creates a key from its `purpose`, with optional `tags`; Origin Cloud assigns its id. |
 | `UpdateKey` | `PATCH <key>?updateMask=state,tags` | `kms.key.update` | Sets `state` to `ENABLED` or `DISABLED`, replaces `tags`, or both. |
 | `DeleteKey` | `DELETE <key>` | `kms.key.delete` | Deletes a key; its material is destroyed after `destroyDelay`. |
-| `UndeleteKey` | `POST <key>:undelete` | `kms.key.delete` | Restores a deleted key, disabled, before its `purgeTime`. |
+| `UndeleteKey` | `POST <key>:undelete` | `kms.key.undelete` | Restores a deleted key, disabled, before its `purgeTime`. |
 | `RotateKey` | `POST <key>:rotate` | `kms.key.rotate` | Adds a version and makes it the primary. |
 | `Encrypt` | `POST <key>:encrypt` | `kms.key.encrypt` | Encrypts `plaintext` with `encryptionContext`. |
 | `Decrypt` | `POST <key>:decrypt` | `kms.key.decrypt` | Decrypts `ciphertext` with `encryptionContext`. |
@@ -90,12 +90,13 @@ Every permission is checked on the key's project. Owner holds them all; Viewer h
 
 | Role | Permissions | For |
 |---|---|---|
-| `roles/kms.admin` | `get`, `list`, `create`, `update`, `delete`, `rotate`, `get_public_key`; grants: `get`, `list`, `delete` | Managing keys, never using them on data |
+| `roles/kms.admin` | `get`, `list`, `create`, `update`, `delete`, `undelete`, `rotate`, `get_public_key`; grants: `get`, `list`, `delete` | Managing keys, never using them on data |
 | `roles/kms.viewer` | `get`, `list`, `get_public_key`; grants: `get`, `list` | Reading keys, public keys and grants |
 | `roles/kms.encrypter-decrypter` | `encrypt`, `decrypt`, `generate_data_key` | A program that encrypts and decrypts its data |
 | `roles/kms.signer` | `sign`, `get_public_key` | A program that signs |
 | `roles/kms.grant-delegate` | grants: `get`, `list`, `create`, `update`, `delete` | The platform's services that let a host use your keys |
 | `roles/kms.grant-issuer` | grants: `create`, `delete` | Storage's service agent, on the keys the platform manages |
+| `roles/kms.volume-keys-agent` | `get`, `create`, `update`, `undelete`, `generate_data_key` | Storage's service agent, on the keys the platform manages |
 
 The permissions are `kms.key.<action>` and `kms.grant.<action>`. See [Built-in roles](../../iam/roles.md) and [Assign roles](../../iam/assign-roles.md).
 

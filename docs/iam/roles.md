@@ -30,6 +30,7 @@ Origin Cloud has fourteen built-in roles. You can't create your own. Each sectio
 | [`roles/kms.signer`](#roleskmssigner) | KMS Signer | Signing with a project's KMS keys |
 | [`roles/kms.grant-delegate`](#roleskmsgrant-delegate) | KMS Grant Delegate | Letting the platform's hosts decrypt with a project's KMS keys, through grants |
 | [`roles/kms.grant-issuer`](#roleskmsgrant-issuer) | KMS Grant Issuer | Making and deleting grants on a project's KMS keys, nothing else |
+| [`roles/kms.volume-keys-agent`](#roleskmsvolume-keys-agent) | KMS Volume Keys Agent | Creating a project's KMS keys and generating data keys with them, for storage's service agent |
 | [`roles/billing.administrator`](#rolesbillingadministrator) | Billing Account Administrator | Full control of billing accounts |
 | [`roles/billing.user`](#rolesbillinguser) | Billing Account User | Billing accounts without deleting them |
 | [`roles/billing.viewer`](#rolesbillingviewer) | Billing Account Viewer | Read-only access to billing accounts |
@@ -62,7 +63,7 @@ Full control of the organization's projects, resources and access. Owner doesn't
 | `iam.service_account` | `list`, `create`, `revoke`, `act_as`, `get_access_token` |
 | `iam.service_account_key` | `get`, `list`, `create`, `delete` |
 | `kms.grant` | `get`, `list`, `create`, `update`, `delete` |
-| `kms.key` | `get`, `list`, `create`, `update`, `delete`, `rotate`, `encrypt`, `decrypt`, `generate_data_key`, `sign`, `get_public_key` |
+| `kms.key` | `get`, `list`, `create`, `update`, `delete`, `undelete`, `rotate`, `encrypt`, `decrypt`, `generate_data_key`, `sign`, `get_public_key` |
 | `network.acl` | `get`, `list`, `create`, `update`, `delete` |
 | `network.resolver_policy` | `get`, `list`, `create`, `update`, `set_default`, `delete`, `attach` |
 | `network.floating_ip` | `get`, `list`, `create`, `attach`, `detach`, `delete` |
@@ -177,7 +178,7 @@ Manages a project's KMS keys: creates, reads, enables, disables, rotates, delete
 | Resource | Actions |
 |---|---|
 | `kms.grant` | `get`, `list`, `delete` |
-| `kms.key` | `get`, `list`, `create`, `update`, `delete`, `rotate`, `get_public_key` |
+| `kms.key` | `get`, `list`, `create`, `update`, `delete`, `undelete`, `rotate`, `get_public_key` |
 
 ## roles/kms.viewer
 
@@ -229,6 +230,16 @@ For the platform's services that let a worker or host use a key for one short jo
 | Resource | Actions |
 |---|---|
 | `kms.grant` | `create`, `delete` |
+
+## roles/kms.volume-keys-agent
+
+For the platform's service that keeps your volumes' keys. Every organization binds it org-wide to storage's service agent, `//iam.origincloudapis.eu/serviceAgents/storage`; see [Service agents](service-agents.md). It creates a key, reads it, enables it, undeletes it and generates data keys with it, and nothing else: it can't list, rotate or delete a key, encrypt or decrypt with one, nor touch its grants. Storage's service agent uses it to create each project's volumes key and a data key for each new encrypted volume. The KMS lets a service agent read, use and change only the keys the platform manages for your projects, and refuses it on your own keys.
+
+**Scope:** org-wide or one project.
+
+| Resource | Actions |
+|---|---|
+| `kms.key` | `get`, `create`, `update`, `undelete`, `generate_data_key` |
 
 ## roles/billing.administrator
 

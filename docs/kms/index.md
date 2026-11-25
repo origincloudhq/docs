@@ -79,6 +79,7 @@ Each method needs a `kms.key.*` or `kms.grant.*` permission on the key's project
 - `roles/kms.viewer`: read keys, public keys and grants.
 - `roles/kms.grant-delegate`: make grants that let the platform's hosts decrypt with your keys, never use them. Every organization holds its org-wide binding to compute's [service agent](../iam/service-agents.md), `//iam.origincloudapis.eu/serviceAgents/compute`, which attaches your volumes; only a service agent's binding of it does anything. See [Grants](grants.md).
 - `roles/kms.grant-issuer`: make and delete grants, nothing else. Every organization holds its org-wide binding to storage's [service agent](../iam/service-agents.md), `//iam.origincloudapis.eu/serviceAgents/storage`, which may use it only on the keys the platform manages. See [Grants](grants.md).
+- `roles/kms.volume-keys-agent`: create, read, enable and undelete keys and generate data keys with them, nothing else. Every organization holds its org-wide binding to storage's service agent, which creates each project's volumes key with it; the KMS lets a service agent read, use and change only the keys the platform manages.
 
 See [Permissions and roles](reference/index.md#permissions-and-roles).
 
