@@ -7,7 +7,7 @@ page_type: overview
 parent: null
 nav_order: 0
 tags: [overview, kms, encryption]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-25
 availability: preview
 ---
 
@@ -78,6 +78,7 @@ Each method needs a `kms.key.*` or `kms.grant.*` permission on the key's project
 - `roles/kms.admin`: manage keys, but never use them on data.
 - `roles/kms.viewer`: read keys, public keys and grants.
 - `roles/kms.grant-delegate`: make grants that let the platform's hosts decrypt with your keys, never use them. Every organization holds its org-wide binding to compute's [service agent](../iam/service-agents.md), `//iam.origincloudapis.eu/serviceAgents/compute`, which attaches your volumes; only a service agent's binding of it does anything. See [Grants](grants.md).
+- `roles/kms.grant-issuer`: make and delete grants, nothing else. Every organization holds its org-wide binding to storage's [service agent](../iam/service-agents.md), `//iam.origincloudapis.eu/serviceAgents/storage`, which may use it only on the keys the platform manages. See [Grants](grants.md).
 
 See [Permissions and roles](reference/index.md#permissions-and-roles).
 

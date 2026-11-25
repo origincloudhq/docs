@@ -7,7 +7,7 @@ page_type: reference
 parent: home
 nav_order: 80
 tags: [kms, reference, api]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-25
 availability: preview
 ---
 
@@ -95,6 +95,7 @@ Every permission is checked on the key's project. Owner holds them all; Viewer h
 | `roles/kms.encrypter-decrypter` | `encrypt`, `decrypt`, `generate_data_key` | A program that encrypts and decrypts its data |
 | `roles/kms.signer` | `sign`, `get_public_key` | A program that signs |
 | `roles/kms.grant-delegate` | grants: `get`, `list`, `create`, `update`, `delete` | The platform's services that let a host use your keys |
+| `roles/kms.grant-issuer` | grants: `create`, `delete` | Storage's service agent, on the keys the platform manages |
 
 The permissions are `kms.key.<action>` and `kms.grant.<action>`. See [Built-in roles](../../iam/roles.md) and [Assign roles](../../iam/assign-roles.md).
 

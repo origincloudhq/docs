@@ -6,7 +6,7 @@ page_type: concept
 parent: home
 nav_order: 10
 tags: [iam, roles, security]
-last_reviewed: 2026-11-24
+last_reviewed: 2026-11-25
 ---
 
 # Access model
@@ -57,7 +57,7 @@ The role applies only to resources inside that one project. It doesn't apply to 
 
 All IAM operations, such as inviting members, assigning roles and creating service accounts, act on the organization. A project-scoped assignment therefore never allows them, even for `roles/owner`. To let someone manage access, assign the role org-wide. The billing roles must always be assigned org-wide; see [Billing access](../platform/billing/billing-access.md).
 
-Whoever creates an organization receives `roles/owner` and `roles/billing.administrator` org-wide, and compute's service agent receives `roles/kms.grant-delegate` org-wide ([Service agents](service-agents.md)). Anyone else holds only the roles you assign to them.
+Whoever creates an organization receives `roles/owner` and `roles/billing.administrator` org-wide, compute's service agent receives `roles/kms.grant-delegate` org-wide, and storage's service agent `roles/kms.grant-issuer` org-wide ([Service agents](service-agents.md)). Anyone else holds only the roles you assign to them.
 
 ## Who can assign a role
 

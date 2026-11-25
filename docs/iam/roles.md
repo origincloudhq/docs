@@ -6,7 +6,7 @@ page_type: reference
 parent: home
 nav_order: 20
 tags: [iam, roles, reference]
-last_reviewed: 2026-11-24
+last_reviewed: 2026-11-25
 ---
 
 # Built-in roles
@@ -29,6 +29,7 @@ Origin Cloud has fourteen built-in roles. You can't create your own. Each sectio
 | [`roles/kms.encrypter-decrypter`](#roleskmsencrypter-decrypter) | KMS Encrypter/Decrypter | Encrypting and decrypting with a project's KMS keys |
 | [`roles/kms.signer`](#roleskmssigner) | KMS Signer | Signing with a project's KMS keys |
 | [`roles/kms.grant-delegate`](#roleskmsgrant-delegate) | KMS Grant Delegate | Letting the platform's hosts decrypt with a project's KMS keys, through grants |
+| [`roles/kms.grant-issuer`](#roleskmsgrant-issuer) | KMS Grant Issuer | Making and deleting grants on a project's KMS keys, nothing else |
 | [`roles/billing.administrator`](#rolesbillingadministrator) | Billing Account Administrator | Full control of billing accounts |
 | [`roles/billing.user`](#rolesbillinguser) | Billing Account User | Billing accounts without deleting them |
 | [`roles/billing.viewer`](#rolesbillingviewer) | Billing Account Viewer | Read-only access to billing accounts |
@@ -218,6 +219,16 @@ For the platform's services that let a host use a project's KMS keys. Every new 
 | Resource | Actions |
 |---|---|
 | `kms.grant` | `get`, `list`, `create`, `update`, `delete` |
+
+## roles/kms.grant-issuer
+
+For the platform's services that let a worker or host use a key for one short job. Every organization binds it org-wide to storage's service agent, `//iam.origincloudapis.eu/serviceAgents/storage`; see [Service agents](service-agents.md). It makes a grant and deletes it, and nothing else: it can't renew, read or list grants, nor read, change or use the keys. Storage's service agent may use it only on the keys the platform manages for your projects; the KMS refuses it on your own keys.
+
+**Scope:** org-wide or one project.
+
+| Resource | Actions |
+|---|---|
+| `kms.grant` | `create`, `delete` |
 
 ## roles/billing.administrator
 
