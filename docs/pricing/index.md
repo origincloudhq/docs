@@ -7,12 +7,12 @@ page_type: overview
 parent: null
 nav_order: 0
 tags: [overview, pricing, billing]
-last_reviewed: 2026-10-28
+last_reviewed: 2026-11-24
 ---
 
 # What is Origin Cloud Pricing?
 
-Origin Cloud publishes the current list price of every billable product in one public price list: instance types, volume storage classes, snapshots, Floating IPs, NAT gateways, network traffic, observability, and DNS. You read it over HTTP, without an account or an access token. Use it to estimate costs before you launch anything, or to show current prices on your own website.
+Origin Cloud publishes the current list price of every billable product in one public price list: instance types, volume storage classes, snapshots, host-local drives, Floating IPs, NAT gateways, network traffic, observability, and DNS. You read it over HTTP, without an account or an access token. Use it to estimate costs before you launch anything, or to show current prices on your own website.
 
 ## How the price list is organized
 
