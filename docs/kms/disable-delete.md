@@ -6,7 +6,7 @@ page_type: task
 parent: home
 nav_order: 70
 tags: [kms, api]
-last_reviewed: 2026-11-14
+last_reviewed: 2026-11-25
 availability: preview
 ---
 
@@ -18,7 +18,7 @@ A key the platform manages can't be disabled, deleted or undeleted: those reques
 
 ## Before you begin
 
-- `kms.key.update` on the key's project to disable and enable it, and `kms.key.delete` to delete and undelete it. `roles/kms.admin` holds both.
+- `kms.key.update` on the key's project to disable and enable it, `kms.key.delete` to delete it and `kms.key.undelete` to undelete it. `roles/kms.admin` holds all three.
 
 ## Disable or enable a key
 

@@ -6,7 +6,7 @@ page_type: concept
 parent: home
 nav_order: 10
 tags: [kms, encryption]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-25
 availability: preview
 ---
 
@@ -61,6 +61,7 @@ Origin Cloud can create keys in your project for its own use of the project's da
 - Only the platform makes, renews and deletes its grants: CreateGrant, RenewGrant and DeleteGrant on it answer `FORBIDDEN`, recorded with reason `platform_managed`. See [Grants](grants.md).
 - You can't change it: UpdateKey, DeleteKey, UndeleteKey and RotateKey answer `FORBIDDEN`, whatever roles you hold. Each refusal is recorded in the audit log, with reason `platform_managed`. Disabling, rotating or deleting it would break, or destroy for good, every volume it protects.
 - Using it on data follows your roles, as for any key.
+- A service agent of the platform reads, uses and changes only such keys: on a key of your own, its request answers `FORBIDDEN`, whatever roles it holds, and a use or change is recorded in the audit log with reason `not_platform_managed`.
 - It's deleted with its project. Deleting the project makes the key `DELETED`, with a `purgeTime` 30 days later, when its material is destroyed. The audit log records the deletion as `kms.keys.scheduleDeletion`, with the actor `platform`. A key of your own isn't deleted on your behalf: [delete it](disable-delete.md#delete-a-key) before you delete the project, or the project's deletion is refused with `CONFLICT`. See [Delete a project](../platform/organizations/projects.md#delete-a-project).
 
 ## Encryption context

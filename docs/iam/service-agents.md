@@ -18,7 +18,7 @@ A service agent is the identity one of the platform's own services acts as in yo
 | Member | Service | Bound in every organization |
 |---|---|---|
 | `//iam.origincloudapis.eu/serviceAgents/compute` | Compute. It makes the KMS grants that let a host decrypt a volume's key while the volume is attached to an instance on that host. | [`roles/kms.grant-delegate`](roles.md#roleskmsgrant-delegate), org-wide |
-| `//iam.origincloudapis.eu/serviceAgents/storage` | Storage, which manages the volumes key the platform keeps in each project. It makes and deletes the KMS grants that let the platform's workers decrypt a new volume's key while they prepare the volume, on the keys the platform manages only. | [`roles/kms.grant-issuer`](roles.md#roleskmsgrant-issuer), org-wide |
+| `//iam.origincloudapis.eu/serviceAgents/storage` | Storage, which manages the volumes key the platform keeps in each project. It creates that key and a data key for each new encrypted volume, and makes and deletes the KMS grants that let the platform's workers decrypt a new volume's key while they prepare the volume, on the keys the platform manages only. | [`roles/kms.grant-issuer`](roles.md#roleskmsgrant-issuer) and [`roles/kms.volume-keys-agent`](roles.md#roleskmsvolume-keys-agent), org-wide |
 
 A service agent's full name is `//iam.origincloudapis.eu/serviceAgents/<name>`, such as `//iam.origincloudapis.eu/serviceAgents/compute`. The REST API and the `origin iam` commands and the GraphQL API take and show a service agent by its full name only. A name the platform has no service agent for is refused with `BAD_REQUEST`.
 
@@ -37,9 +37,11 @@ flowchart LR
 
 Every organization holds compute's binding of `roles/kms.grant-delegate`, made by the platform once: a new organization holds it from its creation. You can [delete it](assign-roles.md) like any other binding, if you hold the role's permissions yourself. Compute then makes no new grants on your organization's keys, and the grants it already made run out within an hour. The platform doesn't make the binding again: to let compute grant again, create it yourself.
 
-Storage's binding of `roles/kms.grant-issuer` works the same way: every organization holds it, made by the platform once, and you can delete it and create it again. Storage then makes no new grants in your organization. Whatever roles storage's service agent holds, the KMS lets it make, renew or delete grants only on the keys the platform manages for your projects. On a key of your own, its request is refused with `FORBIDDEN` and recorded in the audit log with reason `not_platform_managed`.
+Storage's bindings of `roles/kms.grant-issuer` and `roles/kms.volume-keys-agent` work the same way: every organization holds them, made by the platform once, and you can delete them and create them again. Without `roles/kms.grant-issuer`, storage makes no new grants in your organization. Without `roles/kms.volume-keys-agent`, storage can't create a project's volumes key or a new volume's data key, so creating an encrypted volume in your organization fails until you bind it again; volumes that already exist still open.
 
-A service agent can hold only the roles its service needs: compute only `roles/kms.grant-delegate`, storage only `roles/kms.grant-issuer`. A binding of any other role to a service agent is refused with `BAD_REQUEST`, so a service agent never becomes a way to do what your own bindings don't allow.
+Whatever roles a service agent holds, the KMS lets it read, use and change only the keys the platform manages for your projects, and make, renew or delete grants only on those keys too (compute's agent excepted for grants, which it makes on the keys of the volumes you attach). On a key of your own, its request is refused with `FORBIDDEN`, and a use, change or grant is recorded in the audit log with reason `not_platform_managed`.
+
+A service agent can hold only the roles its service needs: compute only `roles/kms.grant-delegate`, storage only `roles/kms.grant-issuer` and `roles/kms.volume-keys-agent`. A binding of any other role to a service agent is refused with `BAD_REQUEST`, so a service agent never becomes a way to do what your own bindings don't allow.
 
 ## In the audit log
 
@@ -48,4 +50,4 @@ A binding the platform makes for a service agent is recorded as `iam.role.assign
 ## Related
 
 - [Access model](access-model.md) – principals, roles and scopes
-- [Built-in roles](roles.md) – what `roles/kms.grant-delegate` and `roles/kms.grant-issuer` allow
+- [Built-in roles](roles.md) – what `roles/kms.grant-delegate`, `roles/kms.grant-issuer` and `roles/kms.volume-keys-agent` allow
