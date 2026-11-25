@@ -7,7 +7,7 @@ page_type: task
 parent: home
 nav_order: 50
 tags: [iam, service-accounts, cli, api]
-last_reviewed: 2026-11-24
+last_reviewed: 2026-11-25
 ---
 
 # Use service accounts
@@ -308,7 +308,7 @@ The exchange is recorded as `sts.token.impersonate` in the account's organizatio
 
 A key never expires and is never changed. To replace one, create the new key, move the software to its credentials file, check that the old key's `lastUseTime` stops moving, then delete the old key. An account's keys can overlap for as long as you need.
 
-Deleting a key refuses its assertions from then on, and the access tokens already exchanged with it at their next API call. It stays readable, with the state `DELETED`. Deleting the service account deletes its keys. Deleting can't be undone, so the command needs `--yes`.
+Deleting a key refuses its assertions within 30 seconds, normally within a few, and the access tokens already exchanged with it from their next API call after that. See [Revoke a service account](#revoke-a-service-account) for why it isn't instant. It stays readable, with the state `DELETED`. Deleting the service account deletes its keys. Deleting can't be undone, so the command needs `--yes`.
 
 ```sh
 origin iam delete-service-account-key \
@@ -317,7 +317,11 @@ origin iam delete-service-account-key \
 
 ## Revoke a service account
 
-Deleting a service account revokes it: it deletes its federated credentials and keys and removes every role binding it holds, in every organization and at every scope. From that moment, every exchange for a new access token is refused, and an access token issued before is refused on its next request.
+Deleting a service account revokes it: it deletes its federated credentials and keys and removes every role binding it holds, in every organization and at every scope. Within 30 seconds, normally within a few, every exchange for a new access token is refused, and an access token issued before is refused on its next request.
+
+The revocation isn't instant everywhere. Each availability zone's security token service and API decide from their own copy of the organization's identities, so that an exchange or a request never depends on another zone being reachable. A revocation reaches every zone's copy a moment after the delete returns. Until it has, an exchange in that zone can still be issued a token, which lives at most 15 minutes like any other and is refused on its next request once the revocation has arrived. If a zone falls further behind than 30 seconds, the platform alerts its operators.
+
+If a key may have leaked, delete it or the service account first, and then check the account's [audit log](audit-log.md) for `iam.service_account_key.exchange` entries issued after the delete.
 
 Deleting is permanent. A deleted service account can't be reactivated or bound to a role again; create a new service account instead. It stays readable, with the state `DELETED`.
 
