@@ -38,7 +38,7 @@ The server serves a token of any client, as long as Origin Cloud's login issued 
 
 3. Verify the connection: ask the agent which zones Origin Cloud has. It answers by calling the `location_list_zones` tool.
 
-Your account must have a given name and a family name. A token without either, as an account signed in through an identity provider that sends no names may have, is refused as not a person's token: add the names to your account and sign in again.
+Your account must have a first name, a last name and an email address. A token without one of them, as an account signed in through an identity provider that sends no names may have, is refused. Add what is missing in the [account console](https://auth.origincloud.eu/realms/origincloud/account), then sign in again.
 
 ## Restrict the agent to a service account's roles
 

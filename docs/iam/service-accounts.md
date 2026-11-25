@@ -243,7 +243,7 @@ Only a person can impersonate. A service account's credentials file, a CI job's 
 
 The account's token lives at most 5 minutes, and never past the person's own token; the CLI, the SDKs and the Terraform provider exchange a new one about a minute before it expires. Revoking the person's token-creator binding refuses the next exchange: a token already issued stays valid until it expires. Revoking the service account refuses its tokens at their next call.
 
-A refused exchange, because the person lacks the role or the account doesn't exist or isn't active, is an error that names the account. No client falls back to calling the API as the person.
+A refused exchange, because the person lacks the role or the account doesn't exist or isn't active, is an error that names the account. No client falls back to calling the API as the person. An exchange is also refused when your account has no first name, last name or email address: the error names the missing claims, such as `the person's token lacks the family_name claim`, and points to the [account console](https://auth.origincloud.eu/realms/origincloud/account). Add what is missing there, then log in again.
 
 ### With the CLI
 
