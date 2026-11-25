@@ -71,6 +71,7 @@ Most fields replace the version's one by one. These replace more than themselves
 | `bootVolume.sizeGib`, `bootVolume.storageClass` | each the version's own; the one you leave out stays |
 | `tags` | all of the version's tags |
 | `networkInterfaces` | all of the version's interfaces |
+| `localDisks` | all of the version's local disks |
 
 The template's version doesn't change: reading it afterwards shows the recipe it had. To keep a change for later launches, [create a version](versions-create.md) with it.
 

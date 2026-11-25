@@ -7,7 +7,7 @@ parent: instances
 nav_order: 60
 tags: [compute, instances, cli, api]
 related: [instances-instance-types, instances-lifecycle, reference-cli]
-last_reviewed: 2026-11-21
+last_reviewed: 2026-11-25
 ---
 
 # Launch an instance
@@ -156,7 +156,7 @@ One of the interface's security groups must allow inbound TCP port 22 from your 
 
 ## Launch from a recipe with the API
 
-A launch can also take a recipe of the instance: its type, image or image family, key pair, and optionally its login user, boot volume, service account, tags, and network interface. Where the recipe gives the interface as a spec, a subnet and security groups, the launch creates the interface for the instance. You don't create one beforehand.
+A launch can also take a recipe of the instance: its type, image or image family, key pair, and optionally its login user, boot volume, service account, tags, network interface and [local disks](../instance-storage/local-disks.md). Where the recipe gives the interface as a spec, a subnet and security groups, the launch creates the interface for the instance. You don't create one beforehand.
 
 Send the recipe as `launchTemplateData` to the `:launch` method of the zone's instances:
 
@@ -207,6 +207,7 @@ A refused launch creates nothing and costs nothing.
 - **`PRODUCT_UNAVAILABLE`**: the instance type or storage class isn't offered. Pick one whose `available` is `true`. See [`PRODUCT_UNAVAILABLE`](../../platform/reference/errors.md#product_unavailable).
 - **Quota**: the launch would take the organization or project past an instance, vCPU or storage limit. The error names the quota. See [Limits](../../platform/reference/limits.md#compute).
 - **Root disk too small**: the boot volume's `size_gib` is smaller than the image. The error names the smallest size that works.
+- **Local disk refused**: a local disk's size or device name breaks a rule. The error names the disk's field, such as `launchTemplateData.localDisks[0].device`. See [Local disk reference](../instance-storage/local-disks-reference.md#rules-a-launch-checks).
 - **Network interface in use or elsewhere**: the interface is attached to another instance, or isn't in the instance's project and zone. Create a new one in a subnet of the instance's zone, or launch from a recipe with an interface spec.
 - **Subnet full**: the subnet of an interface spec has no free address left. Name another subnet of the zone.
 - **Subnet or security group elsewhere**: a spec's subnet isn't in the instance's project and zone, or one of its security groups isn't in the instance's project and region.

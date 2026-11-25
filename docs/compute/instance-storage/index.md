@@ -1,26 +1,28 @@
 ---
 id: instance-storage
 title: Instance storage
-description: How an instance's durable root disk is created and sized at launch, and how extra volumes attach to a running or stopped instance.
+description: How an instance's durable root disk is created and sized at launch, what local disks are, and how extra volumes attach to an instance.
 page_type: overview
 parent: home
 nav_order: 20
 tags: [overview, compute, storage, volumes]
-last_reviewed: 2026-11-24
+last_reviewed: 2026-11-25
 ---
 
 # Instance storage
 
-Every instance boots from a root disk that the launch creates from the image. On top of that, you can attach volumes you created yourself. All of an instance's volumes are durable network storage that isn't tied to any machine, so an instance can stop, start and move between machines without losing data.
+Every instance boots from a root disk that the launch creates from the image. On top of that, you can attach volumes you created yourself, and ask the launch for local disks on the machine the instance runs on. Volumes are durable network storage that isn't tied to any machine, so an instance can stop, start and move between machines without losing their data. Local disks are temporary: their data is lost when the instance stops.
 
 The following diagram shows where an instance's disks come from.
 
 ```mermaid
 flowchart LR
   accTitle: Where an instance's disks come from
-  accDescr: Launching from an image creates the root disk. A volume you create separately can be attached to the instance and detached again.
+  accDescr: Launching from an image creates the root disk. The launch also creates any local disks, blank, on the instance's machine. A volume you create separately can be attached to the instance and detached again.
   img[Image] -->|launch copies| root[(Root disk)]
   root --- inst[Instance]
+  launch[Launch] -->|creates blank| local[(Local disk)]
+  local --- inst
   vol[(Volume you created)] -->|attach| inst
   inst -->|detach| vol
 ```
@@ -36,14 +38,14 @@ A volume you created and attached. It outlives the instance: termination release
 **A disk's serial is its volume's id**  
 Every volume disk in the guest, the root disk included, has the volume's id, such as `vol-AbC123xYz9`, as its serial. A Linux guest links each disk as `/dev/disk/by-id/virtio-<volume-id>`, and `lsblk -o NAME,SERIAL` lists the serials. That tells you which disk is which volume without relying on the order the guest named its disks in. The cloud-init seed disk is not a volume and has no serial.
 
-**Storage backend**  
-Instance volumes use the `pvs` backend: durable, network-attached storage. A launch that asks for `host_local` is refused immediately, naming the field, and creates nothing.
+**Local disk**  
+A disk on the machine the instance runs on, like an instance-store volume, which you ask for at launch with `localDisks`. The launch creates it blank, and it's deleted with the instance. See [Add local disks at launch](local-disks.md).
 
-**Host-local drives are temporary**  
-A host-local drive lives on the disk of the machine the instance runs on, like an instance-store volume. Its data doesn't survive a stop and start, a shutdown from inside the instance, a reboot of that machine, or the instance's termination. Each start gives the drive back empty, on whichever machine the instance starts. A host-local drive is never a boot drive: the root disk is always a durable volume. Keep anything that must survive on a durable volume. See [Volumes](../../storage/volumes/index.md).
+**Local disks are temporary**  
+A local disk's data doesn't survive a stop and start, a shutdown from inside the instance, a reboot of that machine, or the instance's termination. Each start gives the disk back empty, on whichever machine the instance starts. A local disk is never the boot disk: the root disk is always a durable volume. Keep anything that must survive on a durable volume. See [Volumes](../../storage/volumes/index.md).
 
-**Host-local drives have their own price**  
-A host-local drive is billed per GiB-hour of its size for as long as it exists, under the product key `storage.host_local`, not at a storage class's volume price. See [`storage_host_local`](../../pricing/reference/price-list-api.md#storage_host_local) in the price list.
+**Local disks have their own price**  
+A local disk is billed per GiB-hour of its size for as long as it exists, under the product key `storage.host_local`, not at a storage class's volume price. See [`storage_host_local`](../../pricing/reference/price-list-api.md#storage_host_local) in the price list.
 
 ## Sizing the root disk
 
@@ -69,12 +71,13 @@ You can't change the root disk's storage class after launch. To grow it later, r
 ## What you can do
 
 - [Attach and detach volumes](attach-detach.md)
+- [Add local disks at launch](local-disks.md)
 - [Launch an instance](../instances/launch.md) with a larger root disk
 - [Find which instance holds a volume](../../storage/volumes/find-instance.md)
 
 ## Limits and quotas
 
-See [Limits](../../platform/reference/limits.md#storage).
+See [Limits](../../platform/reference/limits.md#storage), and [Local disk reference](local-disks-reference.md) for what a launch's local disks can be.
 
 ## Related
 
