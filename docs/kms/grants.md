@@ -6,7 +6,7 @@ page_type: concept
 parent: home
 nav_order: 15
 tags: [kms, encryption]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-25
 availability: preview
 ---
 
@@ -34,9 +34,11 @@ A key holds at most 1000 grants that haven't expired for any one host, and a key
 
 ## Who makes grants
 
-Making a grant needs `kms.grant.create` on the key's project, which the role `roles/kms.grant-delegate` holds. Every organization holds an org-wide binding of that role to compute's service agent, `//iam.origincloudapis.eu/serviceAgents/compute`, so that compute can make the grants your attached volumes need; you can delete that binding and create it again. See [Service agents](../iam/service-agents.md). That role makes grants for hosts and never uses a key itself. Owner holds every permission, so it can make grants too; none of the other KMS roles can.
+Making a grant needs `kms.grant.create` on the key's project, which the role `roles/kms.grant-delegate` holds. Every organization holds an org-wide binding of that role to compute's service agent, `//iam.origincloudapis.eu/serviceAgents/compute`, so that compute can make the grants your attached volumes need; you can delete that binding and create it again. See [Service agents](../iam/service-agents.md). That role makes grants for hosts and never uses a key itself. Storage's service agent, `//iam.origincloudapis.eu/serviceAgents/storage`, holds an org-wide binding of `roles/kms.grant-issuer`, which only makes and deletes grants, for the grants that prepare a new volume. Owner holds every permission, so it can make grants too; none of the other KMS roles can.
 
 The grants on a key the platform manages are the platform's: only the platform makes, renews and deletes them. Anyone else's request is refused with `FORBIDDEN`, whatever roles they hold, and recorded in the audit log with reason `platform_managed`. You still see them with `ListGrants`. See [Keys the platform manages](keys.md#keys-the-platform-manages).
+
+Storage's service agent makes, renews and deletes grants only on the keys the platform manages. On a key of your own, its request is refused with `FORBIDDEN`, whatever roles it holds, and recorded in the audit log with reason `not_platform_managed`.
 
 A grant is kept by the zone of its host. Making, renewing and using it keep working while any other zone of the region is down.
 
@@ -60,7 +62,7 @@ curl -X DELETE -H "Authorization: Bearer $(origin id token | jq -r .token)" \
   "https://kms.origincloudapis.eu/v1beta1/projects/<project-id>/regions/<region>/keys/<key-id>/grants/<grant-id>"
 ```
 
-To stop every grant on a key at once, [disable the key](disable-delete.md). To stop new grants, remove the `roles/kms.grant-delegate` binding: the grants already made run out within an hour.
+To stop every grant on a key at once, [disable the key](disable-delete.md). To stop new grants, remove the `roles/kms.grant-delegate` and `roles/kms.grant-issuer` bindings: the grants already made run out within an hour.
 
 ## Related
 
