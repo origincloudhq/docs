@@ -81,7 +81,7 @@ origin compute list-volume-attachments --instance <instance-id>
 
    A detached attachment is no longer listed.
 
-You can't detach an instance's root disk.
+You can't detach an instance's root disk or one of its [local disks](local-disks.md).
 
 ## Using the API
 

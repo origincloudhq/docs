@@ -11,7 +11,7 @@ last_reviewed: 2026-11-21
 
 # Launch templates
 
-A launch template keeps the recipe of an instance under a name, so that you don't have to send the whole recipe with every launch. The recipe is the same `launchTemplateData` a launch from a recipe takes: the instance type, the image or image family, the key pair, the login user, the boot volume, the service account, the instance's tags and its network interface.
+A launch template keeps the recipe of an instance under a name, so that you don't have to send the whole recipe with every launch. The recipe is the same `launchTemplateData` a launch from a recipe takes: the instance type, the image or image family, the key pair, the login user, the boot volume, the service account, the instance's tags, its network interface and its local disks.
 
 A template belongs to a project and can be used in every zone. It holds numbered versions of its recipe. A version never changes once it is created, and one version is the template's default.
 
