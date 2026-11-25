@@ -40,7 +40,7 @@ Every volume disk in the guest, the root disk included, has the volume's id, suc
 Instance volumes use the `pvs` backend: durable, network-attached storage. A launch that asks for `host_local` is refused immediately, naming the field, and creates nothing.
 
 **Host-local drives are temporary**  
-A host-local drive lives on the disk of the machine the instance runs on, like an instance-store volume. Its data doesn't survive a stop and start, a reboot of that machine, or the instance's termination. A host-local drive is never a boot drive: the root disk is always a durable volume. Keep anything that must survive on a durable volume. See [Volumes](../../storage/volumes/index.md).
+A host-local drive lives on the disk of the machine the instance runs on, like an instance-store volume. Its data doesn't survive a stop and start, a shutdown from inside the instance, a reboot of that machine, or the instance's termination. Each start gives the drive back empty, on whichever machine the instance starts. A host-local drive is never a boot drive: the root disk is always a durable volume. Keep anything that must survive on a durable volume. See [Volumes](../../storage/volumes/index.md).
 
 ## Sizing the root disk
 
