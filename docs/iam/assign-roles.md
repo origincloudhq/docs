@@ -11,7 +11,7 @@ last_reviewed: 2026-11-24
 
 # Assign and revoke roles
 
-Assign a role to give a user or service account access, and revoke it to take that access away. In the `origin iam` commands and the REST API, each assignment is a role binding: one role for one member, org-wide or in one project. A change takes effect on the member's next request. You can name a user by their email address: if they have no Origin Cloud account yet, the binding waits for them as a [pending role binding](#pending-role-bindings) and the platform emails them an invitation.
+Assign a role to give a user or service account access, and revoke it to take that access away. In the `origin iam` commands and the REST API, each assignment is a role binding: one role for one member, org-wide or in one project. A change takes effect within seconds. You can name a user by their email address: if they have no Origin Cloud account yet, the binding waits for them as a [pending role binding](#pending-role-bindings) and the platform emails them an invitation.
 
 ## Before you begin
 

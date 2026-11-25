@@ -90,7 +90,7 @@ flowchart TD
   more -->|No| deny[Refused with FORBIDDEN]
 ```
 
-Permissions only add up. There are no deny rules, so holding a role never takes access away. The check runs on every request, so assigning or revoking a role takes effect on the principal's next request. A refused request fails with the [`FORBIDDEN`](../platform/reference/errors.md#forbidden) error.
+Permissions only add up. There are no deny rules, so holding a role never takes access away. The check runs on every request, so assigning or revoking a role takes effect within seconds: each zone answers from its own copy of the role bindings, which follows a change a moment after it is made. A refused request fails with the [`FORBIDDEN`](../platform/reference/errors.md#forbidden) error.
 
 ## Repeated assignments and revocations
 
