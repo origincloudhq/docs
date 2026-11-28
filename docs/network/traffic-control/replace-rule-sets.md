@@ -7,7 +7,7 @@ page_type: concept
 parent: traffic-control
 nav_order: 30
 tags: [networking, security, dns, cli]
-last_reviewed: 2026-11-18
+last_reviewed: 2026-11-25
 ---
 
 # How rules, routes and lists change
@@ -39,7 +39,7 @@ An `update-` command changes only what its flags name, and needs at least one; w
 
 An empty list is stated by name, with its `--no-` flag, never by leaving a flag out. Giving both forms, such as `--tag` together with `--no-tags`, is refused.
 
-The GraphQL API's `updateAclRules`, `updateSecurityGroupRules`, `updateRouteTableRoutes`, `updateResolverPolicy` and `setNetworkInterfaceSecurityGroups` mutations replace a whole rule, route, server or security group list in one call. Read the current list first, and send every member to keep.
+In the REST API, each rule, route and association is a resource of its own, which you create or delete one at a time, such as `POST` to a security group's `rules` collection. Only tags and a resolver policy's upstream servers are lists that a `PATCH` replaces as a whole, so send every member to keep.
 
 ## Booleans are explicit
 

@@ -6,7 +6,7 @@ page_type: reference
 parent: reference
 nav_order: 10
 tags: [reference, pricing, api]
-last_reviewed: 2026-11-24
+last_reviewed: 2026-11-27
 ---
 
 # Price list API
@@ -116,6 +116,8 @@ The families appear in the following order. Traffic in `gb` is counted in decima
 | `observability_ingested_sample` | `observability.ingested_sample` | – | `samples` |
 | `dns_hosted_zone` | `dns.hosted_zone` | – | `seconds` |
 | `dns_query` | `dns.query` | – | `queries` |
+| `secretmanager_secret_version` | `secretmanager.secret_version` | – | `seconds` |
+| `secretmanager_access` | `secretmanager.access` | – | `requests` |
 
 ### compute_instance
 
@@ -172,6 +174,14 @@ The time a hosted zone exists, public or private, from its creation until it's d
 ### dns_query
 
 The rate per query to a public zone, which applies once Origin's public name servers answer for public zones. Queries answered inside a VPC for a private zone aren't billed. See [DNS](../../dns/index.md#pricing).
+
+### secretmanager_secret_version
+
+The time each version of a secret is kept, enabled or disabled, from its creation until it's destroyed. A version of a deleted secret counts until the secret is destroyed at the end of its recovery window.
+
+### secretmanager_access
+
+Each access to a secret version's payload that's answered with the payload, in any zone of the region. Refused accesses and reads of metadata aren't billed.
 
 ## Response headers
 

@@ -7,12 +7,12 @@ page_type: task
 parent: volumes
 nav_order: 40
 tags: [storage, volumes, images, cli, api]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-25
 ---
 
 # Import a disk image as a volume
 
-Import a disk image when you've built one yourself and want it as a volume's initial content. The platform downloads the image from an HTTP(S) URL, converts it to raw format, and writes it into a new volume. To launch instances from the result, snapshot and protect the volume, then create an image from the snapshot.
+Import a disk image when you've built one yourself and want it as a volume's initial content. The platform downloads the image from an HTTP(S) URL, checks it, converts it to raw format, and writes it into a new volume. To launch instances from the result, snapshot and protect the volume, then create an image from the snapshot.
 
 ## Before you begin
 
@@ -24,7 +24,7 @@ Import a disk image when you've built one yourself and want it as a volume's ini
 
 ## Choose the image and size
 
-The platform detects the image format and converts it. Common disk image formats are accepted, including qcow2 (also compressed qcow2) and raw. Host the image file itself, not an archive of it such as `.gz` or `.xz`.
+The platform detects the image format and converts it. Two formats are accepted: qcow2 (also compressed qcow2) and raw. Convert an image in another format, such as VMDK, VHDX or VHD, with `qemu-img convert -O qcow2` first. A qcow2 image must be self-contained: one with a backing file or an external data file is refused, and so is an encrypted image. `qemu-img info` shows `backing file` or `data file` for an image that has one; `qemu-img convert -O qcow2` writes a self-contained copy. Host the image file itself, not an archive of it such as `.gz` or `.xz`.
 
 `--size-gib` is the size of the volume you get. It's what the disk becomes, what counts against your quota, and what you're billed for:
 
@@ -42,24 +42,19 @@ The platform detects the image format and converts it. Common disk image formats
 
    The command waits until the import is done and prints the volume. `state: AVAILABLE` means the import succeeded and the volume holds your image. An import can take many minutes; to return at once instead, add `--no-wait`, and wait for the operation later with `origin pvs wait-operation`. See [Wait for long-running operations](../../platform/access/cli.md#wait-for-long-running-operations).
 
-   With the API, use the `importVolume` mutation:
+   With the REST API, send a `POST` to the `volumes:import` method of the zone:
 
-   ```graphql
-   mutation {
-     pvs {
-       importVolume(input: {
-         project: "//resourcemanager.origincloudapis.eu/projects/<project-id>"
-         sizeInGib: 20
-         sourceUrl: "https://example.com/images/my-image.qcow2"
-       }) {
-         id
-         status
-       }
-     }
-   }
+   ```sh
+   curl -sS -X POST \
+     https://pvs.origincloudapis.eu/v1beta1/projects/<project-id>/zones/<zone>/volumes:import \
+     -H "$(origin id token --as-header --raw)" \
+     -H "Content-Type: application/json" \
+     -d '{"volume": {"sizeGib": 20}, "sourceUrl": "https://example.com/images/my-image.qcow2"}'
    ```
 
-   Add `--storage-class` or `storageClass` to choose a class other than the default, and `--tag` to tag the volume. See [Storage classes](storage-classes.md).
+   The request returns an operation. Read the volume until it reports `AVAILABLE`.
+
+   Add `--storage-class` or `volume.storageClass` to choose a class other than the default, and `--tag` to tag the volume. See [Storage classes](storage-classes.md).
 
 2. Optional: verify the volume.
 
@@ -81,6 +76,9 @@ A failed import fails the command and leaves the volume in `ERROR`, and the volu
 
 **`the operation failed (ERR_IMPORT_IMAGE_TOO_LARGE)`**  
 The image's virtual size is larger than the volume's `sizeGib`. Delete the volume and import again with a larger size.
+
+**`the operation failed (ERR_IMPORT_SOURCE_REFUSED)`**  
+The image isn't raw or qcow2, or it names a backing file or an external data file, or it's encrypted. Delete the volume, convert the image to a self-contained, unencrypted qcow2 or raw image, and import again. See [Choose the image and size](#choose-the-image-and-size).
 
 **`the operation failed (ERR_IMPORT)`**  
 The download, conversion, or write failed, or the import ran out of time. Delete the volume and import again, from a faster source if time was the problem.

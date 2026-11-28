@@ -7,7 +7,7 @@ parent: instance-storage
 nav_order: 30
 tags: [compute, storage, volumes, reference, api]
 related: [instance-storage-local-disks, instance-storage]
-last_reviewed: 2026-11-25
+last_reviewed: 2026-11-26
 ---
 
 # Local disk reference
@@ -21,7 +21,7 @@ This page lists the fields of a local disk and the rules that apply to it. For w
 | Field | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `sizeGib` | integer | yes | – | The disk's size in GiB, at least 1. |
-| `device` | string | no | the first free name | The device name the guest sees the disk under: one of `vda` to `vdz`, but `vdc`, and none that the image's volumes or another local disk has. |
+| `device` | string | no | the first free name | The disk's slot on the instance: one of `vda` to `vdz`, but `vdc`, and none that the image's volumes or another local disk has. It is a hint at most, not the name the guest gives the disk; find the disk by its serial, `/dev/disk/by-id/virtio-<volume-id>`. |
 
 An instance shows `localDisks` as it was launched, with the device name each disk got. The field can't be changed after the launch.
 

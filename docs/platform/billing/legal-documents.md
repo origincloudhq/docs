@@ -8,7 +8,7 @@ parent: billing
 nav_order: 25
 tags: [billing, legal]
 availability: preview
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-25
 ---
 
 # Legal documents and acceptance
@@ -45,7 +45,7 @@ flowchart LR
   blocking -->|accepted| accepted
 ```
 
-**At sign-up.** Once a version is in force, registering an organization or creating a billing account must accept every version in force of the four documents, and confirm that you act as a business. In GraphQL, `registerOrganisation` and `createBillingAccount` take this as `legalAcceptance`, the versions with their `sha256` plus `actsAsBusiness: true`. In the REST API, `CreateBillingAccount` takes `acceptedLegalDocuments` and `actsAsBusiness`. A request that leaves out a version in force, or names one with the wrong `sha256`, fails naming the field and creates nothing. An organization created from its name alone (`createOrganisation`, or the resource manager's `CreateOrganization`) accepts nothing; its billing account then has the versions in force as requirements.
+**At sign-up.** Once a version is in force, creating a billing account must accept every version in force of the four documents, and confirm that you act as a business. `CreateBillingAccount` takes this as `acceptedLegalDocuments`, the versions with their `sha256`, plus `actsAsBusiness: true`. A request that leaves out a version in force, or names one with the wrong `sha256`, fails naming the field and creates nothing. An organization created with the resource manager's `CreateOrganization` accepts nothing; its billing account then has the versions in force as requirements.
 
 **When a document changes.** `QueryLegalRequirements` lists the versions a billing account has yet to accept: the version in force, if it isn't accepted, and every material version announced after it. Accept them with `AcceptLegalDocuments`, naming each version with the `sha256` of the text you showed. Accepting a newer version also covers the ones before it. An editorial version is never required.
 

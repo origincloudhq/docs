@@ -2,12 +2,12 @@
 id: reference-metrics
 title: Metrics reference
 nav_title: Metrics
-description: Every metric Observability provides, with resource type, unit, and meaning, plus the REST and GraphQL query fields, limits, and errors.
+description: Every metric Observability provides, with resource type, unit, and meaning, plus the REST query fields, limits, and errors.
 page_type: reference
 parent: reference
 nav_order: 20
 tags: [reference, observability, metrics, api, errors]
-last_reviewed: 2026-11-21
+last_reviewed: 2026-11-25
 ---
 
 # Metrics reference
@@ -161,42 +161,14 @@ The response holds `timeSeries`, one series per requested metric.
 | `timeSeries.points.endTime` | RFC 3339 timestamp | End of the period the data point covers. |
 | `timeSeries.points.value` | number | The `RATE` or `INCREASE` for that period. |
 
-## GraphQL query arguments
-
-The `observability.metrics` query takes one `input` argument of type `MetricQueryInput`.
-
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `resource` | `ID` | yes | The full resource name of one compute instance, volume, or network interface, such as `//compute.origincloudapis.eu/projects/<project-id>/zones/<zone>/instances/<instance-id>`. Its project must exist and you need `observability.metric.get` on the resource. |
-| `metricNames` | `[String!]` | yes | One or more metric names from this page. Each name returns one series, in the order given. |
-| `from` | `DateTime` | yes | Start of the time window, as an RFC 3339 timestamp. The first data point is at `from`. |
-| `to` | `DateTime` | yes | End of the time window, as an RFC 3339 timestamp. Must not be earlier than `from`. |
-| `periodSeconds` | `Int` | yes | Length of each period and spacing of the data points, in seconds. Values below 1 count as 1. There's no maximum. Use at least 60, because each data point needs two values collected 30 seconds apart. |
-| `statistic` | `MetricStatisticInput` | yes | `RATE` (average per-second increase over the period) or `INCREASE` (total increase over the period). |
-
-A metric name that exists but belongs to another resource type returns a series without data points.
-
-## GraphQL response fields
-
-The query returns a list of `MetricSeries`, one per requested metric name.
-
-| Field | Type | Description |
-|---|---|---|
-| `metricName` | `String` | The metric name, as requested. |
-| `resource` | `ID` | The full resource name of the resource the series belongs to. |
-| `unit` | `String` | Unit of the underlying counter: `seconds`, `bytes`, or `operations`. A `RATE` value is this unit per second. |
-| `dataPoints` | `[MetricDataPoint!]` | The data points in time order. Empty when the platform has no values for the window. |
-| `dataPoints.timestamp` | `DateTime` | End of the period the data point covers. |
-| `dataPoints.value` | `Float` | The `RATE` or `INCREASE` for that period. |
-
 ## Limits
 
 | Limit | Value |
 |---|---|
-| Data points per query | 11,000, summed over all metrics in the query. Each metric contributes the window's length divided by the period, plus one: `(to - from) / periodSeconds + 1` in GraphQL. |
-| Queries per minute | 60 per organization, the REST and GraphQL APIs together. Every admitted query counts. A GraphQL query that names an unknown metric is admitted and counts; the REST API refuses it before admission. |
-| Concurrent queries | 4 per organization, the REST and GraphQL APIs together. |
-| Query duration | 30 seconds. A query that runs longer is stopped and returns `SERVICE_UNAVAILABLE` (REST: `503 UNAVAILABLE`). |
+| Data points per query | 11,000, summed over all metrics in the query. Each metric contributes the window's length divided by the period, plus one: `(endTime - startTime) / period + 1`. |
+| Queries per minute | 60 per organization. Every admitted query counts. A query that names an unknown metric is refused before admission and doesn't count. |
+| Concurrent queries | 4 per organization. |
+| Query duration | 30 seconds. A query that runs longer is stopped and returns `503 UNAVAILABLE`. |
 | Data retention | 90 days. Older periods return no data points. |
 | Collection interval | 30 seconds, while the instance runs. |
 
@@ -207,22 +179,10 @@ A REST error is a JSON body `{"error": {...}}` with the HTTP status, its `status
 | HTTP status | `status` | Cause | What to do |
 |---|---|---|---|
 | 400 | `INVALID_ARGUMENT` | A field is missing or invalid: a name in `metrics` that isn't on this page, a `resource` that isn't an instance, volume, or network interface in the project of the path, an `endTime` before `startTime`, a `period` that isn't whole seconds. | Correct the field the error names. |
-| 401 | `UNAUTHENTICATED` | No access token, or an expired or invalid one. | Get a new token. See [Use the API](../../platform/access/api.md#authenticate). |
+| 401 | `UNAUTHENTICATED` | No access token, or an expired or invalid one. | Get a new token. See [Use the REST APIs](../../platform/access/api.md#authenticate). |
 | 403 | `PERMISSION_DENIED` | You don't have `observability.metric.get` on the resource. | Ask for a role that includes it, such as Viewer. See [Roles](../../iam/roles.md). |
 | 404 | `NOT_FOUND` | The project of the path doesn't exist. | Correct the project ID. |
 | 409 | `FAILED_PRECONDITION` | The query exceeds the data point limit, the per-minute limit, or the concurrency limit. All three return the message `metric query rate limit exceeded; please retry later`. | Check that the query has at most 11,000 data points. If it does, wait a few seconds and retry. |
 | 503 | `UNAVAILABLE` | The query didn't finish within 30 seconds, or metrics are temporarily unavailable. | Retry. If it keeps timing out, query a shorter window or fewer metrics. |
-
-## Errors
-
-GraphQL errors carry their code in `extensions.code`. For the general meaning of each code, see [Errors](../../platform/reference/errors.md).
-
-| Code | Cause | What to do |
-|---|---|---|
-| [`BAD_REQUEST`](../../platform/reference/errors.md#bad_request) | A name in `metricNames` isn't one of the metrics on this page (message: ``metric `<name>` is not in the catalog``), or `resource` isn't the full resource name of a compute instance, volume, or network interface (a name without its host, a bare ID and another kind of resource are refused). | Correct the metric name or the resource name. |
-| [`NOT_FOUND`](../../platform/reference/errors.md#not_found) | The project in `resource` doesn't exist. | Correct the project ID. |
-| [`FORBIDDEN`](../../platform/reference/errors.md#forbidden) | You don't have `observability.metric.get` on the resource. | Ask for a role that includes it, such as Viewer. See [Roles](../../iam/roles.md). |
-| [`CONFLICT`](../../platform/reference/errors.md#conflict) | The query exceeds the data point limit, the per-minute limit, or the concurrency limit. All three return the message `metric query rate limit exceeded; please retry later`. | Check that the query has at most 11,000 data points. If it does, wait a few seconds and retry. |
-| [`SERVICE_UNAVAILABLE`](../../platform/reference/errors.md#service_unavailable) | The query didn't finish within 30 seconds, or metrics are temporarily unavailable. | Retry. If it keeps timing out, query a shorter window or fewer metrics. |
 
 A query that fails isn't billed.

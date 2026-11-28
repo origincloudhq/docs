@@ -1,27 +1,27 @@
 ---
 id: reference-status-reasons
 title: Status reasons
-description: Every text an instance can report in statusReason when it is FAILED or was stopped by the platform, with what each means and what to do next.
+description: Every text an instance can report in stateReason when it is FAILED, was stopped by the platform or crashed, with what each means and what to do next.
 page_type: reference
 parent: reference
 nav_order: 20
 tags: [reference, compute, instances, troubleshooting]
 related: [instances-lifecycle, instances-host-failure]
-last_reviewed: 2026-11-21
+last_reviewed: 2026-11-26
 ---
 
 # Status reasons
 
-An instance's status reason says why it is in its current status. `origin compute get-instance` and `list-instances` return it as `stateReason`, next to `state`; the GraphQL API returns it as `statusReason`, next to `status`.
+An instance's status reason says why it is in its current status. `origin compute get-instance` and `list-instances`, and the REST API, return it as `stateReason`, next to `state`.
 
 It's set in two cases:
 
 - Every `FAILED` instance carries one.
-- A `STOPPED` instance carries one when the platform stopped it because its machine failed. A `STOPPED` instance you stopped yourself, that shut itself down, or that the platform stopped to move it to another machine carries none.
+- A `STOPPED` instance carries one when the platform stopped it because its machine failed, or when its operating system crashed. A `STOPPED` instance you stopped yourself, that shut itself down, or that the platform stopped to move it to another machine carries none.
 
-For every other status it's empty (`null` in the GraphQL API), and starting the instance clears it. A reason starts with one of the fixed texts below. Some texts are followed by a colon and a detail, such as a quota refusal you can act on. A reason never contains raw host errors, file paths or machine names. If the reason isn't enough to act on, contact Origin Cloud support and quote the instance's full name, such as `//compute.origincloudapis.eu/projects/<project>/zones/<zone>/instances/<instance-id>`.
+For every other status it's empty, and starting the instance clears it. A reason starts with one of the fixed texts below. Some texts are followed by a colon and a detail, such as a quota refusal you can act on. A reason never contains raw host errors, file paths or machine names. If the reason isn't enough to act on, contact Origin Cloud support and quote the instance's full name, such as `//compute.origincloudapis.eu/projects/<project>/zones/<zone>/instances/<instance-id>`.
 
-The texts are listed in the order an instance can meet them: launch, start, stop, and machine failure.
+The texts are listed in the order an instance can meet them: launch, start, stop, a crash, and machine failure.
 
 ## A volume could not be created
 
@@ -31,7 +31,9 @@ The texts are listed in the order an instance can meet them: launch, start, stop
 
 **Meaning:** A volume the launch creates, such as the root disk, could not be created. A detail you can act on is appended, for example `a volume this instance needs could not be created: invalid input on field quota: volume storage quota exceeded`.
 
-**What to do:** For a quota detail, free volume storage or request a higher limit. Then terminate the instance and launch again.
+If storage can't create the volume for a moment, for example while the platform's key service restarts, the platform asks again for up to two minutes. Only then does the launch fail, with the detail `storage was unavailable`.
+
+**What to do:** For a quota detail, free volume storage or request a higher limit. Then terminate the instance and launch again. For `storage was unavailable`, wait a few minutes before you launch again.
 
 ## A volume could not be attached
 
@@ -126,6 +128,16 @@ The texts are listed in the order an instance can meet them: launch, start, stop
 **Meaning:** The instance's machine is reachable but didn't confirm a stop or a termination's shutdown, after the platform sent it three times over about 30 minutes. The guest may still be running.
 
 **What to do:** Start the instance to return it to the normal lifecycle and stop it again, or terminate it.
+
+## The operating system crashed
+
+**Text:** `the instance's operating system crashed, and the instance stopped; start it again to bring it back`
+
+**Status:** `STOPPED`
+
+**Meaning:** The guest's kernel panicked, or the guest crashed in another way the platform detects. The instance stopped; its machine is fine. A crash while a stop you asked for is under way carries no reason.
+
+**What to do:** Start the instance again. If it keeps crashing, look in the guest's own logs from the boot that crashed for the cause, such as a kernel panic message, if its logs are kept across reboots (`journalctl -k -b -1` on a system with a persistent journal).
 
 ## The machine failed
 

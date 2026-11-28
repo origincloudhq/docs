@@ -7,7 +7,7 @@ parent: instances
 nav_order: 60
 tags: [compute, instances, cli, api]
 related: [instances-instance-types, instances-lifecycle, reference-cli]
-last_reviewed: 2026-11-25
+last_reviewed: 2026-11-26
 ---
 
 # Launch an instance
@@ -219,6 +219,7 @@ For other problems, see [Troubleshoot Compute](../troubleshooting/index.md).
 - [Attach a volume](../instance-storage/attach-detach.md)
 - [Associate a floating IP](../../network/internet-access/floating-ips.md)
 - [Stop and start an instance](stop-start.md)
+- [Terminate the instance when its guest shuts down](shutdown-behavior.md), for an instance that does one job and ends
 
 ## Related
 

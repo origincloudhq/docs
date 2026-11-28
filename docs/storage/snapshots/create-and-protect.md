@@ -6,7 +6,7 @@ page_type: task
 parent: snapshots
 nav_order: 20
 tags: [storage, snapshots, cli, api]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-25
 ---
 
 # Create and protect a snapshot
@@ -40,20 +40,17 @@ Take a snapshot to capture a volume's data at one point in time. Protect it when
 
    If the copy fails, the command fails and the snapshot reports `ERROR`. Delete it and take a new one.
 
-   With the API, use the `createSnapshot` mutation:
+   With the REST API, send a `POST` to the zone's `snapshots` collection:
 
-   ```graphql
-   mutation {
-     pvs {
-       createSnapshot(input: { volume: "//pvs.origincloudapis.eu/projects/<project-id>/zones/<zone>/volumes/<volume-id>" }) {
-         id
-         status
-       }
-     }
-   }
+   ```sh
+   curl -sS -X POST \
+     https://pvs.origincloudapis.eu/v1beta1/projects/<project-id>/zones/<zone>/snapshots \
+     -H "$(origin id token --as-header --raw)" \
+     -H "Content-Type: application/json" \
+     -d '{"sourceVolume": "//pvs.origincloudapis.eu/projects/<project-id>/zones/<zone>/volumes/<volume-id>"}'
    ```
 
-   The mutation returns at once with the snapshot in `PENDING`. Read the snapshot until it reports `status: COMPLETED`.
+   The request returns an operation at once, with the snapshot in `PENDING`. Read the snapshot until it reports `state: COMPLETED`. See [Use the REST APIs](../../platform/access/api.md).
 
 ## Protect the snapshot
 
@@ -67,17 +64,13 @@ Protect the snapshot only after it reports `COMPLETED`. A protect request for a 
 
    The command waits until the snapshot reports `protectionState: PROTECTED`. If the change can't be applied, the command fails and the snapshot reports `PROTECTION_FAILED`: its protection state is unknown. Protect it again. See [Snapshot states](snapshot-states.md#protection-state).
 
-   With the API, use the `protectSnapshot` mutation, and read the snapshot until it reports `protectionStatus: PROTECTED`:
+   With the REST API, call the snapshot's `:protect` method, and read the snapshot until it reports `protectionState: PROTECTED`:
 
-   ```graphql
-   mutation {
-     pvs {
-       protectSnapshot(input: { snapshot: "//pvs.origincloudapis.eu/projects/<project-id>/zones/<zone>/snapshots/<snapshot-id>" }) {
-         accepted
-         message
-       }
-     }
-   }
+   ```sh
+   curl -sS -X POST \
+     https://pvs.origincloudapis.eu/v1beta1/projects/<project-id>/zones/<zone>/snapshots/<snapshot-id>:protect \
+     -H "$(origin id token --as-header --raw)" \
+     -H "Content-Type: application/json" -d '{}'
    ```
 
 2. Optional: verify the snapshot.

@@ -7,7 +7,7 @@ page_type: reference
 parent: home
 nav_order: 80
 tags: [kms, reference, api]
-last_reviewed: 2026-11-25
+last_reviewed: 2026-11-27
 availability: preview
 ---
 
@@ -21,7 +21,7 @@ For explanations, follow the links back to the concept and task pages.
 
 ## Call the KMS API
 
-The KMS API answers at `https://kms.origincloudapis.eu`, and at the regional name `https://kms.eu-central1.origincloudapis.eu`. It's a preview (`v1beta1`): names and fields may still change. Every request carries an access token; with the `origin` CLI logged in, `origin id token --as-header --raw` prints the header. See [Use the GraphQL API](../../platform/access/api.md#authenticate).
+The KMS API answers at `https://kms.origincloudapis.eu`, and at the regional name `https://kms.eu-central1.origincloudapis.eu`. It's a preview (`v1beta1`): names and fields may still change. Every request carries an access token; with the `origin` CLI logged in, `origin id token --as-header --raw` prints the header. See [Use the REST APIs](../../platform/access/api.md).
 
 ```sh
 curl -sS https://kms.origincloudapis.eu/v1beta1/projects/<project-id>/regions/eu-central1/keys \
@@ -31,7 +31,7 @@ curl -sS https://kms.origincloudapis.eu/v1beta1/projects/<project-id>/regions/eu
 Requests and responses are JSON, with fields in lower camel case, such as `encryptionContext`. Bytes, such as a `plaintext` or a `signature`, are base64. A duration, such as `destroyDelay`, is written in seconds with an `s` suffix, such as `"604800s"`.
 
 - Lists return a page at a time. Pass the response's `nextPageToken` as `pageToken` for the next page; `pageSize` asks for a page size, which the server clamps.
-- Creates, updates, deletes, undeletes and rotations take an optional `requestId`, a UUID. A repeat with the same id within a day returns what the first request did instead of doing it again.
+- Creates, updates, deletes, undeletes, rotations and context retirements take an optional `requestId`, a UUID. A repeat with the same id within a day returns what the first request did instead of doing it again.
 
 ## Resource names
 
@@ -57,6 +57,7 @@ Paths are relative to `https://kms.origincloudapis.eu/v1beta1/`, and `<key>` sta
 | `DeleteKey` | `DELETE <key>` | `kms.key.delete` | Deletes a key; its material is destroyed after `destroyDelay`. |
 | `UndeleteKey` | `POST <key>:undelete` | `kms.key.undelete` | Restores a deleted key, disabled, before its `purgeTime`. |
 | `RotateKey` | `POST <key>:rotate` | `kms.key.rotate` | Adds a version and makes it the primary. |
+| `RetireEncryptionContext` | `POST <key>:retireEncryptionContext` | `kms.key.retire_context` | Retires `encryptionContext` on a key the platform manages, for good. Only the platform calls it; see [Retired encryption contexts](#retired-encryption-contexts). |
 | `Encrypt` | `POST <key>:encrypt` | `kms.key.encrypt` | Encrypts `plaintext` with `encryptionContext`. |
 | `Decrypt` | `POST <key>:decrypt` | `kms.key.decrypt` | Decrypts `ciphertext` with `encryptionContext`. |
 | `GenerateDataKey` | `POST <key>:generateDataKey` | `kms.key.generate_data_key` | A 32-byte data key, in `plaintext` and in `ciphertext`. |
@@ -96,9 +97,16 @@ Every permission is checked on the key's project. Owner holds them all; Viewer h
 | `roles/kms.signer` | `sign`, `get_public_key` | A program that signs |
 | `roles/kms.grant-delegate` | grants: `get`, `list`, `create`, `update`, `delete` | The platform's services that let a host use your keys |
 | `roles/kms.grant-issuer` | grants: `create`, `delete` | Storage's service agent, on the keys the platform manages |
-| `roles/kms.volume-keys-agent` | `get`, `create`, `update`, `undelete`, `generate_data_key` | Storage's service agent, on the keys the platform manages |
+| `roles/kms.volume-keys-agent` | `get`, `create`, `update`, `undelete`, `generate_data_key`, `retire_context` | Storage's service agent, on the keys the platform manages |
+| `roles/kms.secret-keys-agent` | `get`, `create`, `update`, `undelete`, `generate_data_key`, `decrypt` | Secret Manager's service agent, on the keys the platform manages |
 
-The permissions are `kms.key.<action>` and `kms.grant.<action>`. See [Built-in roles](../../iam/roles.md) and [Assign roles](../../iam/assign-roles.md).
+The permissions are `kms.key.<action>` and `kms.grant.<action>`. Owner holds `kms.key.retire_context` too, so an owner can bind `roles/kms.volume-keys-agent` again, but the KMS refuses a retire from anyone but a platform service agent. See [Built-in roles](../../iam/roles.md) and [Assign roles](../../iam/assign-roles.md).
+
+## Retired encryption contexts
+
+A platform service agent can retire an encryption context on a key the platform manages, such as a deleted volume's context, `volume=<the volume's full name>`, on the project's volumes key. From then on, in every zone, the KMS refuses with `FORBIDDEN` each `Encrypt`, `Decrypt` and `GenerateDataKey` under exactly that context, and each grant made, renewed or used under it, so no ciphertext made under it opens again, wherever a copy of it is kept. Other contexts under the same key aren't affected.
+
+Only a platform service agent retires a context, and only on a key the platform manages. A retired context stays retired for as long as the key exists. The retirement and every refusal are recorded in the audit log, a refusal with `details.reason` `context_retired`.
 
 ## Limits
 
@@ -117,7 +125,7 @@ The permissions are `kms.key.<action>` and `kms.grant.<action>`. See [Built-in r
 | `BAD_REQUEST` | A malformed name or field, a region the KMS doesn't serve, data over 64 KiB, a ciphertext that doesn't decrypt under this key and encryption context, or an operation the key's purpose doesn't do. The error names the field. |
 | `NOT_FOUND` | The project, the key or the key version doesn't exist. |
 | `CONFLICT` | The key isn't in a state the request can start from: using a disabled or deleted key, rotating a key that isn't enabled, or undeleting a key that isn't deleted or whose material is destroyed. |
-| `FORBIDDEN` | The caller lacks the method's permission on the key's project, or asks to change a key the platform manages. |
+| `FORBIDDEN` | The caller lacks the method's permission on the key's project, asks to change a key the platform manages, or uses a key under an encryption context retired on it. |
 | `SERVICE_UNAVAILABLE` | Retryable: a key or a change that hasn't reached the zone yet, or the zone that answers key management is unreachable. |
 
 See [Error codes](../../platform/reference/errors.md) for how errors are returned.

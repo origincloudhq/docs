@@ -7,7 +7,7 @@ parent: images
 nav_order: 20
 tags: [compute, images, snapshots, cli, api]
 related: [images, instances-guest-environment]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-26
 ---
 
 # Create an image
@@ -61,7 +61,7 @@ For more about snapshot states, see [Create and protect a snapshot](../../storag
 
 ## Create the image
 
-An image lists its disks as block devices. Each has a guest device name, a size and, for a disk with content, the snapshot it's created from. The root device names the one the image boots from.
+An image lists its disks as block devices. Each has a device name, a size and, for a disk with content, the snapshot it's created from. The root device names the one the image boots from.
 
 1. Create the image from the snapshot:
 
@@ -77,7 +77,7 @@ An image lists its disks as block devices. Each has a guest device name, a size 
 
    - The snapshot must be protected, and in the project and zone you create the image in.
    - `size_gib` must be at least the snapshot's `sourceSizeGib`. Instances launched from the image get a root disk of at least this size.
-   - `device` is the guest device name of the disk, from `vda` to `vdz`, without `/dev/`; `vdc` is reserved. `--root-device` must name one of the block devices.
+   - `device` is the disk's slot on the instance, from `vda` to `vdz`, without `/dev/`; `vdc` is reserved. It is a hint at most, not the name the guest gives the disk: in the guest, find a disk by its serial, `/dev/disk/by-id/virtio-<volume-id>`. `--root-device` must name one of the block devices.
    - `--default-user` sets the account instances log in as. Omitted, it's `cloud`. See [Guest environment](../instances/guest-environment.md#login-user).
 
 2. Verify the image. Note its `name`, and check that it reads `state: AVAILABLE`:

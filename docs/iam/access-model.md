@@ -1,12 +1,12 @@
 ---
 id: access-model
 title: Access model
-description: How principals, roles, role assignments and permissions work together, how org-wide and project scopes differ, and how a request is authorized.
+description: How principals, roles, role assignments and permissions work together, how scopes and resource lists differ, and how a request is authorized.
 page_type: concept
 parent: home
 nav_order: 10
 tags: [iam, roles, security]
-last_reviewed: 2026-11-25
+last_reviewed: 2026-11-26
 ---
 
 # Access model
@@ -15,7 +15,7 @@ Access in Origin Cloud is granted by role assignments. A role assignment gives o
 
 ## Principals
 
-A principal is whoever or whatever is granted access: a user, a service account, or a service agent of the platform. The `origin iam` commands, the REST API and the GraphQL API call it a member, and take and show it by its full name only.
+A principal is whoever or whatever is granted access: a user, a service account, or a service agent of the platform. The `origin iam` commands and the REST API call it a member, and take and show it by its full name only.
 
 | Principal | Full name |
 |---|---|
@@ -33,7 +33,7 @@ A service agent is the identity one of the platform's own services acts as in yo
 
 ## Roles
 
-A role is a named, fixed set of permissions. Every role is built in: you can assign and revoke them, but you can't create, change or delete a role. Each role has a short ID such as `roles/owner` or `roles/iam.editor`. `origin iam get-role` and the REST API's `GetRole` take a role by its ID; a role binding's `role`, in the CLI, the REST API and the GraphQL API, takes its full name, such as `//iam.origincloudapis.eu/roles/iam.editor`, which the GraphQL `roles` query lists as each role's `id`. The [`list-roles`](reference/cli.md#list-roles) command shows every role with its permissions. For the full catalog, see [Built-in roles](roles.md).
+A role is a named, fixed set of permissions. Every role is built in: you can assign and revoke them, but you can't create, change or delete a role. Each role has a short ID such as `roles/owner` or `roles/iam.editor`. `origin iam get-role` and the REST API's `GetRole` take a role by its ID; a role binding's `role`, in the CLI and the REST API, takes its full name, such as `//iam.origincloudapis.eu/roles/iam.editor`. The [`list-roles`](reference/cli.md#list-roles) command shows every role with its permissions. For the full catalog, see [Built-in roles](roles.md).
 
 ## Permissions
 
@@ -47,7 +47,7 @@ The [`list-permissions`](reference/cli.md#list-permissions) command lists every 
 
 ## Role assignments and scopes
 
-A role assignment links a principal, a role and a scope. The scope is either the whole organization or one project in it. The `origin iam` commands and the REST API call an assignment a role binding.
+A role assignment links a principal, a role and a scope. The scope is the whole organization, one project in it, or one of its service accounts. The `origin iam` commands and the REST API call an assignment a role binding.
 
 **Org-wide**  
 The role applies to the organization itself and to every resource in every project of the organization, including projects created later.
@@ -55,13 +55,36 @@ The role applies to the organization itself and to every resource in every proje
 **Project scope**  
 The role applies only to resources inside that one project. It doesn't apply to the organization itself.
 
+**Service account scope**  
+The role applies only to that one service account, and to nothing on the organization or its projects. Only [`roles/iam.service-account-token-creator`](roles.md#rolesiamservice-account-token-creator) can be bound so, to let its holder impersonate that account alone. A binding on a service account is removed when the account is revoked.
+
+### Bindings limited to a list of resources
+
+An org-wide or project-scoped binding can be limited further, to a list of up to 100 resources inside its scope, named by their full names. Such a binding grants its role on the listed resources only. It grants nothing on the rest of its scope, and nothing on the organization or the project itself, so it never allows listing or creating resources there. A binding with no list covers its whole scope, as described above.
+
+A binding can list only the kinds of resource a service offers per-resource access for. The one kind so far is a Secret Manager secret, `//secretmanager.origincloudapis.eu/projects/<project-id>/regions/<region>/secrets/<secret>`, and a binding listing anything else is refused with [`BAD_REQUEST`](../platform/reference/errors.md#bad_request). Secret Manager itself isn't offered yet, so such a binding grants nothing until it is. A binding listing a secret grants only the permissions that act on one secret: reading, changing, deleting and restoring it, and everything on its versions. Creating and listing secrets need a binding on the project.
+
+How the scopes nest:
+
+| A binding on | Grants on |
+|---|---|
+| The organization, no list | The organization, and every resource in every project |
+| The organization, with a list | The listed resources, in any of its projects |
+| A project, no list | Every resource in that project |
+| A project, with a list | The listed resources of that project |
+| A service account | That account alone |
+
+A list names resources, not resource objects. Deleting a listed resource keeps the binding and its list, and a resource created later under the same name is covered by the binding again. To stop granting on a name, remove it from the binding's list with `origin iam update-role-binding` or `UpdateRoleBinding` ([Add or remove a resource from a binding](assign-roles.md#add-or-remove-a-resource-from-a-binding)), or delete the binding.
+
+A member can hold the same role at the same scope in one binding only for now, with or without a list: a second one is refused with [`CONFLICT`](../platform/reference/errors.md#conflict) naming the binding the member holds. Delete that binding to replace it. A [pending role binding](assign-roles.md#pending-role-bindings) for an address whose account then holds the role org-wide with a list is used up when it would activate, and grants nothing more; the [audit log](audit-log.md) records the activation as failed.
+
 All IAM operations, such as inviting members, assigning roles and creating service accounts, act on the organization. A project-scoped assignment therefore never allows them, even for `roles/owner`. To let someone manage access, assign the role org-wide. The billing roles must always be assigned org-wide; see [Billing access](../platform/billing/billing-access.md).
 
-Whoever creates an organization receives `roles/owner` and `roles/billing.administrator` org-wide, compute's service agent receives `roles/kms.grant-delegate` org-wide, and storage's service agent `roles/kms.grant-issuer` and `roles/kms.volume-keys-agent` org-wide ([Service agents](service-agents.md)). Anyone else holds only the roles you assign to them.
+Whoever creates an organization receives `roles/owner` and `roles/billing.administrator` org-wide, compute's service agent receives `roles/kms.grant-delegate` org-wide, storage's service agent `roles/kms.grant-issuer` and `roles/kms.volume-keys-agent` org-wide, and Secret Manager's service agent `roles/kms.secret-keys-agent` org-wide ([Service agents](service-agents.md)). Anyone else holds only the roles you assign to them.
 
 ## Who can assign a role
 
-Assigning and revoking roles needs `iam.role.assign` or `iam.role.revoke` on the organization. On top of that, you can only assign or revoke a role whose permissions you hold yourself at the scope of the grant. For an org-wide grant, your org-wide assignments count. For a project-scoped grant, your org-wide assignments and your assignments in that project count. Nobody can use role management to gain access they don't already have.
+Assigning and revoking roles needs `iam.role.assign` or `iam.role.revoke` on the organization. On top of that, you can only assign or revoke a role whose permissions you hold yourself at the scope of the grant. For an org-wide grant, your org-wide assignments count. For a project-scoped grant, your org-wide assignments and your assignments in that project count. For a grant on one service account, your org-wide assignments and your assignments on that account count. For a grant with a list of resources, your assignments that cover every listed resource count, including one with a list holding all of them; an assignment with a list never counts toward a grant without one. Changing a binding's list needs `iam.role.assign`, and the role's permissions on every resource of both the new and the old list, counted the same way. Nobody can use role management to gain access they don't already have.
 
 This applies to every path that changes a grant:
 
@@ -78,11 +101,13 @@ The following diagram shows how the platform decides whether to allow a request.
 ```mermaid
 flowchart TD
   accTitle: Authorizing a request
-  accDescr: The platform finds the caller's role assignments in the resource's organization. It skips assignments scoped to a different project. If any remaining assignment's role contains the required permission, the request is allowed; otherwise it is refused.
+  accDescr: The platform finds the caller's role assignments in the resource's organization. It skips assignments scoped to a different project, and assignments with a list of resources that doesn't name the resource. If any remaining assignment's role contains the required permission, the request is allowed; otherwise it is refused.
   req[Request needs a permission on a resource] --> find[Find the principal's role assignments in the resource's organization]
   find --> scope{Assignment is org-wide or in the resource's project?}
   scope -->|No| skip[Skip the assignment]
-  scope -->|Yes| perm{Role contains the permission?}
+  scope -->|Yes| listed{No list, or the list names the resource?}
+  listed -->|No| skip
+  listed -->|Yes| perm{Role contains the permission?}
   perm -->|Yes| allow[Allowed]
   perm -->|No| skip
   skip --> more{More assignments?}
@@ -94,11 +119,9 @@ Permissions only add up. There are no deny rules, so holding a role never takes 
 
 ## Repeated assignments and revocations
 
-In the `origin iam` commands and the REST API, binding a role that the member already holds at the same scope is refused with [`CONFLICT`](../platform/reference/errors.md#conflict), and a binding is revoked by deleting it by its ID, so it can't miss the scope. A retry with the same request ID within a day answers as the first request did.
+In the `origin iam` commands and the REST API, binding a role that the member already holds at the same scope, with or without a list of resources, is refused with [`CONFLICT`](../platform/reference/errors.md#conflict), and a binding is revoked by deleting it by its ID, so it can't miss the scope. A retry with the same request ID within a day answers as the first request did.
 
-In the GraphQL API, assigning and revoking are idempotent. Assigning a role that the principal already holds at the same scope, with the same role, succeeds and changes nothing. Revoking a role that the principal doesn't hold at that scope also succeeds and changes nothing.
-
-A GraphQL revocation matches the role and the scope exactly. An org-wide grant needs an org-wide revoke, and a project-scoped grant needs the same project. Use the role's full name as it appears in the principal's grants. For the steps, see [Assign and revoke roles](assign-roles.md).
+Deleting a binding removes exactly that binding: an org-wide grant needs its own delete, and a project-scoped grant its own. For the steps, see [Assign and revoke roles](assign-roles.md).
 
 ## The last owner is protected
 

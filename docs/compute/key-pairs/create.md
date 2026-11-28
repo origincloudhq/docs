@@ -7,7 +7,7 @@ parent: key-pairs
 nav_order: 10
 tags: [compute, key-pairs, cli, api]
 related: [key-pairs, instances-launch]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-25
 ---
 
 # Create a key pair
@@ -64,23 +64,16 @@ Both ways use `origin compute create-key-pair`: with `--public-key`, it imports 
    origin compute list-key-pairs
    ```
 
-## Using the API
+## Using the REST API
 
-The `importKeyPair` and `generateKeyPair` mutations take the same inputs. Request `privateKey` in the `generateKeyPair` selection, or you can't get it later:
+`POST` to the project's `keyPairs` collection. Pass `publicKey` to import a key, or leave it out to have the platform generate one; the `origin:name` tag names the key pair. The response of a generated key pair carries `privateKey` once, and never again:
 
-```graphql
-mutation {
-  compute {
-    generateKeyPair(input: {
-      project: "//resourcemanager.origincloudapis.eu/projects/<project-id>"
-      name: "my-key"
-    }) {
-      id
-      publicKey
-      privateKey
-    }
-  }
-}
+```sh
+curl -sS -X POST \
+  https://compute.origincloudapis.eu/v1beta1/projects/<project-id>/keyPairs \
+  -H "$(origin id token --as-header --raw)" \
+  -H "Content-Type: application/json" \
+  -d '{"tags": {"origin:name": "my-key"}}'
 ```
 
 ## Next steps

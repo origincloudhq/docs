@@ -7,7 +7,7 @@ parent: instances
 nav_order: 90
 tags: [compute, instances, cli, api]
 related: [instances-lifecycle]
-last_reviewed: 2026-11-04
+last_reviewed: 2026-11-25
 ---
 
 # Terminate an instance
@@ -41,7 +41,7 @@ Terminating is safe to repeat. If you aren't sure an earlier attempt went throug
 | Root disk and other launch-created volumes | Deleted. |
 | Volumes you attached yourself | Detached and `AVAILABLE` again. Not deleted. |
 | Network interface you named at launch | Released and `AVAILABLE` again, keeping its addresses and the Floating IPs you associated with it. Not deleted. Delete it with `origin network delete-network-interface` when you no longer need it. |
-| Network interface the platform created at launch | Deleted, with any public address the platform assigned to it automatically. This applies to instances launched without naming an interface, through the GraphQL API. |
+| Network interface the platform created at launch | Deleted, with any public address the platform assigned to it automatically. This applies to instances launched without naming an interface. |
 | Floating IP you allocated yourself | Disassociated. It stays allocated to you until you release it. See [Floating IPs](../../network/internet-access/floating-ips.md). |
 
 A launch-created volume that has a snapshot can't be deleted, so it stays `AVAILABLE` and billed after the instance terminates. Its `retentionNote` says why. Delete the snapshots, then the volume. See [Delete a volume](../../storage/volumes/delete.md).
@@ -50,17 +50,14 @@ If something else can't be released, the instance still reaches `TERMINATED` and
 
 A terminated instance stays in `list-instances` for 2 hours, then drops out of the list. You can still read it with `get-instance` for a day after it was terminated.
 
-## Using the API
+## Using the REST API
 
-```graphql
-mutation {
-  compute {
-    terminateInstance(input: { instance: "//compute.origincloudapis.eu/projects/<project-id>/zones/<zone>/instances/<instance-id>" }) {
-      accepted
-      message
-    }
-  }
-}
+Send a `DELETE` for the instance. The request returns an operation:
+
+```sh
+curl -sS -X DELETE \
+  https://compute.origincloudapis.eu/v1beta1/projects/<project-id>/zones/<zone>/instances/<instance-id> \
+  -H "$(origin id token --as-header --raw)"
 ```
 
 ## Related

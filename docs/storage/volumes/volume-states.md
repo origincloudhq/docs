@@ -6,14 +6,12 @@ page_type: concept
 parent: volumes
 nav_order: 20
 tags: [storage, volumes]
-last_reviewed: 2026-11-21
+last_reviewed: 2026-11-25
 ---
 
 # Volume states
 
 A volume reports two independent fields: `state` describes the volume itself, and `resizeState` describes the last resize. Creating, importing, resizing, and deleting a volume are long-running operations. The `origin pvs` commands wait until the operation is done; these fields tell you how the work ended, and where a volume is while it runs.
-
-This page uses the field names the CLI prints. The GraphQL API names some of them differently; see [Field names in the GraphQL API](#field-names-in-the-graphql-api).
 
 ## State
 
@@ -94,32 +92,13 @@ A state that has settled stays settled. Only something you do next changes it:
 
 ## Deleted volumes
 
-A deleted volume drops out of your volume list immediately. For 24 hours you can still look it up by its name with `origin pvs get-volume`, or by its full name with the `pvs.volume` query, and it reports `DELETED`; after that the lookup finds nothing.
-
-In the GraphQL API, a change of state can take a few seconds to show in a list or a lookup. To read your own change at once, send back the token its response carried; see [Read what you just changed](../../platform/access/api.md#read-what-you-just-changed).
+A deleted volume drops out of your volume list immediately. For 24 hours you can still look it up by its name with `origin pvs get-volume`, or by `GET` on its name in the REST API, and it reports `DELETED`; after that the lookup finds nothing.
 
 ## A volume that outlived its instance
 
 When you terminate an instance, the volumes created with it are normally deleted too. If one of them can't be deleted, most often because a snapshot of it still exists, the platform keeps the volume instead of failing the termination. The volume is `AVAILABLE`, it's yours, and it's billed.
 
 `retentionNote` on the volume explains why it was kept. It's empty on every other volume, including volumes you created yourself. To remove a kept volume, delete its snapshots and then the volume. See [Delete a volume](delete.md).
-
-## Field names in the GraphQL API
-
-The GraphQL API's `PvsVolume` reports the same states under these names:
-
-| CLI output | GraphQL API |
-|---|---|
-| `state` | `status` |
-| `IN_USE` | `INUSE` |
-| `stateReason` | `statusReason` |
-| `attachment` | `claimRef` |
-| `resizeState` | `modificationStatus` |
-| `RESIZE_COMPLETED`, `RESIZING`, `RESIZE_FAILED` | `COMPLETED`, `RESIZING` or `MODIFYING`, `FAILED` |
-| `resizeReason` | `modificationStatusReason` |
-| `sizeGib`, `pendingSizeGib` | `sizeInGib`, `pendingSizeInGib` |
-
-Where the CLI prints an empty string or `0` for a field that isn't set, the GraphQL API returns `null`.
 
 ## Related
 

@@ -7,7 +7,7 @@ parent: launch-templates
 nav_order: 60
 tags: [compute, launch-templates, instances, api]
 related: [launch-templates-how-it-works, instances-launch, launch-templates-versions-view]
-last_reviewed: 2026-11-21
+last_reviewed: 2026-11-26
 ---
 
 # Launch an instance from a launch template
@@ -72,6 +72,8 @@ Most fields replace the version's one by one. These replace more than themselves
 | `tags` | all of the version's tags |
 | `networkInterfaces` | all of the version's interfaces |
 | `localDisks` | all of the version's local disks |
+
+A `shutdownBehavior` left unspecified keeps the version's; `STOP` or `TERMINATE` replaces it. See [Choose what a guest shutdown does](../instances/shutdown-behavior.md).
 
 The template's version doesn't change: reading it afterwards shows the recipe it had. To keep a change for later launches, [create a version](versions-create.md) with it.
 

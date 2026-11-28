@@ -7,7 +7,7 @@ page_type: task
 parent: home
 nav_order: 40
 tags: [iam, organizations, cli, api]
-last_reviewed: 2026-11-24
+last_reviewed: 2026-11-25
 ---
 
 # Manage organization members
@@ -35,7 +35,7 @@ You can name a person by their email address, even before they have an account. 
    What happens next depends on whether an Origin Cloud account has verified the address:
 
    - **Account exists:** the role is granted immediately, and the binding's `member` is the user's full name. There's no separate step to accept.
-   - **No account yet:** the binding is created with `state` `PENDING`, org-wide, and the platform emails the address an invitation to sign up. The binding becomes active the first time someone signs up with that address, verifies it and signs in, to the console or with `origin id login`. If by then you can no longer assign the role yourself, it's dropped instead.
+   - **No account yet:** the binding is created with `state` `PENDING`, org-wide, and the platform emails the address an invitation to sign up. The binding becomes active the first time someone signs up with that address, verifies it and signs in to the console, or calls [`ActivatePendingRoleBindings`](reference/index.md#rest-api) themselves. If by then you can no longer assign the role yourself, it's dropped instead.
 
    Delivery of the email is best effort: a bounced or delayed email doesn't affect the binding.
 
@@ -87,8 +87,6 @@ In the console, find it under the pending invites on the **Access** page and cho
 ## Using the API
 
 In the REST API, add a member with `CreateRoleBinding` and `member` set to `user:<email>`, list members with `ListRoleBindings`, and remove one or withdraw an invitation with `DeleteRoleBinding`. See [Assign and revoke roles](assign-roles.md) and the [IAM reference](reference/index.md#rest-api).
-
-The GraphQL fields `inviteMember`, `removeMember`, `revokeInvite`, `orgMembers` and `orgInvites`, in the `iam` namespace, are the older path the console still uses. New integrations should use the REST API.
 
 ## Related
 

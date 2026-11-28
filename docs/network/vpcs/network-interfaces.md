@@ -6,7 +6,7 @@ page_type: concept
 parent: vpcs
 nav_order: 30
 tags: [networking, vpc]
-last_reviewed: 2026-11-22
+last_reviewed: 2026-11-26
 ---
 
 # Network interfaces
@@ -58,6 +58,8 @@ By default an instance can send only from its own interface's addresses. A packe
 - the interface's MAC address, and
 - the interface's private IPv4 or IPv6 address as its source. IPv6 traffic from a link-local address (`fe80::/10`) is also allowed, as is the unspecified address `::` for router solicitation and for duplicate address detection of the interface's own addresses.
 
+A DHCP request is the one IPv4 packet allowed from `0.0.0.0`: the broadcast an instance sends while it asks for its address (see [Network configuration](../../compute/instances/guest-environment.md#network-configuration)). It reaches the platform's DHCP server only, never another instance. An instance can't act as a DHCP or DHCPv6 server for its neighbors: packets from UDP ports 67 and 547 are dropped.
+
 ARP messages must name the interface's IPv4 address as their sender, or `0.0.0.0` for an address probe. IPv6 Neighbor Advertisements must name the interface's IPv6 address, or the link-local address formed from its MAC address (EUI-64, the Linux default), as their target. If the instance's operating system forms its link-local address another way, such as RFC 7217 stable-privacy addresses, other hosts on the subnet can't resolve that link-local address. IPv6 Router Advertisements and Redirects are dropped, so an instance that acts as an IPv6 router for others needs the check turned off. Frames that are not ARP, IPv4 or IPv6, including VLAN-tagged frames, are dropped.
 
 A Floating IP is not one of these addresses and doesn't need to be: the translation to and from it happens outside the instance, so the instance always sends from its private address.
@@ -68,6 +70,7 @@ The check applies to everything the instance sends, including to other instances
 - forwarding traffic for other addresses, as a router or NAT instance does
 - Kubernetes pod networking that routes pod addresses directly between nodes, such as flannel's `host-gw` backend
 - a virtual IP shared between instances, with keepalived/VRRP, kube-vip or MetalLB in L2 mode
+- a DHCP or DHCPv6 server for other instances
 
 ### Turning the check off
 

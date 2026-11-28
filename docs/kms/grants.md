@@ -21,7 +21,7 @@ A grant names:
 - **The key**, an `ENCRYPT_DECRYPT` key of yours.
 - **The operation**: `DECRYPT`.
 - **The grantee**: one platform host, or one platform service of the zone, by the identity its certificate names (it ends in `/zones/<zone>/hosts/<host>` or `/zones/<zone>/workloads/<workload>`).
-- **The encryption context** a decryption must carry, exactly, such as `volume=<the volume's name>`. A ciphertext made with another context doesn't decrypt under the grant.
+- **The encryption context** a decryption must carry, exactly, such as `volume=<the volume's name>`. A ciphertext made with another context doesn't decrypt under the grant. A `volume` in the context is the volume's full resource name, `//pvs.origincloudapis.eu/projects/<project-id>/zones/<zone>/volumes/<volume-id>`, of the key's own project: a grant naming a volume of another project, or a volume by anything but its full name, is refused with `INVALID_ARGUMENT`.
 - **When it expires**: at most 60 minutes after it was made or last renewed.
 
 Its name is `projects/<project-id>/regions/<region>/keys/<key-id>/grants/<grant-id>`.

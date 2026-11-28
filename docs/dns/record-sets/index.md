@@ -67,6 +67,7 @@ Each record set counts against your organization's record set quota, across all 
 - [Change several record sets at once](batch-changes.md)
 - [Point a name at a Floating IP](alias.md)
 
+- [Use external-dns with Origin Cloud DNS](external-dns.md)
 
 ## Related
 

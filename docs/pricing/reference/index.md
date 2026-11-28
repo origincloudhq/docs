@@ -22,4 +22,4 @@ The `GET /v1/pricing` endpoint: every response field, the product families and t
 ## Related references
 
 - [Metrics reference](../../observability/reference/metrics.md) – what the observability families bill for.
-- [Errors](../../platform/reference/errors.md) – error codes of the GraphQL API, including `PRODUCT_UNAVAILABLE`.
+- [Errors](../../platform/reference/errors.md) – error codes of the APIs, including `PRODUCT_UNAVAILABLE`.

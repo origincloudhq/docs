@@ -2,12 +2,12 @@
 id: volumes-find-instance
 title: Find the instance a volume is attached to
 nav_title: Find a volume's instance
-description: Find the volume attachment that holds an IN_USE volume, and from its name the instance, with one CLI command or API query.
+description: Find the volume attachment that holds an IN_USE volume, and from its name the instance, with one CLI command or REST API request.
 page_type: task
 parent: volumes
 nav_order: 70
 tags: [storage, volumes, instances, cli, api]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-26
 ---
 
 # Find the instance a volume is attached to
@@ -35,25 +35,16 @@ A volume that reports `IN_USE` names what holds it in `attachment`: the id of a 
      --volume //pvs.origincloudapis.eu/projects/<project-id>/zones/eu-central1-az1/volumes/<volume-id>
    ```
 
-   With the API, use the `volumeAttachments` query:
+   With the REST API, list the attachments of the instance `-`, which means every instance in the zone, and filter by `volume`:
 
-   ```graphql
-   query {
-     compute {
-       volumeAttachments(input: {
-         project: "//resourcemanager.origincloudapis.eu/projects/<project-id>"
-         volume: "//pvs.origincloudapis.eu/projects/<project-id>/zones/<zone>/volumes/<volume-id>"
-       }) {
-         id
-         instance
-         deviceName
-         status
-       }
-     }
-   }
+   ```sh
+   curl -sS -G \
+     https://compute.origincloudapis.eu/v1beta1/projects/<project-id>/zones/<zone>/instances/-/volumeAttachments \
+     --data-urlencode "volume=//pvs.origincloudapis.eu/projects/<project-id>/zones/<zone>/volumes/<volume-id>" \
+     -H "$(origin id token --as-header --raw)"
    ```
 
-3. Take the entry whose id, the last segment of its `name` (with the API, of its `id`), equals the volume's `attachment` (with the API, its `claimRef`). With the API, its `instance` is the instance's full name. Its `name` has the form `projects/<project-id>/zones/<zone>/instances/<instance-id>/volumeAttachments/<attachment-id>`: the `<instance-id>` segment is the instance, and `device` is the device name the guest sees.
+3. Take the entry whose id, the last segment of its `name`, equals the volume's `attachment`. Its `name` has the form `projects/<project-id>/zones/<zone>/instances/<instance-id>/volumeAttachments/<attachment-id>`: the `<instance-id>` segment is the instance, and `device` is the disk's slot on the instance. Inside the guest, find the disk by its serial, `/dev/disk/by-id/virtio-<volume-id>`, not by that name.
 
 4. Confirm by listing the instance's attachments. The volume is among them.
 

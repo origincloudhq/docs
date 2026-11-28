@@ -7,7 +7,7 @@ page_type: concept
 parent: vpcs
 nav_order: 10
 tags: [networking, vpc]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-26
 ---
 
 # VPC and subnet addressing
@@ -45,13 +45,18 @@ Instances use the router address as their default gateway and the DNS resolver a
 
 ## IPv6 addresses
 
-The platform assigns every VPC a `/56` IPv6 range; you can't choose it. Each subnet gets a `/72` from it, and each network interface gets one address from its subnet.
+Unless you choose one, the platform assigns every VPC a globally routable `/56` IPv6 range. Each subnet gets a `/72` from it, and each network interface gets one address from its subnet.
+
+Instances learn their IPv6 default router from router advertisements, which name the subnet's prefix as on-link. The advertisements don't allow stateless address autoconfiguration (SLAAC), so an instance keeps the one IPv6 address its network interface was assigned. They tell the instance to get that address over DHCPv6 (see [Network configuration](../../compute/instances/guest-environment.md#network-configuration)).
+
+
+### IPv6 and the internet
 
 IPv6 works between instances inside the VPC. It doesn't work between an instance and the internet, in either direction. What an outbound IPv6 connection to an internet address does depends on the VPC's IPv6 range, its `ipv6CidrBlock`:
 
 | VPC IPv6 range | Outbound IPv6 to the internet |
 |---|---|
-| Starts with `fd` (a private range) | Refused immediately with an ICMPv6 "administratively prohibited" error. Clients that fall back to IPv4, such as browsers, `curl` and package managers, then connect over IPv4 without waiting. |
+| A private range (unique local, starting with `fc` or `fd`) | Refused immediately with an ICMPv6 "administratively prohibited" error. Clients that fall back to IPv4, such as browsers, `curl` and package managers, then connect over IPv4 without waiting. |
 | Any other range | Gets no answer. A client waits for its connection timeout before it falls back to IPv4. |
 
 A subnet whose route table has no `::/0` route to the Internet Gateway, or that has no route table, gets the immediate refusal whatever the VPC's range.
@@ -65,6 +70,7 @@ Address space can run out in three places. Each case is refused with a message t
 - **The VPC has no room for another subnet.** `create-subnet` is refused; the VPC's `availableSubnetCount` is `0`. Use a different VPC, or create a new one with a wider IPv4 range. Deleting a subnet doesn't give its range back to the VPC.
 - **The subnet has no free address.** `create-network-interface` in that subnet is refused, and so is a launch that creates its interface there. Use a different subnet, or delete network interfaces you no longer need; their addresses become free again.
 - **The platform has no IPv6 range left for a new VPC.** `create-vpc` is refused, because every VPC needs an IPv6 range.
+
 
 A VPC's address ranges go back to the platform only when you delete the whole VPC. For what happens to a VPC's IPv6 range after deletion, see [Delete a subnet or VPC](delete.md).
 

@@ -6,7 +6,7 @@ page_type: task
 parent: organizations
 nav_order: 30
 tags: [projects, organizations, cli]
-last_reviewed: 2026-11-23
+last_reviewed: 2026-11-25
 ---
 
 # Manage projects
@@ -85,7 +85,7 @@ To rename the organization, use `origin resourcemanager update-organization --or
 
 ## Change a project's billing account
 
-A project is always charged to exactly one billing account of its organization. To charge it to another one, call the `linkProjectToBillingAccount` mutation in the `admin` namespace with the project's full resource name as `project` and the billing account's as `billingAccount`; the account must be one of the project's organization. It replaces the current link; there's no way to leave a project without a billing account.
+A project is always charged to exactly one billing account of its organization. To charge it to another one, call `UpdateProjectBillingInfo` in the billing REST API: `PATCH https://billing.origincloudapis.eu/v1beta1/projects/<project-id>/billingInfo?updateMask=billingAccount`, with the billing account's full name as `billingAccount` in the body; the account must be one of the project's organization. It replaces the current link; there's no way to leave a project without a billing account.
 
 This needs the `admin.project.attach` permission, which the Owner role has. It doesn't need access to the billing account itself. See [Billing access](../billing/billing-access.md).
 
@@ -100,9 +100,10 @@ Deleting a project is refused while it still owns any of these resources. Nothin
 - A VPC, including the project's default VPC.
 - A resolver policy other than the project's default one.
 - A hosted zone.
+- A Secret Manager secret that isn't deleted. A deleted secret in its recovery window doesn't block: it's destroyed when the window ends.
 - A KMS key of yours that isn't `DELETED`. A key the platform manages doesn't block: it's deleted with the project.
 
-1. Delete every resource in the project: terminate its instances, delete its images, key pairs, volumes and snapshots, delete its NAT gateways, release its Floating IPs, delete its VPCs, delete its resolver policies except the default one, delete its [hosted zones](../../dns/hosted-zones/delete.md), and [delete its KMS keys](../../kms/disable-delete.md#delete-a-key).
+1. Delete every resource in the project: terminate its instances, delete its images, key pairs, volumes and snapshots, delete its NAT gateways, release its Floating IPs, delete its VPCs, delete its resolver policies except the default one, delete its [hosted zones](../../dns/hosted-zones/delete.md), delete its Secret Manager secrets, and [delete its KMS keys](../../kms/disable-delete.md#delete-a-key).
 2. Delete the project. Deleting can't be undone, so the command needs `--yes`:
 
    ```sh
@@ -115,7 +116,7 @@ If a resource remains, the request fails with `CONFLICT`, naming every kind of r
 
 Deleting a project also removes its default resolver policy, the quota budgets you set on it, and every role assignment scoped to it, for every member and service account. Org-wide role assignments are unaffected. See [Role assignments and scopes](../../iam/access-model.md#role-assignments-and-scopes).
 
-The project's deletion also deletes each KMS key the platform manages in it, such as the volumes key: the key becomes `DELETED`, with a `purgeTime` 30 days later, when its material is destroyed. See [Keys the platform manages](../../kms/keys.md#keys-the-platform-manages).
+The project's deletion also deletes each KMS key the platform manages in it, such as the volumes key and the default Secret Manager key: the key becomes `DELETED`, with a `purgeTime` 30 days later, when its material is destroyed. See [Keys the platform manages](../../kms/keys.md#keys-the-platform-manages).
 
 ## Delete an organization
 

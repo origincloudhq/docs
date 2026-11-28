@@ -7,7 +7,7 @@ page_type: overview
 parent: null
 nav_order: 0
 tags: [overview, networking, vpc]
-last_reviewed: 2026-11-18
+last_reviewed: 2026-11-25
 ---
 
 # What is Origin Cloud Network?
@@ -52,8 +52,8 @@ Every instance gets an internal hostname that other instances in its VPC can res
 **CLI**  
 The `origin network` command group, with a command for each resource and for the associations between them. VPCs, route tables, network ACLs, security groups, Internet Gateways and resolver policies are regional; subnets, network interfaces, Floating IPs and NAT gateways are zonal. See [Use the CLI](../platform/access/cli.md) to install it and log in, and [`origin network` commands](reference/cli.md) for every command.
 
-**GraphQL API**  
-VPCs, subnets, network interfaces, gateways, route tables, Floating IPs, ACLs, security groups and resolver policies live under the `network` namespace of the API, for both queries and mutations. See [API access](../platform/access/api.md) and the [Network reference](reference/index.md).
+**REST API**  
+VPCs, subnets, network interfaces, gateways, route tables, Floating IPs, ACLs, security groups and resolver policies at `https://network.origincloudapis.eu`. See [Use the REST APIs](../platform/access/api.md) and the [Network reference](reference/index.md#rest-api).
 
 ## When to use Network
 

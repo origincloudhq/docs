@@ -1,12 +1,12 @@
 ---
 id: assign-roles
 title: Assign and revoke roles
-description: Bind a built-in role to a user, an email address or a service account org-wide or for one project, and delete the binding to revoke it.
+description: Bind a built-in role to a user, an email address or a service account org-wide or for one project, add or remove the resources a binding is limited to, and delete the binding to revoke it.
 page_type: task
 parent: home
 nav_order: 30
 tags: [iam, roles, cli, api]
-last_reviewed: 2026-11-24
+last_reviewed: 2026-11-26
 ---
 
 # Assign and revoke roles
@@ -43,7 +43,7 @@ Assign a role to give a user or service account access, and revoke it to take th
 
    To name a user by email address, pass `--member user:jane@example.com`. The answer's `member` is the user's full name when the address has an account, and `user:jane@example.com` with `state` `PENDING` when it has none.
 
-   To limit the binding to one project, add `--project //resourcemanager.origincloudapis.eu/projects/<project-id>`. A project-scoped binding applies only to resources in that project; it never allows IAM operations. See [Role assignments and scopes](access-model.md#role-assignments-and-scopes).
+   To limit the binding to one project, add `--project //resourcemanager.origincloudapis.eu/projects/<project-id>`. A project-scoped binding applies only to resources in that project; it never allows IAM operations. See [Role assignments and scopes](access-model.md#role-assignments-and-scopes). To let someone impersonate one service account alone, bind `roles/iam.service-account-token-creator` with `--service-account` and the account's full name instead; see [Grant impersonation of one service account](service-accounts.md#grant-impersonation-of-one-service-account). To limit the binding to some resources of its organization or project, add `--resource` with each one's full name; see [Limit a binding to a list of resources](#limit-a-binding-to-a-list-of-resources).
 
 3. Verify the binding. The output lists the member's bindings, each with its role and project.
 
@@ -56,7 +56,7 @@ The platform refuses the binding, and changes nothing, in these cases:
 - The user has no enabled account, or the service account is another organization's: [`NOT_FOUND`](../platform/reference/errors.md#not_found).
 - The member, role or project isn't a full name or, for the member, `user:<email>`, such as `roles/viewer` or a bare `jane@example.com`: [`BAD_REQUEST`](../platform/reference/errors.md#bad_request).
 - More than one account has verified the address: [`CONFLICT`](../platform/reference/errors.md#conflict). Bind the user by their full name instead.
-- The member already holds the role at that scope: [`CONFLICT`](../platform/reference/errors.md#conflict). A retry of the command with the same `--request-id` within a day returns the binding the first one created instead.
+- The member already holds the role at that scope, with or without a list of resources: [`CONFLICT`](../platform/reference/errors.md#conflict), naming the binding they hold. A retry of the command with the same `--request-id` within a day returns the binding the first one created instead.
 - The role has permissions you don't hold yourself at that scope: [`FORBIDDEN`](../platform/reference/errors.md#forbidden).
 - The member is a deleted service account: [`BAD_REQUEST`](../platform/reference/errors.md#bad_request).
 
@@ -95,21 +95,21 @@ origin iam create-role-binding --organization <org-id> \
 
 `list-role-bindings` and the REST API show a pending binding with `state` `PENDING` and the address as its member, `user:<email>`, as you typed it. An active binding has `state` `ACTIVE`.
 
-A pending binding grants nothing and counts toward no permission check. It is always org-wide. When someone signs up with its address and verifies it, it becomes active: its member becomes the new user's full name, and its name stays the same. It activates only while whoever created it can still assign the role; otherwise it's dropped.
+A pending binding grants nothing and counts toward no permission check. It is always org-wide. When someone signs up with its address and verifies it, and then signs in with a client that calls `ActivatePendingRoleBindings`, such as the console, it becomes active: its member becomes the new user's full name, and its name stays the same. A person can also call [`ActivatePendingRoleBindings`](reference/index.md#rest-api) themselves with `POST /v1beta1/users/me:activatePendingRoleBindings`; an address their account hasn't verified activates nothing. It activates only while whoever created it can still assign the role; otherwise it's dropped.
 
 ```mermaid
 stateDiagram-v2
     accTitle: Lifecycle of a role binding
-    accDescr: A pending binding becomes active when its address signs up and verifies it, or ends when withdrawn or dropped; an active binding ends when deleted.
+    accDescr: A pending binding becomes active when the person verifies its address and signs in, or ends when withdrawn or dropped; an active binding ends when deleted.
     [*] --> PENDING: create-role-binding user:<email>, no account has the address
-    PENDING --> ACTIVE: someone signs up with the address and verifies it
+    PENDING --> ACTIVE: the person verifies the address and signs in with a client that activates it
     PENDING --> [*]: deleted (withdrawn), or creator can no longer assign the role
     ACTIVE --> [*]: deleted (revoked)
 ```
 
 Creating a pending binding needs, besides what any binding needs, `iam.member.create` on the organization, which `roles/owner` has and `roles/iam.editor` doesn't. So an IAM Editor can bind people who already have an account by their address, but can't make the platform email an address that has none. The platform also refuses a pending binding, and changes nothing, in these cases:
 
-- `--project` is set: [`BAD_REQUEST`](../platform/reference/errors.md#bad_request). Bind the role org-wide, or ask the person to sign up first.
+- `--project` or a list of resources is set: [`BAD_REQUEST`](../platform/reference/errors.md#bad_request). Bind the role org-wide, or ask the person to sign up first.
 - The address already holds a pending binding of the role in the organization, in any spelling: [`CONFLICT`](../platform/reference/errors.md#conflict).
 
 A retry with the same `--request-id` within a day returns the binding the first request created, pending or since activated.
@@ -125,23 +125,88 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 ## Using the API
 
-In the REST API, these are `CreateRoleBinding` and `DeleteRoleBinding`; see the [IAM reference](reference/index.md#rest-api). In the GraphQL API, the `assignRole` and `revokeRole` mutations take the same input as full names: the `organisation`, the `member`, the `role` and, for a grant on one project, the `project`. Omit `project` for an org-wide grant.
+In the REST API, these are `CreateRoleBinding` and `DeleteRoleBinding`, and `UpdateRoleBinding` changes a binding's list of resources; see the [IAM reference](reference/index.md#rest-api). A grant takes the `member`, the `role` and, for a grant on one project, the `project`, as full names. Omit `project` for an org-wide grant.
 
-```graphql
-mutation {
-  iam {
-    assignRole(input: {
-      organisation: "//resourcemanager.origincloudapis.eu/organizations/<org-id>"
-      member: "//iam.origincloudapis.eu/users/<user-id>"
-      role: "//iam.origincloudapis.eu/roles/viewer"
-    })
-  }
-}
+```sh
+curl -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  https://iam.origincloudapis.eu/v1beta1/organizations/<org-id>/roleBindings \
+  -d '{"member": "//iam.origincloudapis.eu/users/<user-id>", "role": "//iam.origincloudapis.eu/roles/iam.editor"}'
 ```
+
+### Limit a binding to a list of resources
+
+`CreateRoleBinding` takes `resources`, the full names of the resources inside the binding's organization or project the role applies to; see [Bindings limited to a list of resources](access-model.md#bindings-limited-to-a-list-of-resources). In the `origin iam` commands, `create-role-binding` takes it as `--resource`, once for each resource.
+
+> **Not yet available for any kind of resource.** Only the kinds of resource a service offers per-resource access for can be listed; until one does, a list is refused with `BAD_REQUEST`.
+
+```sh
+origin iam create-role-binding --organization <org-id> \
+  --member //iam.origincloudapis.eu/users/<user-id> \
+  --role //iam.origincloudapis.eu/roles/<role> \
+  --project //resourcemanager.origincloudapis.eu/projects/<project-id> \
+  --resource <full name of a resource in the project> \
+  --resource <full name of another resource in the project>
+```
+
+```sh
+curl -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  https://iam.origincloudapis.eu/v1beta1/organizations/<org-id>/roleBindings \
+  -d '{"member": "//iam.origincloudapis.eu/users/<user-id>",
+       "role": "//iam.origincloudapis.eu/roles/<role>",
+       "project": "//resourcemanager.origincloudapis.eu/projects/<project-id>",
+       "resources": ["<full name of a resource in the project>"]}'
+```
+
+`GetRoleBinding` and `ListRoleBindings` return `resources` in name order, and empty for a binding on its whole scope; the table of `list-role-bindings` shows them by their IDs, in its `RESOURCES` column. To change the list, see [Add or remove a resource from a binding](#add-or-remove-a-resource-from-a-binding). Besides the refusals above, the platform refuses a list with [`BAD_REQUEST`](../platform/reference/errors.md#bad_request) on the field `roleBinding.resources`, naming the entry, when an entry isn't a full name, is of a kind that can't be listed, is outside the binding's organization or project, or is listed twice; when the list has more than 100 entries or is set together with `serviceAccount` (the CLI refuses `--resource` with `--service-account` before sending anything); and when none of the role's permissions applies to a listed kind of resource. You need every permission of the role on each listed resource; see [Who can assign a role](access-model.md#who-can-assign-a-role).
+
+To see who has access to one resource, filter `ListRoleBindings` by its full name. The answer holds the bindings that list it and those without a list on its organization or project, which cover it as a whole:
+
+```sh
+origin iam list-role-bindings --organization <org-id> --resource <full name of the resource>
+```
+
+```sh
+curl -G -H "Authorization: Bearer $TOKEN" \
+  "https://iam.origincloudapis.eu/v1beta1/organizations/<org-id>/roleBindings" \
+  --data-urlencode "resource=<full name of the resource>"
+```
+
+The audit log's `iam.role.assign` and `iam.role.revoke` entries of a binding with a list hold its `resources`.
+
+### Add or remove a resource from a binding
+
+`UpdateRoleBinding` replaces a binding's list of resources with a new one, for example to give an application's binding one more secret. Send the whole new list, and set `updateMask` to `resources`, the only field of a binding that can change. The member, the role and the scope stay as they are; to change one of them, create another binding and delete this one.
+
+With the CLI, `update-role-binding` sends the mask for you. Give `--resource` once for each resource of the new list, the ones you keep as well as the ones you add:
+
+```sh
+origin iam update-role-binding --organization <org-id> --role-binding <role-binding-id> \
+  --resource <full name of a resource kept> \
+  --resource <full name of a resource added>
+```
+
+`--no-resources` instead sends an empty list. The command needs one of the two, and refuses both together.
+
+```sh
+curl -X PATCH -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  "https://iam.origincloudapis.eu/v1beta1/organizations/<org-id>/roleBindings/<binding-id>?updateMask=resources" \
+  -d '{"resources": ["<full name of a resource kept>", "<full name of a resource added>"]}'
+```
+
+The answer is the binding with its new list. The new list replaces the old one at once: the member keeps the role on every resource in both lists while the change applies, gains it on the resources added and loses it on those left out. Deleting the binding and creating another would instead leave a moment with no access at all. An empty list, `--no-resources` or `"resources": []`, widens the binding to its whole organization or project.
+
+The new list is checked as on create, and refused with [`BAD_REQUEST`](../platform/reference/errors.md#bad_request) on `roleBinding.resources` for the same entries. The platform also refuses with `BAD_REQUEST`:
+
+- an `updateMask` that is missing or names anything but `resources`, `*` included, on the field `updateMask`;
+- a [pending role binding](#pending-role-bindings), on the field `roleBinding.name`: it covers the whole organization until its address signs up.
+
+An unknown binding is [`NOT_FOUND`](../platform/reference/errors.md#not_found). Changing a list needs `iam.role.assign` on the organization, and every permission of the role on each resource of both the new and the old list, as creating the new binding and deleting the old one would; see [Who can assign a role](access-model.md#who-can-assign-a-role). A retry with the same `requestId` within a day answers with the binding as it is then, and changes nothing.
+
+Each change is recorded in the [audit log](audit-log.md) as `iam.role_binding.update`, naming the resources added and removed. Sending the list the binding already has changes nothing and records nothing.
 
 ## Related
 
 - [Access model](access-model.md)
 - [Built-in roles](roles.md)
-- [`create-role-binding`](reference/cli.md#create-role-binding) and [`delete-role-binding`](reference/cli.md#delete-role-binding) commands
-- [Audit log](audit-log.md) – every assignment and revocation is recorded
+- [`create-role-binding`](reference/cli.md#create-role-binding), [`update-role-binding`](reference/cli.md#update-role-binding) and [`delete-role-binding`](reference/cli.md#delete-role-binding) commands
+- [Audit log](audit-log.md) – every assignment, change of a list and revocation is recorded

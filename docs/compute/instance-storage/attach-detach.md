@@ -1,13 +1,13 @@
 ---
 id: instance-storage-attach-detach
 title: Attach and detach volumes
-description: Attach an available volume to a running or stopped instance, choose its guest device name, and detach it again to use elsewhere.
+description: Attach an available volume to a running or stopped instance, find its disk in the guest by serial, and detach it again to use elsewhere.
 page_type: task
 parent: instance-storage
 nav_order: 10
 tags: [compute, storage, volumes, cli, api]
 related: [instance-storage]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-26
 ---
 
 # Attach and detach volumes
@@ -32,7 +32,7 @@ Attach a volume to give an instance another disk. Detach it to move the disk and
 
    `--volume` takes the volume's full name: `//pvs.origincloudapis.eu/` followed by its `name`.
 
-   To choose the guest device name, add `--device`, for example `--device vdb`. Names run from `vda` to `vdz`, and `vdc` is reserved by the platform. Omitted, the platform assigns the first free name.
+   To choose the disk's slot on the instance, add `--device`, for example `--device vdb`. Slots run from `vda` to `vdz`, and `vdc` is reserved by the platform. Omitted, the platform assigns the first free one. The slot is a hint at most, not the name the guest gives the disk: the guest names its disks in the order it finds them, so a disk attached to a running instance often gets another name. Find the disk by its serial instead, as the next step shows.
 
    The command waits for the attachment, then prints it with its `device` and `state`:
 
@@ -46,7 +46,7 @@ Attach a volume to give an instance another disk. Detach it to move the disk and
    lsblk -o NAME,SERIAL,SIZE
    ```
 
-   Use that path, not a device name, to pick the disk for `mkfs` or `mount`. A new volume has no file system. Create one before you mount it.
+   Use that path, not the attachment's `device` or a name such as `/dev/vdb`, to pick the disk for `mkfs` or `mount`. Formatting a disk by its name can format another volume. A new volume has no file system. Create one before you mount it.
 
 To list an instance's attachments, the boot volume's first:
 
@@ -83,24 +83,24 @@ origin compute list-volume-attachments --instance <instance-id>
 
 You can't detach an instance's root disk or one of its [local disks](local-disks.md).
 
-## Using the API
+## Using the REST API
 
-The `attachVolume` and `detachVolume` mutations take the instance's full name, its `id` in the `compute` graph, and the volume's, its `id` in the `pvs` graph. Both must be in the same project and zone. They return the attachment:
+Attach a volume with a `POST` to the instance's `volumeAttachments` collection, naming the volume by its full name. The instance and the volume must be in the same project and zone. The request returns an operation:
 
-```graphql
-mutation {
-  compute {
-    attachVolume(input: {
-      instance: "//compute.origincloudapis.eu/projects/<project-id>/zones/<zone>/instances/<instance-id>"
-      volume: "//pvs.origincloudapis.eu/projects/<project-id>/zones/<zone>/volumes/<volume-id>"
-      deviceName: "vdb"
-    }) {
-      id
-      deviceName
-      status
-    }
-  }
-}
+```sh
+curl -sS -X POST \
+  https://compute.origincloudapis.eu/v1beta1/projects/<project-id>/zones/<zone>/instances/<instance-id>/volumeAttachments \
+  -H "$(origin id token --as-header --raw)" \
+  -H "Content-Type: application/json" \
+  -d '{"volume": "//pvs.origincloudapis.eu/projects/<project-id>/zones/<zone>/volumes/<volume-id>", "device": "vdb"}'
+```
+
+Detach it with a `DELETE` for the attachment, found as described in [Find the instance that holds a volume](../../storage/volumes/find-instance.md):
+
+```sh
+curl -sS -X DELETE \
+  https://compute.origincloudapis.eu/v1beta1/projects/<project-id>/zones/<zone>/instances/<instance-id>/volumeAttachments/<attachment-id> \
+  -H "$(origin id token --as-header --raw)"
 ```
 
 ## If this fails

@@ -8,7 +8,7 @@ parent: access
 nav_order: 32
 tags: [getting-started]
 related: [access-mcp, access-coding-agents]
-last_reviewed: 2026-11-24
+last_reviewed: 2026-11-26
 ---
 
 # Connect an MCP client to Origin Cloud
@@ -46,13 +46,16 @@ Signed in as yourself, the agent can do everything you can. To give it less, con
 
 1. Create a service account for the agent and grant it the narrow roles, as [Use service accounts](../../iam/service-accounts.md#create-a-service-account) shows. Its type doesn't matter: an `EXTERNAL` or a `WORKLOAD` account both work, and it needs no key or federated credential for this.
 
-2. Grant yourself [`roles/iam.service-account-token-creator`](../../iam/roles.md#rolesiamservice-account-token-creator) on the account's organization, org-wide. A project-scoped grant lets you impersonate no account. `roles/owner` already includes it.
+2. Grant yourself [`roles/iam.service-account-token-creator`](../../iam/roles.md#rolesiamservice-account-token-creator) on that one service account, with `--service-account` and its full name (CLI version 3.1.0 or later, or `serviceAccount` in the REST API; see [Grant impersonation of one service account](../../iam/service-accounts.md#grant-impersonation-of-one-service-account)). You can then impersonate that account and no other, and the binding grants you nothing on the organization or its projects:
 
    ```sh
    origin iam create-role-binding --organization <org-id> \
      --member //iam.origincloudapis.eu/users/<user-id> \
-     --role //iam.origincloudapis.eu/roles/iam.service-account-token-creator
+     --role //iam.origincloudapis.eu/roles/iam.service-account-token-creator \
+     --service-account //iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>
    ```
+
+   Binding a role needs `iam.role.assign` on the organization; if you don't hold it, ask someone who does. The broader alternative is the same role org-wide, without `--service-account`: it lets you impersonate every active service account of the organization, including ones created later, so grant it only to someone you'd trust with each of them. `roles/owner` already includes it. A project-scoped grant lets you impersonate no account.
 
 3. Add the server with the account's full name in `service_account`. In Claude Code:
 
@@ -72,7 +75,7 @@ What the agent can then do is exactly what the service account's roles allow, in
 If you don't hold the token-creator role on the account, or the account doesn't exist or is revoked, the connection's first request is answered `403` with `WWW-Authenticate: Bearer error="insufficient_scope"`, naming the account and the role. The server never falls back to your own access. It can't tell you which of these causes it was, as the security token service doesn't say. The refusal is recorded in the audit log, and the server remembers it for 30 seconds, so a binding you add takes up to that long to be seen. Only a person can impersonate: a service account's own token on such a connection is refused the same way.
 
 **Taking the access back**  
-Revoke your token-creator binding, or the service account's roles. Without the binding, the next exchange for the account's token is refused. The server keeps a token it already holds until shortly before it expires, at most 5 minutes after it was issued and never past your own token, so an agent already connected may go on for up to that long. A role revoked from the account itself applies at the agent's next call.
+Delete your token-creator binding on the account (revoking the account deletes it too), or revoke the account's roles. Without the binding, the next exchange for the account's token is refused. The server keeps a token it already holds until shortly before it expires, at most 5 minutes after it was issued and never past your own token, so an agent already connected may go on for up to that long. A role revoked from the account itself applies at the agent's next call.
 
 **Audit**  
 Each exchange for the account's token, issued or refused, is recorded as `sts.token.impersonate` in the account's organization's log, with you as its actor, the MCP server as its acting party and a refusal's `reason`, such as `no_binding`. A change the agent makes is recorded with the service account as its `actor`, and you, then the MCP server, in `actingParties`. See [Changes made by impersonating a service account](../../iam/audit-log.md#changes-made-by-impersonating-a-service-account).

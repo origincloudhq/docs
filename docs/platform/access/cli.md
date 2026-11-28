@@ -8,7 +8,7 @@ parent: access
 nav_order: 10
 tags: [cli, getting-started]
 related: [reference-cli, access-api]
-last_reviewed: 2026-11-24
+last_reviewed: 2026-11-25
 ---
 
 # Use the CLI
@@ -163,7 +163,13 @@ Released versions never change: the files under a version's directory are the sa
 
 `origin id login` opens the Origin Cloud login page in your browser and waits for you to log in there. The CLI never sees your password. Whatever the login page offers works, including a second factor.
 
-Logging in also activates any [pending role bindings](../../iam/assign-roles.md#pending-role-bindings) for your verified email address. If the CLI can't do that, for example because it can't reach the API, it prints a warning and the login still succeeds; logging in again, or signing in to the console, applies the invites later.
+[Pending role bindings](../../iam/assign-roles.md#pending-role-bindings) for your verified email address become active when you sign in to the console, or when you call IAM's `ActivatePendingRoleBindings` with your token:
+
+```sh
+curl -sS -X POST https://iam.origincloudapis.eu/v1beta1/users/me:activatePendingRoleBindings \
+  -H "$(origin id token --as-header --raw)" \
+  -H "Content-Type: application/json" -d '{}'
+```
 
 1. Run the login command:
 
@@ -321,7 +327,7 @@ origin pvs wait-operation --operation <operation-name>
 
 ## Use your access token outside the CLI
 
-`origin id token` prints the current access token, renewing it first if it has expired. Without a valid session, it fails and tells you to log in. While you [impersonate a service account](#act-as-a-service-account-with-your-login), it prints the account's token, or fails with the refusal if the exchange is refused. Use it to call the [GraphQL API](api.md) with your own tools.
+`origin id token` prints the current access token, renewing it first if it has expired. Without a valid session, it fails and tells you to log in. While you [impersonate a service account](#act-as-a-service-account-with-your-login), it prints the account's token, or fails with the refusal if the exchange is refused. Use it to call the [REST APIs](api.md) with your own tools.
 
 | Command | Prints |
 |---|---|
@@ -333,10 +339,8 @@ origin pvs wait-operation --operation <operation-name>
 For example, to send an API request with `curl`:
 
 ```sh
-curl -sS https://graph.origincloudapis.eu/graphql \
-  -H "$(origin id token --as-header --raw)" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ admin { organisations { id name status } } }"}'
+curl -sS https://resourcemanager.origincloudapis.eu/v1beta1/organizations \
+  -H "$(origin id token --as-header --raw)"
 ```
 
 ## Give an AI agent access
@@ -403,7 +407,6 @@ Commands that delete something, or change it in a way that can't be undone, such
 | Option | Effect |
 |---|---|
 | `-c`, `--config <FILE>` | Reads the profile from this file instead of the default location, and `config profile-set` saves to it. Give it before the command group. |
-| `-a`, `--api <URL>` | The GraphQL endpoint `origin id login` reads your user from, which activates your pending role bindings. The default is `https://graph.origincloudapis.eu/graphql`. Give it before the command group. |
 | `--output <FORMAT>` | Overrides the profile's `output-format`. |
 | `--impersonate-service-account <SERVICE_ACCOUNT>` | Acts as this service account, by its full name. Overrides `ORIGINCLOUD_IMPERSONATE_SERVICE_ACCOUNT` and the profile's `impersonate-service-account`; see [Act as a service account with your login](#act-as-a-service-account-with-your-login). |
 | `-V`, `--version` | Prints the CLI version. `origin version` prints it as JSON. |
@@ -413,7 +416,7 @@ The `compute`, `network`, `pvs`, `dns`, `resourcemanager`, `location`, `iam`, `b
 
 ## Related
 
-- [Use the GraphQL API](api.md)
+- [Use the REST APIs](api.md)
 - [Platform CLI commands](../reference/cli.md)
 - [`origin compute` commands](../../compute/reference/cli.md)
 - [`origin pvs` commands](../../storage/reference/cli.md)

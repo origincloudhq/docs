@@ -7,12 +7,12 @@ page_type: troubleshooting
 parent: home
 nav_order: 60
 tags: [troubleshooting, compute, instances]
-last_reviewed: 2026-11-21
+last_reviewed: 2026-11-25
 ---
 
 # Troubleshoot Compute
 
-Each section starts from what you see. The CLI prints an instance's status as `state` and its reason as `stateReason`; the GraphQL API calls them `status` and `statusReason`. For the meaning of every reason, see [Status reasons](../reference/status-reasons.md).
+Each section starts from what you see. The CLI and the REST API report an instance's status as `state` and its reason as `stateReason`. For the meaning of every reason, see [Status reasons](../reference/status-reasons.md).
 
 ## Instance status is FAILED
 
@@ -55,7 +55,7 @@ Each section starts from what you see. The CLI prints an instance's status as `s
 
 ## GUEST_PRESENT is IMPAIRED
 
-**Symptom:** The instance is `RUNNING`, but its health checks show `GUEST_PRESENT` as `IMPAIRED` and `availability` as `IMPAIRED`. The CLI prints them under `health`, the GraphQL API under `healthChecks`.
+**Symptom:** The instance is `RUNNING`, but its health checks show `GUEST_PRESENT` as `IMPAIRED` and `availability` as `IMPAIRED`. Both the CLI and the REST API report them under `health`.
 
 **Cause:** The machine carrying the instance is reachable and no longer runs it. Waiting won't bring it back.
 

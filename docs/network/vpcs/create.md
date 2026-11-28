@@ -6,7 +6,7 @@ page_type: task
 parent: vpcs
 nav_order: 40
 tags: [networking, vpc, cli]
-last_reviewed: 2026-11-21
+last_reviewed: 2026-11-26
 ---
 
 # Create a VPC and subnets
@@ -30,6 +30,7 @@ Creating VPCs and subnets doesn't require a payment method.
    ```
 
    `--tag origin:name=frontend` names the VPC; leave it out for an unnamed VPC. See [Name and tag network resources](name-and-tag.md).
+
 
 2. Note the VPC's `name` in the output. A command that acts on the VPC takes its id, the last segment of its `name`, as `--vpc <vpc-id>`; a command that refers to it from another resource, such as `create-subnet --vpc`, takes its full name: `//network.origincloudapis.eu/` followed by its `name`. See [Name resources](../../platform/access/cli.md#name-resources). Its `ipv4CidrBlock` shows the range, and `subnetIpv4PrefixLength` the size every subnet gets. To read it again:
 

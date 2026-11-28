@@ -6,7 +6,7 @@ page_type: reference
 parent: reference
 nav_order: 30
 tags: [quotas, reference, organizations, projects]
-last_reviewed: 2026-11-23
+last_reviewed: 2026-11-25
 ---
 
 # Limits
@@ -27,25 +27,16 @@ Quotas count what exists now, not what you created over time. Deleting a resourc
 
 ## Read your quota
 
-The `organisationQuota` query returns each limit together with current usage. Usage is recounted continuously, so a resource you just created or deleted can take up to half a minute to show; the limit itself is enforced on the exact count. Anyone with read access to the organization can read it. If usage isn't available yet, the query fails with [`SERVICE_UNAVAILABLE`](errors.md#service_unavailable); retry.
+`GetOrganizationQuota` returns each limit together with current usage. Usage is recounted continuously, so a resource you just created or deleted can take up to half a minute to show; the limit itself is enforced on the exact count. Anyone with read access to the organization can read it. If usage isn't available yet, the request fails with [`SERVICE_UNAVAILABLE`](errors.md#service_unavailable); retry.
 
-```graphql
-query {
-  admin {
-    organisationQuota(organisation: "//resourcemanager.origincloudapis.eu/organizations/<org-id>") {
-      maxInstances      currentInstances
-      maxVcpu           currentVcpu
-      maxVolumeGib      currentVolumeGib
-      maxVpcs           currentVpcs
-      maxPublicIps      currentPublicIps
-      maxHostedZones    currentHostedZones
-      maxRecordSets     currentRecordSets
-    }
-  }
-}
+```sh
+curl -sS https://resourcemanager.origincloudapis.eu/v1beta1/organizations/<org-id>/quota \
+  -H "Authorization: Bearer <access-token>"
 ```
 
-`projectQuota(project: "//resourcemanager.origincloudapis.eu/projects/<project-id>")` returns the same fields for one project. There, a `max*` field is `null` when the project has no budget for that dimension.
+The response holds the limits (`maxInstances`, `maxVcpu`, `maxVolumeGib`, `maxVpcs`, `maxPublicIps`, `maxHostedZones`, `maxRecordSets`) and, in `usage`, how much the organization's projects use together (`instances`, `vcpu`, `volumeGib`, `vpcs`, `publicIps`, `hostedZones`, `recordSets`).
+
+`GET /v1beta1/projects/<project-id>/quota` (`GetProjectQuota`) returns the same fields for one project. There, a `max*` field is left out when the project has no budget for that dimension.
 
 With the CLI, read the organization's quota and a project's budgets, each with its usage:
 
@@ -65,24 +56,17 @@ origin resourcemanager update-project-quota --project <project-id> \
   --max-vcpu 16 --no-max-instances
 ```
 
-The flags are `--max-instances`, `--max-vcpu`, `--max-volume-gib`, `--max-vpcs` and `--max-public-ips`. With the API, set one dimension with the `setProjectQuotaLimit` mutation, and remove it with `clearProjectQuotaLimit`. Both ways need the `admin.resource_quota.update` permission, which the Owner role has.
+The flags are `--max-instances`, `--max-vcpu`, `--max-volume-gib`, `--max-vpcs` and `--max-public-ips`. With the API, call `UpdateProjectQuota`. Only the budgets named in `updateMask` change, and a budget named there but left out of the body is removed. Both ways need the `admin.resource_quota.update` permission, which the Owner role has.
 
-```graphql
-mutation {
-  admin {
-    setProjectQuotaLimit(input: {
-      project: "//resourcemanager.origincloudapis.eu/projects/<project-id>"
-      dimension: MAX_VCPU
-      value: 16
-    }) {
-      maxVcpu
-      currentVcpu
-    }
-  }
-}
+```sh
+curl -sS -X PATCH \
+  "https://resourcemanager.origincloudapis.eu/v1beta1/projects/<project-id>/quota?updateMask=maxVcpu,maxInstances" \
+  -H "Authorization: Bearer <access-token>" \
+  -H "Content-Type: application/json" \
+  -d '{"maxVcpu": 16}'
 ```
 
-`dimension` is one of `MAX_INSTANCES`, `MAX_VCPU`, `MAX_VOLUME_GIB`, `MAX_VPCS`, `MAX_PUBLIC_IPS`, `MAX_HOSTED_ZONES` and `MAX_RECORD_SETS`. A negative value, or one above the organization quota, is refused rather than capped. Lowering a budget below current usage doesn't remove anything; it refuses further growth until usage drops below the budget.
+The budgets are `maxInstances`, `maxVcpu`, `maxVolumeGib`, `maxVpcs`, `maxPublicIps`, `maxHostedZones` and `maxRecordSets`. The response is the project's quota, as `GetProjectQuota` returns it. A negative value, or one above the organization quota, is refused rather than capped. Lowering a budget below current usage doesn't remove anything; it refuses further growth until usage drops below the budget.
 
 ## What a refusal looks like
 

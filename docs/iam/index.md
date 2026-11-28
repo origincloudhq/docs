@@ -7,7 +7,7 @@ page_type: overview
 parent: null
 nav_order: 0
 tags: [overview, iam, roles]
-last_reviewed: 2026-11-24
+last_reviewed: 2026-11-25
 ---
 
 # What is Origin Cloud IAM?
@@ -60,8 +60,8 @@ A record of who changed access in your organization and when. See [Audit log](au
 **CLI**  
 The `origin iam` command group. See [CLI access](../platform/access/cli.md) to install and sign in, and [`origin iam` commands](reference/cli.md) for every command.
 
-**GraphQL API**  
-IAM queries and mutations live under the `iam` namespace of the API. See [API access](../platform/access/api.md) and the [IAM reference](reference/index.md) for the list of operations.
+**REST API**  
+The IAM REST API at `https://iam.origincloudapis.eu`. See [Use the REST APIs](../platform/access/api.md) and the [IAM reference](reference/index.md) for the list of operations.
 
 ## Limitations
 

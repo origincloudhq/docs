@@ -7,7 +7,7 @@ page_type: overview
 parent: null
 nav_order: 0
 tags: [overview, organizations, projects]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-25
 ---
 
 # What is Origin Cloud?
@@ -19,10 +19,10 @@ The following diagram shows how your organization holds projects, how projects h
 ```mermaid
 flowchart TD
   accTitle: Organizations, projects and resources
-  accDescr: You reach Origin Cloud through the console, the origin CLI or the GraphQL API. An organization holds projects and billing accounts. Each project holds its resources, such as instances, volumes and VPCs, and is charged to one billing account.
+  accDescr: You reach Origin Cloud through the console, the origin CLI or the REST APIs. An organization holds projects and billing accounts. Each project holds its resources, such as instances, volumes and VPCs, and is charged to one billing account.
   console[Console] --> org[Organization]
   cli[origin CLI] --> org
-  api[GraphQL API] --> org
+  api[REST APIs] --> org
   org --> proj[Project]
   org --> ba[Billing account]
   proj -->|charged to| ba
@@ -62,6 +62,9 @@ Your account, its review status, and the projects you create resources in. See [
 **Tags**  
 Key-value labels, such as a name, on your network, compute and storage resources. See [Tags](tags.md).
 
+**Encryption at rest**  
+What is encrypted at rest, with which key, and who holds each key. See [Encryption at rest](encryption-at-rest.md).
+
 **Support cases**  
 Questions and problems you raise with Origin Cloud support, and the conversation about each. See [Support cases](support-cases.md).
 
@@ -76,8 +79,8 @@ The web interface, for working with your organization in a browser.
 **`origin` CLI**  
 A command-line tool for Linux and macOS that covers organizations, projects, compute, storage, network and IAM. See [Use the CLI](access/cli.md).
 
-**GraphQL API**  
-Every operation the console and the CLI use, at `https://graph.origincloudapis.eu/graphql`. See [Use the GraphQL API](access/api.md).
+**REST APIs**  
+One REST API per service, such as `https://iam.origincloudapis.eu` and `https://resourcemanager.origincloudapis.eu`. See [Use the REST APIs](access/api.md).
 
 For a comparison, see [Ways to access Origin Cloud](access/index.md).
 

@@ -6,7 +6,7 @@ page_type: task
 parent: volumes
 nav_order: 60
 tags: [storage, volumes, cli, api]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-25
 ---
 
 # Delete a volume
@@ -47,17 +47,12 @@ Delete a volume to remove its data and stop paying for it. Deleting frees the vo
 
    The command waits until the volume reports `DELETED`. A deletion usually completes within seconds. If the storage layer doesn't confirm it, the platform requests it again every 30 minutes until it completes, so a volume doesn't stay in `DELETING`. You don't need to delete it again, and you can't while it's `DELETING`. To return at once instead, add `--no-wait`. See [Wait for long-running operations](../../platform/access/cli.md#wait-for-long-running-operations).
 
-   With the API, use the `deleteVolume` mutation, and read the volume until it reports `DELETED`:
+   With the REST API, send a `DELETE` for the volume, and read the volume until it reports `DELETED`:
 
-   ```graphql
-   mutation {
-     pvs {
-       deleteVolume(input: { volume: "//pvs.origincloudapis.eu/projects/<project-id>/zones/<zone>/volumes/<volume-id>" }) {
-         accepted
-         message
-       }
-     }
-   }
+   ```sh
+   curl -sS -X DELETE \
+     https://pvs.origincloudapis.eu/v1beta1/projects/<project-id>/zones/<zone>/volumes/<volume-id> \
+     -H "$(origin id token --as-header --raw)"
    ```
 
 2. Optional: verify the volume. A deleted volume drops out of `origin pvs list-volumes` at once. You can still look it up by name for 24 hours after it reports `DELETED`; after that the lookup finds nothing.

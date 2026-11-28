@@ -7,7 +7,7 @@ page_type: concept
 parent: organizations
 nav_order: 20
 tags: [organizations]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-25
 ---
 
 # Organization review status
@@ -77,7 +77,7 @@ Read the organization's status with the CLI, as its `state` field:
 origin resourcemanager get-organization --organization <organization-id>
 ```
 
-`origin resourcemanager list-organizations` shows the state of every organization you hold a role in. With the API, read `status` from the `organisation` or `organisations` query in the `admin` namespace.
+`origin resourcemanager list-organizations` shows the state of every organization you hold a role in. With the API, read `state` from `GetOrganization` (`GET https://resourcemanager.origincloudapis.eu/v1beta1/organizations/<org-id>`) or `ListOrganizations` (`GET /v1beta1/organizations`).
 
 ## Related
 
