@@ -8,7 +8,7 @@ parent: instances
 nav_order: 40
 tags: [compute, instances]
 related: [instances-health-checks, instances-stop-start]
-last_reviewed: 2026-11-21
+last_reviewed: 2026-11-25
 ---
 
 # When the machine under an instance fails
@@ -20,7 +20,7 @@ The following diagram shows how an instance's status and health change after its
 ```mermaid
 stateDiagram-v2
   accTitle: Instance after a machine failure
-  accDescr: A RUNNING instance whose machine is unreachable stays RUNNING with HOST_REACHABLE impaired. Once the platform proves the machine restarted, or the machine is taken out of service, the instance becomes STOPPED with a statusReason. Starting it moves it to PENDING, possibly on another machine.
+  accDescr: A RUNNING instance whose machine is unreachable stays RUNNING with HOST_REACHABLE impaired. Once the platform proves the machine restarted, or the machine is taken out of service, the instance becomes STOPPED with a stateReason. Starting it moves it to PENDING, possibly on another machine.
   RUNNING --> unreachable: machine stops answering
   unreachable: RUNNING, HOST_REACHABLE impaired
   unreachable --> STOPPED: machine restart proven
@@ -37,8 +37,8 @@ A machine the platform can't reach proves nothing about what runs on it. So the 
 
 The platform moves the instance from `RUNNING` straight to `STOPPED`, without `STOPPING`, in two cases:
 
-- **The machine restarted.** The machine comes back and the platform can prove it restarted. A virtual machine doesn't survive that. `statusReason` reads: "the machine this instance was running on failed, and the instance went down with it; start it again to bring it back".
-- **The machine is taken out of service.** The machine doesn't come back, and the platform takes it out of service after confirming it's powered off. `statusReason` reads: "the machine this instance was running on failed and has been taken out of service; the instance went down with it, and starting it again will place it on another machine".
+- **The machine restarted.** The machine comes back and the platform can prove it restarted. A virtual machine doesn't survive that. `stateReason` reads: "the machine this instance was running on failed, and the instance went down with it; start it again to bring it back".
+- **The machine is taken out of service.** The machine doesn't come back, and the platform takes it out of service after confirming it's powered off. `stateReason` reads: "the machine this instance was running on failed and has been taken out of service; the instance went down with it, and starting it again will place it on another machine".
 
 From that moment the instance uses no compute capacity and accrues no compute usage, exactly as if you had stopped it. Its network interface stays reserved and its volumes stay attached.
 
@@ -46,7 +46,7 @@ From that moment the instance uses no compute capacity and accrues no compute us
 
 The platform doesn't start the instance again for you. Whether a workload should come back on its own after a failure, or needs checking first, depends on the workload.
 
-Starting it is an ordinary start. Its volumes, network interface, addresses and security groups are as they were, and it can come up on a different machine. If your workload should come back on its own, watch for `STOPPED` with a non-null `statusReason` and start the instance. For the steps, see [Stop and start an instance](stop-start.md).
+Starting it is an ordinary start. Its volumes, network interface, addresses and security groups are as they were, and it can come up on a different machine. If your workload should come back on its own, watch for `STOPPED` with a non-empty `stateReason` and start the instance. For the steps, see [Stop and start an instance](stop-start.md).
 
 ## What survives
 
@@ -58,7 +58,7 @@ Anything only in memory, and anything on a temporary file system. Treat a machin
 
 ## Planned moves
 
-When a machine needs maintenance, the platform can move the instances on it to another machine. Moving an instance means stopping it and starting it again elsewhere. From inside the guest, that looks like a reboot you didn't ask for. In the API, the instance passes through `STOPPING`, `STOPPED` and `PENDING` back to `RUNNING`, with the same volumes, interface and addresses. Its `statusReason` stays `null` throughout. If the move is called off part-way, the instance stays `STOPPED`; start it yourself.
+When a machine needs maintenance, the platform can move the instances on it to another machine. Moving an instance means stopping it and starting it again elsewhere. From inside the guest, that looks like a reboot you didn't ask for. In the API, the instance passes through `STOPPING`, `STOPPED` and `PENDING` back to `RUNNING`, with the same volumes, interface and addresses. Its `stateReason` stays empty throughout. If the move is called off part-way, the instance stays `STOPPED`; start it yourself.
 
 If your workload can't tolerate an unannounced restart, run more than one instance and spread the load across them. A move affects the instances on one machine, so an instance on another machine keeps serving.
 

@@ -6,7 +6,7 @@ page_type: reference
 parent: reference
 nav_order: 20
 tags: [errors, reference, api]
-last_reviewed: 2026-11-21
+last_reviewed: 2026-11-25
 ---
 
 # Error codes
@@ -15,38 +15,14 @@ Every error the API returns carries a stable code. This page lists each code wit
 
 ## How errors are returned
 
-In the GraphQL API, a failed operation returns an `errors` array. Each error has a human-readable `message` and, in `extensions`, three fields:
-
-**`code`**  
-The stable, machine-readable code. Branch on it. Messages can change wording; codes don't.
-
-**`retryable`**  
-Whether sending the identical request again can succeed. It's deliberately conservative: only conditions that clear by themselves are retryable.
-
-**`correlationId`**  
-An ID for your request. Quote it when you contact support: it ties your error to the platform's own record of what happened.
-
-```json
-{
-  "errors": [{
-    "message": "invalid input on field quota: organisation quota exceeded: vCPU usage is 38, requesting 4 more would exceed the limit of 40",
-    "extensions": {
-      "code": "BAD_REQUEST",
-      "retryable": false,
-      "correlationId": "4bf92f3577b34da6a3ce929d0e0e4736"
-    }
-  }]
-}
-```
-
-The REST APIs, which the `origin compute`, `network`, `pvs`, `resourcemanager` and `location` commands call, answer a failed request with an `error` object. Its `status` is a canonical code, and the code this page lists travels as the `reason` of its `ErrorInfo` detail, with the correlation id as the `requestId` of its `RequestInfo` detail:
+Every Origin Cloud REST API answers a failed request with an `error` object, in the form of a `google.rpc.Status`. The HTTP status code is in `code`, and `status` is the closest canonical code. The code this page lists travels as the `reason` of its `ErrorInfo` detail. The correlation ID, which you quote when you contact support because it ties your error to the platform's own record of what happened, is the `requestId` of its `RequestInfo` detail. A code that is retryable also carries a `RetryInfo` detail.
 
 ```json
 {
   "error": {
     "code": 400,
     "status": "INVALID_ARGUMENT",
-    "message": "invalid input on field size_gib: must be at least 1",
+    "message": "invalid input on field sizeGib: must be at least 1",
     "details": [
       { "@type": "type.googleapis.com/google.rpc.ErrorInfo", "reason": "BAD_REQUEST", "domain": "origincloudapis.eu" },
       { "@type": "type.googleapis.com/google.rpc.RequestInfo", "requestId": "4bf92f3577b34da6a3ce929d0e0e4736" }
@@ -68,7 +44,7 @@ Branch on the `reason`. An error about a resource you can act on also names it i
 | `INTERNAL_SERVER_ERROR`, `SERVER_ERROR` | `INTERNAL` |
 | `SERVICE_UNAVAILABLE` | `UNAVAILABLE` |
 
-The HTTP status is the same on every surface: a `CONFLICT` is `409` and a `PAYMENT_METHOD_REQUIRED` is `402`, although both have the `status` `FAILED_PRECONDITION`.
+A `CONFLICT` is `409` and a `PAYMENT_METHOD_REQUIRED` is `402`, although both have the `status` `FAILED_PRECONDITION`.
 
 The `origin` CLI prints the API's message and code in its failure envelope, and exits with `1`. See [Use the CLI](../access/cli.md#read-the-output).
 
@@ -77,7 +53,7 @@ The `origin` CLI prints the API's message and code in its failure envelope, and 
 Every code is one of two kinds, and the difference tells you who has to act:
 
 - **A refusal you can act on.** The platform understood the request and declined it, for a reason the message states: invalid input, missing permission, an exhausted quota, a missing payment method, a legal document version not yet accepted, no capacity right now. Nothing was created or changed. Fix what the message names, or wait where the code says so, then send the request again.
-- **A platform fault.** Something inside the platform failed. The message is deliberately generic and names no internal detail. Nothing about your request is wrong; retry if the code is retryable, and otherwise report the `correlationId`.
+- **A platform fault.** Something inside the platform failed. The message is deliberately generic and names no internal detail. Nothing about your request is wrong; retry if the code is retryable, and otherwise report the correlation ID.
 
 | Code | Kind | Retryable |
 |---|---|---|
@@ -106,7 +82,7 @@ The codes below are ordered the same way: refusals first, then faults.
 - An access token that has expired.
 - A token that wasn't issued by Origin Cloud, or was altered.
 
-**What to do:** Get a fresh access token and send the request again. With the CLI, run `origin id login`. With a service account, exchange its CI job's token or a new key assertion at the security token service again. See [Use the GraphQL API](../access/api.md#authenticate).
+**What to do:** Get a fresh access token and send the request again. With the CLI, run `origin id login`. With a service account, exchange its CI job's token or a new key assertion at the security token service again. See [Use the REST APIs](../access/api.md#authenticate).
 
 ## FORBIDDEN
 
@@ -123,11 +99,11 @@ The codes below are ordered the same way: refusals first, then faults.
 
 ## BAD_REQUEST
 
-**Meaning:** The request is malformed, failed validation, or was refused by a check the request itself can't pass as it stands. The message names the field, in the form `invalid input on field <field>: <cause>`. A query the GraphQL layer can't run at all is refused with this code too, with a message describing the problem in the query.
+**Meaning:** The request is malformed, failed validation, or was refused by a check the request itself can't pass as it stands. The message names the field, in the form `invalid input on field <field>: <cause>`.
 
 **Common causes:**
 
-- A query that doesn't run as written: a syntax error, a field or argument that doesn't exist, a missing required argument, or an argument value the API can't read, such as a malformed resource name in an `ID` argument. The message names the type or argument.
+- A request body that isn't valid JSON, a field that doesn't exist, or a missing required field. The message names the field.
 - A value that fails validation, such as a malformed resource name, an invalid email address, or a size below the minimum.
 - A request the resource can't accept in its current form, such as changing the type of an instance that isn't stopped, or deleting a VPC's default security group.
 - An exhausted quota. The field is `quota`, and the message names the scope, the dimension, the current usage and the limit. See [Limits](limits.md).
@@ -161,8 +137,8 @@ The codes below are ordered the same way: refusals first, then faults.
 - A resource that still has a live dependent, such as a volume that is still attached to an instance, or a subnet that still has an attached network interface. The message names what to detach, delete or terminate first.
 - A bounded address space that has run out, such as a subnet with no IPv4 addresses left. The message names what frees or replaces it.
 - Revoking the last organization-wide Owner role.
-- An `Idempotency-Key` sent before with a different request. Use a new key for a new request; see [Retry a request safely](../access/api.md#retry-a-request-safely).
-- A retried `generateKeyPair`, or a retried `CreateKeyPair` in the compute REST API that generates the key, whose key pair was generated by the first attempt. The private key was in that first response only: delete the key pair and generate a new one. The message names it; in the REST API, the `metadata` of the `ErrorInfo` detail names it too, under `keyPair`.
+- A `requestId` sent before with a different request. Use a new `requestId` for a new request; see [Retry a request safely](../access/api.md#retry-a-request-safely).
+- A retried `CreateKeyPair` in the compute REST API that generates the key, whose key pair was generated by the first attempt. The private key was in that first response only: delete the key pair and generate a new one. The message names it, and the `metadata` of the `ErrorInfo` detail names it too, under `keyPair`.
 - A retried `CreateServiceAccountKey` in the IAM REST API whose key was created by the first request with that `requestId`. The private key was in that first response only: delete the key and create a new one. The `metadata` of the `ErrorInfo` detail names it under `serviceAccountKey`.
 
 **What to do:** Resolve the conflict the message describes, for example by detaching the dependent or waiting for the resource to reach a state that allows the action, then send the request again. Retrying the identical request without changing anything doesn't help.
@@ -221,9 +197,9 @@ The codes below are ordered the same way: refusals first, then faults.
 - A short interruption inside the platform.
 - A metrics query that took too long to answer.
 - A request to create or grow a resource while the platform can't yet confirm the organisation's standing, billing or quotas. Nothing was created.
-- A change to a volume, snapshot, instance, image, key pair or network resource whose result didn't arrive in time. It may still have taken effect. Sent with an `Idempotency-Key`, the identical request with the same key is safe to send again: it returns the first result instead of applying twice. Without one, list the resources before you send a create, a launch or an allocation again.
+- A change to a volume, snapshot, instance, image, key pair or network resource whose result didn't arrive in time. It may still have taken effect. Sent with a `requestId`, the identical request with the same `requestId` is safe to send again: it returns the first result instead of applying twice. Without one, list the resources before you send a create, a launch or an allocation again.
 
-**What to do:** Send the request again after a short wait, with increasing waits between attempts, and with the same `Idempotency-Key` if it had one. If it keeps failing, report the `correlationId`.
+**What to do:** Send the request again after a short wait, with increasing waits between attempts, and with the same `requestId` if it had one. If it keeps failing, report the correlation ID.
 
 ## INTERNAL_SERVER_ERROR
 
@@ -233,7 +209,7 @@ The codes below are ordered the same way: refusals first, then faults.
 
 - A fault in the platform. Nothing about your request is known to be wrong.
 
-**What to do:** Report the `correlationId` to Origin Cloud support. The identical request may succeed later, but this code doesn't say so: check whether the operation took effect before you send it again.
+**What to do:** Report the correlation ID to Origin Cloud support. The identical request may succeed later, but this code doesn't say so: check whether the operation took effect before you send it again.
 
 ## SERVER_ERROR
 
@@ -243,11 +219,11 @@ The codes below are ordered the same way: refusals first, then faults.
 
 - A platform misconfiguration affecting operations that reach the identity service, such as creating a service account.
 
-**What to do:** Report the `correlationId` to Origin Cloud support. Retrying doesn't help until the platform is fixed.
+**What to do:** Report the correlation ID to Origin Cloud support. Retrying doesn't help until the platform is fixed.
 
 ## Codes not listed here
 
-New codes can be added; existing codes never change meaning. If your client receives a code it doesn't know, use the `retryable` flag to decide whether to retry, and report the `correlationId`.
+New codes can be added; existing codes never change meaning. If your client receives a code it doesn't know, use its `status` to decide whether to retry (`UNAVAILABLE` is retryable), and report the correlation ID.
 
 ## Failures after the request was accepted
 
@@ -255,5 +231,5 @@ Some operations return as soon as the request is accepted and finish later, such
 
 ## Related
 
-- [Use the GraphQL API](../access/api.md)
+- [Use the REST APIs](../access/api.md)
 - [Limits](limits.md)

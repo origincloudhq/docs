@@ -6,7 +6,7 @@ page_type: task
 parent: volumes
 nav_order: 50
 tags: [storage, volumes, cli, api]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-25
 ---
 
 # Resize a volume
@@ -43,23 +43,17 @@ Grow a volume when it runs out of space. You can grow a volume while it's attach
 
    A size equal to the current `sizeGib` changes nothing.
 
-   With the API, use the `resizeVolume` mutation:
+   With the REST API, `PATCH` the volume with `updateMask=sizeGib`:
 
-   ```graphql
-   mutation {
-     pvs {
-       resizeVolume(input: {
-         volume: "//pvs.origincloudapis.eu/projects/<project-id>/zones/<zone>/volumes/<volume-id>"
-         sizeInGib: 120
-       }) {
-         accepted
-         message
-       }
-     }
-   }
+   ```sh
+   curl -sS -X PATCH \
+     "https://pvs.origincloudapis.eu/v1beta1/projects/<project-id>/zones/<zone>/volumes/<volume-id>?updateMask=sizeGib" \
+     -H "$(origin id token --as-header --raw)" \
+     -H "Content-Type: application/json" \
+     -d '{"sizeGib": 120}'
    ```
 
-   The mutation only reports that the request was accepted. Read the volume until `modificationStatus` reports `COMPLETED` and `sizeInGib` shows the new size.
+   The request returns an operation. Read the volume until `resizeState` reports `RESIZE_COMPLETED` and `sizeGib` shows the new size.
 
 ## Use the new space inside the guest
 

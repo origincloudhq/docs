@@ -7,7 +7,7 @@ parent: instance-storage
 nav_order: 20
 tags: [compute, storage, volumes, api]
 related: [instance-storage, instance-storage-local-disks-reference, instances-launch]
-last_reviewed: 2026-11-25
+last_reviewed: 2026-11-26
 ---
 
 # Add local disks at launch
@@ -64,7 +64,7 @@ You ask for local disks when you launch the instance. You can't add one to an in
 
    Each local disk is also one of the instance's volume attachments: `origin compute list-volume-attachments --instance <instance-id>` lists it with its volume.
 
-3. Log in and find the disks. Each has its volume's id as its serial, like any other disk, and has no file system yet:
+3. Log in and find the disks by serial, not by `device`: the guest may name them otherwise. Each has its volume's id as its serial, like any other disk, and has no file system yet:
 
    ```sh
    lsblk -o NAME,SERIAL,SIZE

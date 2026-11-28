@@ -6,7 +6,7 @@ page_type: concept
 parent: home
 nav_order: 35
 tags: [tags, networking, compute, storage]
-last_reviewed: 2026-11-18
+last_reviewed: 2026-11-25
 ---
 
 # Tags
@@ -57,7 +57,7 @@ origin pvs update-volume --volume <volume-id> \
   --tag origin:name=data --tag team=web
 ```
 
-The GraphQL API also sets and removes single tags, with the `setResourceTags` and `removeResourceTags` mutations of the `compute`, `network` and `pvs` namespaces. Setting a tag that the resource already carries replaces its value; tags you don't name are left alone. Removing a key the resource doesn't carry is not an error.
+In the REST APIs, an `Update` method with `updateMask=tags` does the same: the `tags` map in the body replaces all of the resource's tags, so send every tag to keep. To change one tag, read the resource, change the map and send it back.
 
 A request with any invalid tag is refused as a whole, and creates or changes nothing.
 

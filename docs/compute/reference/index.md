@@ -2,12 +2,12 @@
 id: reference
 title: Compute reference
 nav_title: Reference
-description: Complete reference material for Compute - every origin compute command and its options, and every reason an instance can report for its status.
+description: Complete reference material for Compute - every origin compute command and its options, every reason an instance can report for its status, and the metadata service's paths.
 page_type: reference
 parent: home
 nav_order: 50
 tags: [reference, compute]
-last_reviewed: 2026-11-21
+last_reviewed: 2026-11-26
 ---
 
 # Compute reference
@@ -20,7 +20,14 @@ These pages list everything of one kind. For explanations, follow the links back
 Every `origin compute` command with its options.
 
 **[Status reasons](status-reasons.md)**  
-Every text an instance can report as its reason, in `stateReason` (CLI) or `statusReason` (GraphQL API), what it means and what to do.
+Every text an instance can report as its reason, in `stateReason`, what it means and what to do.
+
+**[Instance metadata service](metadata-service.md)**  
+Every path the metadata service at `169.254.169.254` answers on an instance, and what it returns.
+
+## REST API
+
+The Compute API answers at `https://compute.origincloudapis.eu`. It's a preview (`v1beta1`): names and fields may still change. Requests and responses are JSON with lower camel case field names, such as `instanceType`. Every request carries an access token; see [Use the REST APIs](../../platform/access/api.md). A method that changes a resource returns a long-running operation. Instances, volume attachments and images are zonal, such as `/v1beta1/projects/<project-id>/zones/<zone>/instances`; key pairs and launch templates belong to a project, such as `/v1beta1/projects/<project-id>/keyPairs`.
 
 ## Names
 

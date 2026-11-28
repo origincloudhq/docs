@@ -6,7 +6,7 @@ page_type: overview
 parent: home
 nav_order: 40
 tags: [billing, overview]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-25
 ---
 
 # Billing
@@ -50,13 +50,13 @@ An amount per calendar month that triggers email alerts when the month's spend c
 The Terms of Service, Data Processing Agreement, Service Level Agreement and Acceptable Use Policy a billing account accepts, in fixed versions. See [Legal documents and acceptance](legal-documents.md).
 
 **Usage and cost**  
-What a project or the whole organization has used and what it costs, by hour or by day. Read it with the `usageCost` and `orgUsageCost` queries, or in the [REST API](rest-api.md) with `QueryProjectCost` and `QueryOrganizationCost`. Prices come from the [price list](../../pricing/index.md).
+What a project or the whole organization has used and what it costs, by hour or by day. Read it in the [REST API](rest-api.md) with `QueryProjectCost` and `QueryOrganizationCost`. Prices come from the [price list](../../pricing/index.md).
 
 ## Billing details
 
-Billing details are stored on the billing account. `register-organisation` sets them on the default billing account when you create the organization. To set or change them, call the `updateBillingAccountProfile` mutation in the `admin` namespace. It replaces every field at once: a field you leave out is cleared, not kept.
+Billing details are stored on the billing account. A new organization's default billing account has none. To set or change them, call `UpdateBillingAccount` in the [billing REST API](rest-api.md). Only the fields named in `updateMask` are replaced, and the account must have complete billing details afterwards.
 
-The same rules apply as at registration: the invoice email must be a valid email address, the country must be an EU member state given as its ISO code, and every country except `DE` needs a VAT identification number. The `billingCountries` query lists the accepted countries and which need a VAT identification number.
+The same rules apply when you create an organization: the invoice email must be a valid email address, the country must be an EU member state given as its ISO code, and every country except `DE` needs a VAT identification number. `ListBillingCountries` lists the accepted countries and which need a VAT identification number.
 
 To rename a billing account, call `updateBillingAccountDisplayName`. The name appears in spend limit alert emails and can't be empty.
 
@@ -66,7 +66,7 @@ To rename a billing account, call `updateBillingAccountDisplayName`. The name ap
 - [Give someone access to billing](billing-access.md)
 - [Charge a project to another billing account](../organizations/projects.md#change-a-projects-billing-account)
 
-Billing accounts, payment methods, spend limits and cost reports are available through the [GraphQL API](../access/api.md) in the `admin` namespace. They are also in the [billing REST API](rest-api.md). The CLI doesn't cover them.
+Billing accounts, payment methods, spend limits and cost reports are available through the [billing REST API](rest-api.md). The CLI doesn't cover them.
 
 ## Related
 

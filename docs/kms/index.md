@@ -7,7 +7,7 @@ page_type: overview
 parent: null
 nav_order: 0
 tags: [overview, kms, encryption]
-last_reviewed: 2026-11-25
+last_reviewed: 2026-11-27
 availability: preview
 ---
 
@@ -79,7 +79,8 @@ Each method needs a `kms.key.*` or `kms.grant.*` permission on the key's project
 - `roles/kms.viewer`: read keys, public keys and grants.
 - `roles/kms.grant-delegate`: make grants that let the platform's hosts decrypt with your keys, never use them. Every organization holds its org-wide binding to compute's [service agent](../iam/service-agents.md), `//iam.origincloudapis.eu/serviceAgents/compute`, which attaches your volumes; only a service agent's binding of it does anything. See [Grants](grants.md).
 - `roles/kms.grant-issuer`: make and delete grants, nothing else. Every organization holds its org-wide binding to storage's [service agent](../iam/service-agents.md), `//iam.origincloudapis.eu/serviceAgents/storage`, which may use it only on the keys the platform manages. See [Grants](grants.md).
-- `roles/kms.volume-keys-agent`: create, read, enable and undelete keys and generate data keys with them, nothing else. Every organization holds its org-wide binding to storage's service agent, which creates each project's volumes key with it; the KMS lets a service agent read, use and change only the keys the platform manages.
+- `roles/kms.volume-keys-agent`: create, read, enable and undelete keys, generate data keys with them and retire an encryption context on them, nothing else. Every organization holds its org-wide binding to storage's service agent, which creates each project's volumes key with it; the KMS lets a service agent read, use and change only the keys the platform manages.
+- `roles/kms.secret-keys-agent`: create, read, enable and undelete keys, generate data keys with them and decrypt those data keys, nothing else. Every organization holds its org-wide binding to Secret Manager's service agent, which Secret Manager, not yet available, will use for each project's secrets key, on the keys the platform manages only.
 
 See [Permissions and roles](reference/index.md#permissions-and-roles).
 
@@ -87,6 +88,7 @@ See [Permissions and roles](reference/index.md#permissions-and-roles).
 
 - [IAM](../iam/index.md) – roles, service accounts and the audit log that records every use of a key
 - [Platform](../platform/index.md) – organizations, projects and access
+- [Encryption at rest](../platform/encryption-at-rest.md) – what is encrypted, with which key, and who holds it
 
 ## Next steps
 

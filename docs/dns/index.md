@@ -7,7 +7,7 @@ page_type: overview
 parent: null
 nav_order: 0
 tags: [overview, dns, networking]
-last_reviewed: 2026-11-13
+last_reviewed: 2026-11-25
 availability: preview
 ---
 
@@ -66,7 +66,7 @@ Delete, change and create several record sets of a zone together, all or none, s
 The `origin dns` commands, such as `origin dns create-hosted-zone`. This guide's examples use them. See [Use the CLI](../platform/access/cli.md) to install the CLI and log in, and [`origin dns` commands](reference/cli.md) for every command.
 
 **REST API**  
-The DNS API answers at `https://dns.origincloudapis.eu`, the same host for every region. It's a preview (`v1beta1`): names and fields may still change. See [Call the DNS API](reference/index.md#call-the-dns-api) and [DNS API methods](reference/index.md#api-methods).
+The DNS API answers at `https://dns.origincloudapis.eu`, the same host for every region. It's a preview (`v1beta1`): names and fields may still change. See [Use the REST APIs](../platform/access/api.md), [Call the DNS API](reference/index.md#call-the-dns-api) and [DNS API methods](reference/index.md#api-methods).
 
 ## Access
 
@@ -94,7 +94,6 @@ The rates are in the [price list](../pricing/reference/price-list-api.md), under
 
 - [Create a public zone and verify it](hosted-zones/create-public.md)
 - [Add, change and delete record sets](record-sets/manage.md)
-
-
+- [Use external-dns with Origin Cloud DNS](record-sets/external-dns.md)
 - [Create a private zone and attach it to a VPC](private-zones/create.md)
 - [Troubleshoot DNS](troubleshooting/index.md)

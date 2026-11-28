@@ -7,12 +7,12 @@ page_type: overview
 parent: null
 nav_order: 0
 tags: [overview, observability, metrics]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-25
 ---
 
 # What is Origin Cloud Observability?
 
-Origin Cloud Observability gives you usage metrics for your own resources: how much CPU time an instance consumes, how many bytes a network interface sends and receives, and how many bytes an instance reads from and writes to a volume. The platform collects these metrics for you. You query them through the REST API or the GraphQL API to graph activity, size instances, or find a busy disk.
+Origin Cloud Observability gives you usage metrics for your own resources: how much CPU time an instance consumes, how many bytes a network interface sends and receives, and how many bytes an instance reads from and writes to a volume. The platform collects these metrics for you. You query them through the REST API to graph activity, size instances, or find a busy disk.
 
 ## How metrics flow
 
@@ -47,10 +47,7 @@ One query returns a series of data points per metric for one resource over a tim
 ## Ways to access Observability
 
 **REST API**  
-The Observability API answers at `https://observability.origincloudapis.eu`, with one method, `QueryTimeSeries`. It's a preview (`v1beta1`): names and fields may still change. See [Query metrics](query-metrics.md#query-metrics-with-the-rest-api).
-
-**GraphQL API**  
-Metrics are available through the `observability` namespace of the API, with the `metrics` query. See [Query metrics](query-metrics.md#query-metrics-with-the-graphql-api). For authenticating against the API, see [Use the API](../platform/access/api.md).
+The Observability API answers at `https://observability.origincloudapis.eu`, with one method, `QueryTimeSeries`. It's a preview (`v1beta1`): names and fields may still change. See [Query metrics](query-metrics.md#query-metrics-with-the-rest-api). For authenticating, see [Use the REST APIs](../platform/access/api.md).
 
 The `origin` CLI has no command for metrics.
 

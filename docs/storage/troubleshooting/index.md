@@ -6,7 +6,7 @@ page_type: troubleshooting
 parent: home
 nav_order: 40
 tags: [storage, troubleshooting, volumes, snapshots, errors]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-25
 ---
 
 # Troubleshoot storage
@@ -23,7 +23,7 @@ Each section below describes one symptom, its cause, and how to resolve it. For 
 1. Delete the volume. Deleting an `ERROR` volume is allowed. See [Delete a volume](../volumes/delete.md).
 2. Create or import the volume again.
 
-For import failures, see [Import fails with ERR_IMPORT or ERR_IMPORT_IMAGE_TOO_LARGE](#import-fails-with-err_import-or-err_import_image_too_large).
+For import failures, see [Import fails with ERR_IMPORT, ERR_IMPORT_IMAGE_TOO_LARGE or ERR_IMPORT_SOURCE_REFUSED](#import-fails-with-err_import-err_import_image_too_large-or-err_import_source_refused).
 
 ## Volume reports ERROR after delete
 
@@ -127,15 +127,15 @@ If the error says the size `must be greater or equal than used snapshot size`, a
 1. Delete each named volume and wait until it reports `DELETED`. See [Delete a volume](../volumes/delete.md).
 2. Unprotect the snapshot again, wait for `UNPROTECTED`, and delete it. See [Delete a snapshot](../snapshots/delete.md).
 
-## Import fails with ERR_IMPORT or ERR_IMPORT_IMAGE_TOO_LARGE
+## Import fails with ERR_IMPORT, ERR_IMPORT_IMAGE_TOO_LARGE or ERR_IMPORT_SOURCE_REFUSED
 
-**Symptom:** `import-volume` fails, and the volume reports `ERROR` with `stateReason` `the operation failed (ERR_IMPORT_IMAGE_TOO_LARGE)` or `the operation failed (ERR_IMPORT)`.
+**Symptom:** `import-volume` fails, and the volume reports `ERROR` with `stateReason` `the operation failed (ERR_IMPORT_IMAGE_TOO_LARGE)`, `the operation failed (ERR_IMPORT_SOURCE_REFUSED)` or `the operation failed (ERR_IMPORT)`.
 
-**Cause:** `ERR_IMPORT_IMAGE_TOO_LARGE` means the image's virtual size is larger than the volume's `sizeGib`. `ERR_IMPORT` means the download, conversion, or write failed: the source returned an HTTP error, sent nothing for 60 seconds, or the import took longer than 25 minutes.
+**Cause:** `ERR_IMPORT_IMAGE_TOO_LARGE` means the image's virtual size is larger than the volume's `sizeGib`. `ERR_IMPORT_SOURCE_REFUSED` means the image isn't raw or qcow2, names a backing file or an external data file, or is encrypted. `ERR_IMPORT` means the download, conversion, or write failed: the source returned an HTTP error, sent nothing for 60 seconds, or the import took longer than 25 minutes.
 
 **Resolution:**
 1. Delete the failed volume.
-2. Import again with `--size-gib` at least the image's virtual size, or from a faster or reachable source. See [Import a disk image as a volume](../volumes/import.md).
+2. Import again with `--size-gib` at least the image's virtual size, with a self-contained, unencrypted qcow2 or raw image (`qemu-img convert -O qcow2` writes one), or from a faster or reachable source. See [Import a disk image as a volume](../volumes/import.md).
 
 ## Request refused with PRODUCT_UNAVAILABLE
 

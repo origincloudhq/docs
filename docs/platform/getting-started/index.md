@@ -12,7 +12,7 @@ last_reviewed: 2026-11-15
 
 # Get started with Origin Cloud
 
-This tutorial takes you from a new user account to a running Linux instance you log in to over SSH. You register your organization in the console, add a payment method through the GraphQL API, and use the `origin` CLI for everything else.
+This tutorial takes you from a new user account to a running Linux instance you log in to over SSH. You register your organization in the console, add a payment method through the billing REST API, and use the `origin` CLI for everything else.
 
 ## What you'll build
 

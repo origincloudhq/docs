@@ -8,7 +8,7 @@ parent: instances
 nav_order: 80
 tags: [compute, instances, cli, api]
 related: [instances-instance-types, instances-stop-start]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-25
 ---
 
 # Change an instance's type
@@ -46,27 +46,23 @@ Change an instance's type to resize it, or to move it off a type that is no long
    origin compute start-instance --instance <instance-id>
    ```
 
-## Using the API
+## Using the REST API
 
-```graphql
-mutation {
-  compute {
-    changeInstanceType(input: {
-      instance: "//compute.origincloudapis.eu/projects/<project-id>/zones/<zone>/instances/<instance-id>"
-      instanceType: "gp1.core.4"
-    }) {
-      accepted
-      message
-    }
-  }
-}
+`PATCH` the stopped instance with `updateMask=instanceType`. The request returns an operation:
+
+```sh
+curl -sS -X PATCH \
+  "https://compute.origincloudapis.eu/v1beta1/projects/<project-id>/zones/<zone>/instances/<instance-id>?updateMask=instanceType" \
+  -H "$(origin id token --as-header --raw)" \
+  -H "Content-Type: application/json" \
+  -d '{"instanceType": "//compute.origincloudapis.eu/instanceTypes/gp1.core.4"}'
 ```
 
 ## If this fails
 
 - **`PRODUCT_UNAVAILABLE`**: the type you named is no longer offered. Pick one whose `available` is `true`. See [Instance types](instance-types.md#available-and-withdrawn-types).
 - **Quota exceeded**: the larger type would take the organization or project past its vCPU limit. Choose a smaller type or request a higher limit.
-- **`FAILED_PRECONDITION`**: the instance isn't `STOPPED`. Stop it first.
+- **`FAILED_PRECONDITION`**: the instance isn't `STOPPED`. Stop it first. A `FAILED` instance still holds capacity on its host and can't be stopped: start it and stop it again, or terminate it.
 - **[`CONFLICT`](../../platform/reference/errors.md#conflict)**: another change of the instance's type landed while yours was being checked. Look at its type now, and send yours again if it is still not the one you want.
 
 ## Related

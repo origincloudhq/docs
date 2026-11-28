@@ -7,7 +7,7 @@ page_type: reference
 parent: home
 nav_order: 50
 tags: [dns, reference, cli, api]
-last_reviewed: 2026-11-21
+last_reviewed: 2026-11-25
 availability: preview
 ---
 
@@ -41,7 +41,7 @@ A list command prints every page unless you give `--page-size` or `--page-token`
 
 ## Call the DNS API
 
-The DNS API answers at `https://dns.origincloudapis.eu`, the same host for every region. It's a preview (`v1beta1`): names and fields may still change. Call it directly when you don't use the CLI, such as from your own program. Every request carries an access token, as for the GraphQL API; with the `origin` CLI logged in, `origin id token --as-header --raw` prints the header. See [Use the GraphQL API](../../platform/access/api.md#authenticate). For example, to list a project's hosted zones:
+The DNS API answers at `https://dns.origincloudapis.eu`, the same host for every region. It's a preview (`v1beta1`): names and fields may still change. Call it directly when you don't use the CLI, such as from your own program. Every request carries an access token; with the `origin` CLI logged in, `origin id token --as-header --raw` prints the header. See [Use the REST APIs](../../platform/access/api.md). For example, to list a project's hosted zones:
 
 ```sh
 curl -sS https://dns.origincloudapis.eu/v1beta1/projects/<project-id>/hostedZones \
@@ -63,13 +63,10 @@ Requests and responses are JSON, with fields in lower camel case, such as `dnsNa
 
 A resource's full name is `//dns.origincloudapis.eu/` followed by its name. Every reference to another resource is a full name, in what the API takes and in what it shows: an attachment's `vpc` and the `vpc` filter, an alias's `floatingIp`, a batch's `deletions`. A relative name or an id there is refused with `BAD_REQUEST`.
 
-## GraphQL API
+## References to other resources
 
-The GraphQL API's `dns` namespace works on the same resources, which it names by their full resource names: an `id` is `//dns.origincloudapis.eu/` followed by the resource name above, such as `//dns.origincloudapis.eu/projects/<project-id>/hostedZones/<zone-id>`, and an argument that names a resource takes the same form: `project`, `hostedZone`, `recordSet`, `vpc` and, for an alias, `floatingIp`. Copy a full name from a response's `id` rather than assembling it. A name without its host, a bare ID or the name of another kind of resource is refused with `BAD_REQUEST`, naming the argument.
-
-- A project that doesn't exist is `NOT_FOUND`; a `hostedZone(id)` query answers `null` for a zone that isn't there.
+- A project that doesn't exist is `NOT_FOUND`.
 - A `vpc` and a `floatingIp` must be in the zone's project: the full name of a VPC (`//network.origincloudapis.eu/projects/<project-id>/regions/<region>/vpcs/<vpc-id>`) carries its region, and that of a Floating IP its zone, so neither is given separately.
-- A record set shows its zone in `hostedZone`, an alias its Floating IP in `aliasFloatingIp`, and an attachment its zone in `hostedZone` and its VPC in `vpc`.
 
 ## API methods
 

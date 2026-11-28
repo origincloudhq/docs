@@ -7,7 +7,7 @@ parent: instances
 nav_order: 70
 tags: [compute, instances, cli, api]
 related: [instances-lifecycle, instances-change-type]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-26
 ---
 
 # Stop and start an instance
@@ -34,7 +34,7 @@ Stop an instance when you don't need it running. A stopped instance accrues no c
 
 2. Verify that `state` reads `STOPPED` in the output. If the stop fails, the command fails with the reason; `get-instance` then shows the instance `FAILED`, with the reason in `stateReason`.
 
-Stopping an instance that is already stopped changes nothing. You can also shut the guest down from inside, with `sudo poweroff`. The instance then goes from `RUNNING` straight to `STOPPED`.
+Stopping an instance that is already stopped changes nothing. You can also shut the guest down from inside, with `sudo poweroff`. The instance then goes from `RUNNING` straight to `STOPPED`, unless its `shutdownBehavior` is `TERMINATE`: then the shutdown terminates it. See [Choose what a guest shutdown does](shutdown-behavior.md).
 
 ## Start the instance
 
@@ -58,19 +58,15 @@ Starting an instance that is already `RUNNING` changes nothing. A start is refus
 
 To get control back without waiting, add `--no-wait` to either command, and wait for the operation it prints later with `origin compute wait-operation`. See [Wait for long-running operations](../../platform/access/cli.md#wait-for-long-running-operations).
 
-## Using the API
+## Using the REST API
 
-The `startInstance` and `stopInstance` mutations take the instance's full name, its `id`:
+Call the instance's `:stop` or `:start` method. Each returns an operation:
 
-```graphql
-mutation {
-  compute {
-    stopInstance(input: { instance: "//compute.origincloudapis.eu/projects/<project-id>/zones/<zone>/instances/<instance-id>" }) {
-      accepted
-      message
-    }
-  }
-}
+```sh
+curl -sS -X POST \
+  https://compute.origincloudapis.eu/v1beta1/projects/<project-id>/zones/<zone>/instances/<instance-id>:stop \
+  -H "$(origin id token --as-header --raw)" \
+  -H "Content-Type: application/json" -d '{}'
 ```
 
 ## If this fails

@@ -7,7 +7,7 @@ page_type: troubleshooting
 parent: home
 nav_order: 60
 tags: [networking, troubleshooting]
-last_reviewed: 2026-11-22
+last_reviewed: 2026-11-26
 ---
 
 # Troubleshoot Network
@@ -54,6 +54,7 @@ last_reviewed: 2026-11-22
 **Cause:** The platform picks default ranges from 16 `/16` ranges, and your organization's VPCs already use them, or the random choice found no free one.
 
 **Resolution:** Run `create-vpc` again with `--ipv4-cidr-block` and a private range between `/16` and `/28`. See [VPC and subnet addressing](../vpcs/addressing.md#the-vpcs-ipv4-range).
+
 
 ## A subnet or VPC delete is refused
 

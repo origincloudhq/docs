@@ -51,7 +51,7 @@ A product in the price list isn't necessarily available to order. Selecting a pr
 **HTTP**  
 `GET https://billing.origincloudapis.eu/v1/pricing` returns the price list as JSON. See [Read the price list](read-price-list.md) and the [Price list API reference](reference/price-list-api.md).
 
-The price list isn't part of the GraphQL API, and the `origin` CLI doesn't read it.
+The `origin` CLI doesn't read the price list.
 
 ## Related services
 

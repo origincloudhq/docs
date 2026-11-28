@@ -1,12 +1,12 @@
 ---
 id: volumes-create
 title: Create a volume
-description: Create an empty volume or a volume from a protected snapshot with the origin CLI or the GraphQL API, and check that it becomes AVAILABLE.
+description: Create an empty volume or a volume from a protected snapshot with the origin CLI or the REST API, and check that it becomes AVAILABLE.
 page_type: task
 parent: volumes
 nav_order: 30
 tags: [storage, volumes, cli, api]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-25
 ---
 
 # Create a volume
@@ -42,29 +42,29 @@ Create a standalone volume when you need a disk that isn't tied to one instance'
 
    The command waits until the volume is `AVAILABLE` and prints it. Note its `name`; the last segment is the volume's id. To return at once instead, add `--no-wait` and wait for the operation later. See [Wait for long-running operations](../../platform/access/cli.md#wait-for-long-running-operations).
 
-   With the API, use the `createVolume` mutation:
+   With the REST API, send a `POST` to the zone's `volumes` collection:
 
-   ```graphql
-   mutation {
-     pvs {
-       createVolume(input: {
-         project: "//resourcemanager.origincloudapis.eu/projects/<project-id>"
-         sizeInGib: 100
-         storageClass: "gp1"
-       }) {
-         id
-         status
-       }
-     }
-   }
+   ```sh
+   curl -sS -X POST \
+     https://pvs.origincloudapis.eu/v1beta1/projects/<project-id>/zones/<zone>/volumes \
+     -H "$(origin id token --as-header --raw)" \
+     -H "Content-Type: application/json" \
+     -d '{"sizeGib": 100, "storageClass": "//pvs.origincloudapis.eu/storageClasses/gp1"}'
    ```
 
-   The mutation returns at once with the volume in `CREATING`. Read the volume until it reports `AVAILABLE`.
+   The request returns an operation at once, with the volume in `CREATING`. Read the volume until it reports `AVAILABLE`. See [Use the REST APIs](../../platform/access/api.md).
 
 3. Optional: verify the volume.
 
    ```sh
    origin pvs get-volume --volume <volume-id>
+   ```
+
+   With the REST API, `GET` the volume:
+
+   ```sh
+   curl -sS https://pvs.origincloudapis.eu/v1beta1/projects/<project-id>/zones/<zone>/volumes/<volume-id> \
+     -H "$(origin id token --as-header --raw)"
    ```
 
 ## Create a volume from a snapshot
@@ -94,7 +94,7 @@ If a rule doesn't hold, the request is refused with an error that names the rule
 
    `--source-snapshot` takes the snapshot's full name: `//pvs.origincloudapis.eu/` followed by its `name`. The command waits until the volume is `AVAILABLE` and prints it.
 
-   With the API, add `snapshot`, the snapshot's `id`, to the `createVolume` input.
+   With the REST API, add `sourceSnapshot`, the snapshot's full name, to the request body.
 
 ## If this fails
 

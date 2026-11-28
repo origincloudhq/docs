@@ -6,7 +6,7 @@ page_type: concept
 parent: volumes
 nav_order: 10
 tags: [storage, volumes]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-25
 ---
 
 # Storage classes
@@ -23,30 +23,16 @@ The platform publishes three classes. Only those with `available: true` in the c
 | `st1` | Throughput Optimized | `HDD` | Not published | Not published | No |
 | `io1` | I/O Intensive | `SSD` | Not published | Not published | No |
 
-Read the catalog rather than relying on this table. The `origin pvs list-storage-classes` command and the `pvs.storageClasses` query return every published class with its display name, backing media, whether it's the default, its `available` flag and its baseline limits. The catalog is platform-wide and needs no permission.
+Read the catalog rather than relying on this table. The `origin pvs list-storage-classes` command and the `storageClasses` REST method return every published class with its display name, backing media, whether it's the default, its `available` flag and its baseline limits. The catalog is platform-wide and needs no permission.
 
 ```sh
 origin pvs list-storage-classes
 origin pvs get-storage-class --storage-class gp1
 ```
 
-In the CLI's output, a class's `name` is `storageClasses/<class>`, such as `storageClasses/gp1`, and the fields are `displayName`, `media`, `defaultClass`, `available`, `baselineIops` and `baselineThroughputMibps`. The GraphQL query has the same fields, with `storageClass` for the class and `isDefault` in place of `defaultClass`:
+With the REST API, send a `GET` to `https://pvs.origincloudapis.eu/v1beta1/storageClasses` with your access token.
 
-```graphql
-query {
-  pvs {
-    storageClasses {
-      storageClass
-      displayName
-      media
-      isDefault
-      available
-      baselineIops
-      baselineThroughputMibps
-    }
-  }
-}
-```
+A class's `name` is `storageClasses/<class>`, such as `storageClasses/gp1`, and the fields are `displayName`, `media`, `defaultClass`, `available`, `baselineIops` and `baselineThroughputMibps`.
 
 ## Performance limits
 
@@ -70,13 +56,13 @@ The storage behind every volume is shared. A volume can't go above its limit, bu
 **Most workloads never reach it**  
 A database writing small transactions one at a time is bound by how long each write takes to become durable, a few milliseconds, which keeps it at a few hundred writes per second. The limit matters for bulk loads, backups, benchmarks and other work that keeps many I/Os in flight.
 
-A volume whose `iops` and `throughputMibps` are `0` in the CLI's output, or `null` in the GraphQL API, has no limit. Volumes you create are always limited.
+A volume whose `iops` and `throughputMibps` are `0` has no limit. Volumes you create are always limited.
 
 You can't change a volume's limit yet.
 
 ## Choosing a class
 
-Pass the class as `--storage-class` on `origin pvs create-volume` and `origin pvs import-volume` by its full name, such as `//pvs.origincloudapis.eu/storageClasses/gp1`; a volume shows its class the same way. With the API, pass it as `storageClass` on the `createVolume` or `importVolume` mutation. Omit it to get the default.
+Pass the class as `--storage-class` on `origin pvs create-volume` and `origin pvs import-volume` by its full name, such as `//pvs.origincloudapis.eu/storageClasses/gp1`; a volume shows its class the same way. With the REST API, pass it as `storageClass` in the volume you create or import. Omit it to get the default.
 
 The platform answers two kinds of wrong values differently:
 

@@ -2,17 +2,17 @@
 id: reference
 title: Network reference
 nav_title: Reference
-description: Where to find every origin network CLI command and every GraphQL query and mutation in the network namespace of the API.
+description: Where to find every origin network CLI command and the REST API's resources and paths for VPCs, subnets, interfaces, gateways, routing and traffic control.
 page_type: reference
 parent: home
 nav_order: 50
 tags: [networking, reference, cli, api]
-last_reviewed: 2026-11-21
+last_reviewed: 2026-11-25
 ---
 
 # Network reference
 
-Network has two reference surfaces: the `origin network` CLI commands and the `network` namespace of the GraphQL API. Both cover the same resources; the CLI has a command for each rule, route and association, where the GraphQL API replaces whole lists. For concepts and procedures, start at [What is Origin Cloud Network?](../index.md).
+Network has two reference surfaces: the `origin network` CLI commands and the network REST API. Both cover the same resources, with a command or a method for each rule, route and association. For concepts and procedures, start at [What is Origin Cloud Network?](../index.md).
 
 ## CLI commands
 
@@ -28,70 +28,32 @@ A network resource's `name` is its relative name, such as `projects/<project>/re
 
 A relative name or an id there is refused with `BAD_REQUEST`. `creator` is the full name of the principal that created the resource, such as `//iam.origincloudapis.eu/users/<user-id>`, or a platform service's, `//iam.origincloudapis.eu/services/<service>`, for what the platform created.
 
-## GraphQL queries
+## REST API
 
-All queries are fields of `network` on the root query type. For how to call the API, see [API access](../../platform/access/api.md).
+The Network API answers at `https://network.origincloudapis.eu`. It's a preview (`v1beta1`): names and fields may still change. Requests and responses are JSON with lower camel case field names. Every request carries an access token; see [Use the REST APIs](../../platform/access/api.md). A method that changes a resource returns a long-running operation. A collection supports `GET` to list and `POST` to create; a resource's name supports `GET`, `PATCH` where it has changeable fields, and `DELETE`. Regional resources sit under `/v1beta1/projects/<project-id>/regions/<region>/`, zonal ones under `/v1beta1/projects/<project-id>/zones/<zone>/`.
 
-| Query | Returns |
+| Resource | Collection, below the region or zone |
 |---|---|
-| `vpcs` | Every VPC in a project. |
-| `vpc` | One VPC by its full resource name. |
-| `subnets` | Every subnet in a project. |
-| `subnet` | One subnet by its full resource name. |
-| `networkInterfaces` | Every network interface in a project. |
-| `networkInterface` | One network interface by its full resource name. |
-| `internetGateway` | A VPC's Internet Gateway, by the VPC's full resource name, if it has one. |
-| `routeTables` | Every route table in a project. |
-| `routeTable` | One route table by its full resource name. |
-| `natGateways` | Every NAT gateway in a project. |
-| `floatingIps` | Every Floating IP in a project. |
-| `floatingIp` | One Floating IP by its full resource name. |
-| `acls` | Every network ACL in a project. |
-| `acl` | One network ACL by its full resource name. |
-| `securityGroups` | Every security group in a project. |
-| `securityGroup` | One security group by its full resource name. |
-| `resolverPolicies` | Every resolver policy in a project. |
-| `resolverPolicy` | One resolver policy by its full resource name. |
+| VPC | `vpcs` |
+| Resolver policy association | `vpcs/<vpc-id>/resolverPolicyAssociations` |
+| Resolver policy | `resolverPolicies`; `POST <name>:setDefault` makes one the default |
+| Internet Gateway | `internetGateways` |
+| Route table | `routeTables` |
+| Route | `routeTables/<route-table-id>/routes` |
+| Network ACL | `acls` |
+| ACL rule | `acls/<acl-id>/rules` |
+| Security group | `securityGroups` |
+| Security group rule | `securityGroups/<security-group-id>/rules` |
+| Subnet | `subnets` |
+| Subnet's ACL association | `subnets/<subnet-id>/aclAssociations` |
+| Subnet's route table association | `subnets/<subnet-id>/routeTableAssociations` |
+| Network interface | `networkInterfaces` |
+| Interface's security group association | `networkInterfaces/<interface-id>/securityGroupAssociations` |
+| NAT gateway | `natGateways` |
+| Floating IP | `floatingIps` |
+| Floating IP association | `floatingIps/<floating-ip-id>/associations` |
 
-## GraphQL mutations
-
-All mutations are fields of `network` on the root mutation type.
-
-| Mutation | Does |
-|---|---|
-| `createVpc` | Creates an empty VPC: no subnet, route table, ACL or security group. |
-| `deleteVpc` | Deletes a VPC and everything it owns. |
-| `createSubnet` | Adds a subnet to a VPC. |
-| `deleteSubnet` | Deletes a subnet. |
-| `updateSubnetAcl` | Assigns a network ACL to a subnet. |
-| `updateSubnetAutoAssignPublicIp` | Turns automatic Floating IPs for a subnet on or off. |
-| `createNetworkInterface` | Creates a standalone network interface in a subnet. |
-| `deleteNetworkInterface` | Deletes a standalone network interface. |
-| `setNetworkInterfaceSourceAddressCheck` | Turns the source-address check on or off for a network interface. |
-| `setNetworkInterfaceSecurityGroups` | Replaces the security groups a network interface carries. |
-| `attachInternetGateway` | Attaches an Internet Gateway to a VPC. |
-| `detachInternetGateway` | Detaches a VPC's Internet Gateway. |
-| `createRouteTable` | Creates a route table in a VPC. |
-| `updateRouteTableRoutes` | Replaces a route table's routes. |
-| `associateRouteTable` | Points a subnet at a route table. |
-| `deleteRouteTable` | Deletes a route table. |
-| `createNatGateway` | Creates a NAT gateway in a public subnet. |
-| `deleteNatGateway` | Deletes a NAT gateway. |
-| `allocateFloatingIp` | Allocates a Floating IP to a project. |
-| `associateFloatingIp` | Associates a Floating IP with a network interface. |
-| `disassociateFloatingIp` | Removes a Floating IP's association. |
-| `releaseFloatingIp` | Releases a Floating IP. |
-| `createAcl` | Creates a network ACL in a VPC. |
-| `updateAclRules` | Replaces a network ACL's rules. |
-| `deleteAcl` | Deletes a network ACL. |
-| `createSecurityGroup` | Creates a security group in a VPC, optionally with initial rules. |
-| `updateSecurityGroupRules` | Replaces a security group's ingress and egress rules. |
-| `deleteSecurityGroup` | Deletes a security group. |
-| `createResolverPolicy` | Creates a resolver policy in a project. |
-| `updateResolverPolicy` | Replaces a resolver policy's relaying setting and upstream servers. |
-| `attachResolverPolicy` | Attaches a resolver policy to a VPC. |
-| `setDefaultResolverPolicy` | Makes a resolver policy the project's default. |
-| `deleteResolverPolicy` | Deletes a resolver policy. |
+VPCs, resolver policies and their associations, Internet Gateways, route tables, routes, ACLs, ACL rules, security groups and their rules are regional. Subnets, interfaces, NAT gateways, Floating IPs and their associations are zonal, as in the CLI.
 
 ## Errors and limits
 

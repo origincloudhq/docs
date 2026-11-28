@@ -6,7 +6,7 @@ page_type: overview
 parent: home
 nav_order: 20
 tags: [overview, compute, storage, volumes]
-last_reviewed: 2026-11-25
+last_reviewed: 2026-11-26
 ---
 
 # Instance storage
@@ -36,7 +36,10 @@ The volume the instance boots from. The launch creates it by copying the image o
 A volume you created and attached. It outlives the instance: termination releases it rather than deleting it. See [Attach and detach volumes](attach-detach.md).
 
 **A disk's serial is its volume's id**  
-Every volume disk in the guest, the root disk included, has the volume's id, such as `vol-AbC123xYz9`, as its serial. A Linux guest links each disk as `/dev/disk/by-id/virtio-<volume-id>`, and `lsblk -o NAME,SERIAL` lists the serials. That tells you which disk is which volume without relying on the order the guest named its disks in. The cloud-init seed disk is not a volume and has no serial.
+Every volume disk in the guest, the root disk included, has the volume's id, such as `vol-AbC123xYz9`, as its serial. A Linux guest links each disk as `/dev/disk/by-id/virtio-<volume-id>`, and `lsblk -o NAME,SERIAL` lists the serials. That tells you which disk is which volume without relying on the order the guest named its disks in. An instance started before its boot configuration came from the metadata service still has a cloud-init seed disk until its next stop and start; that disk is not a volume and has no serial.
+
+**A device name is a slot, not the guest's name**  
+An attachment's `device`, a local disk's `device` and an image block device's `device`, such as `vdb`, name the slot the disk takes on the instance. The guest names its disks in the order it finds them, so its name for a disk can differ, most often for a volume attached to a running instance. Identify a disk by its serial, never by its name.
 
 **Local disk**  
 A disk on the machine the instance runs on, like an instance-store volume, which you ask for at launch with `localDisks`. The launch creates it blank, and it's deleted with the instance. See [Add local disks at launch](local-disks.md).

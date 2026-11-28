@@ -1,18 +1,22 @@
 ---
 id: instances-guest-environment
 title: Guest environment
-description: What the platform sets up inside an instance at first boot - the login user and SSH key, time synchronization - and why each image needs its own machine-id.
+description: What the platform sets up inside an instance - the login user and SSH key, its network configuration, time synchronization - and why each image needs its own machine-id.
 page_type: concept
 parent: instances
 nav_order: 50
 tags: [compute, instances, images]
 related: [images, key-pairs, images-create]
-last_reviewed: 2026-11-21
+last_reviewed: 2026-11-26
 ---
 
 # Guest environment
 
 At first boot, the platform hands the guest a short configuration through cloud-init. It creates the login user with your SSH key and points the guest's clock at the platform's time service. Everything else inside the guest comes from the image.
+
+cloud-init reads that configuration over the network, from the [instance metadata service](../reference/metadata-service.md#boot-configuration). The instance's firmware carries the system serial number `ds=nocloud-net;s=http://169.254.169.254/nocloud/`, which tells cloud-init's NoCloud datasource where to look, so the instance has no configuration disk. The image needs cloud-init with the NoCloud datasource, which the platform-provided images and the common distributions' cloud images include.
+
+An instance started before the platform served its configuration this way still has a small cloud-init seed disk. It keeps the disk until it's stopped and started, and then boots without it.
 
 ## Login user
 
@@ -29,6 +33,20 @@ Set `--login-user` on `origin compute create-instance`, or `loginUser` in [a rec
 A login user name is a POSIX user name: lowercase letters, digits, underscores and hyphens, at most 32 characters, starting with a letter or underscore, and not `root`.
 
 Whichever applies, the instance reports it as `loginUser`. Read the name from the instance rather than from the image. It's fixed for the instance's life, even if the image is later deleted or its family moves on.
+
+## Network configuration
+
+An instance gets its network configuration over DHCP, from a server on your subnet that answers only your instance's own interfaces. cloud-init sets the instance's first network interface to use DHCP for IPv4 and IPv6, and the image's own configuration decides about any other interface. An instance that asks for an IPv4 address by DHCP gets:
+
+- the interface's private IPv4 address and the subnet's prefix length
+- the subnet's gateway as the default route
+- a route to `169.254.169.254` on the interface itself
+- the subnet's DNS resolver, which also serves time, and the search domain `internal`
+- the hostname `ip-<a>-<b>-<c>-<d>.internal`, built from the private IPv4 address
+
+The route to `169.254.169.254` is what lets cloud-init reach its configuration, before anything in the guest is set up. The address is the interface's for as long as the instance runs: a lease lasts a day and renews twice a day, and the DHCP server never hands out any other address.
+
+The interface's IPv6 address is available the same way, over DHCPv6. The subnet's router advertisements tell the instance to ask DHCPv6 for its address, and the server answers with the interface's private IPv6 address. The IPv6 default route and the subnet's prefix come from the router advertisements, not from DHCPv6. The DHCPv6 server hands out no DNS resolver: the resolver is the IPv4 one above. Like the IPv4 lease, the IPv6 address stays the interface's for as long as the instance runs. Its lifetime is a day, and it renews twice a day.
 
 ## Time synchronization
 

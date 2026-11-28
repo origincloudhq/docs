@@ -7,7 +7,7 @@ page_type: overview
 parent: null
 nav_order: 0
 tags: [overview, storage, volumes, snapshots]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-27
 ---
 
 # What is Origin Cloud Storage?
@@ -45,13 +45,16 @@ Point-in-time, crash-consistent copies of a volume, used as the source for new v
 **Disk image import**  
 Create a volume whose initial content is a disk image you download from an HTTP(S) URL. See [Import a disk image as a volume](volumes/import.md).
 
+**Kubernetes persistent volumes**  
+The Origin CSI driver gives a Kubernetes cluster you run on Origin Cloud instances persistent volumes, snapshots and online expansion, with no credential stored in the cluster. See [Volumes for Kubernetes with the Origin CSI driver](kubernetes/index.md).
+
 ## Ways to access Storage
 
 **Origin CLI**  
 The `origin pvs` command group covers volumes, storage classes, and snapshots. See [`origin pvs` commands](reference/cli.md).
 
-**GraphQL API**  
-Volumes, snapshots, and storage classes live under the `pvs` namespace of the API. See [Storage reference](reference/index.md).
+**REST API**  
+Volumes, snapshots, and storage classes at `https://pvs.origincloudapis.eu`. See [Use the REST APIs](../platform/access/api.md) and the [Storage reference](reference/index.md#rest-api).
 
 For installing the CLI and authenticating, see [Access Origin Cloud](../platform/access/index.md).
 
@@ -61,6 +64,7 @@ For installing the CLI and authenticating, see [Access Origin Cloud](../platform
 - [Attach and detach volumes](../compute/instance-storage/attach-detach.md) – connect a volume you created to an instance.
 - [Create an image](../compute/images/create.md) – turn a protected snapshot into an image you can launch instances from.
 - [Pricing](../pricing/index.md) – how volumes and snapshots are billed.
+- [Encryption at rest](../platform/encryption-at-rest.md) – how volumes, snapshots and images are encrypted, and who holds the keys.
 
 ## On origincloud.eu
 

@@ -7,12 +7,12 @@ page_type: task
 parent: home
 nav_order: 50
 tags: [iam, service-accounts, cli, api]
-last_reviewed: 2026-11-25
+last_reviewed: 2026-11-26
 ---
 
 # Use service accounts
 
-A service account is a non-interactive identity for automation such as CI pipelines, scripts and infrastructure-as-code tools. It belongs to one organization and acts as its own principal: the member `//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>` in the `origin iam` commands and the REST API, its `id` in the GraphQL API. Its access is checked exactly like a user's: it can do what its role bindings allow, and nothing else.
+A service account is a non-interactive identity for automation such as CI pipelines, scripts and infrastructure-as-code tools. It belongs to one organization and acts as its own principal: the member `//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>` in the `origin iam` commands and the REST API. Its access is checked exactly like a user's: it can do what its role bindings allow, and nothing else.
 
 A service account never holds a password or a client secret. Software acts as it with an access token from the security token service, `https://sts.origincloudapis.eu`, which exchanges a proof for it: a CI job's own OIDC token, an instance's credential, or an assertion signed with one of the account's keys.
 
@@ -222,13 +222,66 @@ sequenceDiagram
 
 ### Who may impersonate
 
-Impersonating needs `iam.service_account.get_access_token`, which [`roles/iam.service-account-token-creator`](roles.md#rolesiamservice-account-token-creator) grants, and `roles/owner` holds. Grant it org-wide, on the account's organization: a project-scoped grant lets its holder impersonate no account. An org-wide one lets its holder impersonate every active service account of the organization, `EXTERNAL` and `WORKLOAD` alike, so grant it only to people you would trust with each of them.
+Impersonating needs `iam.service_account.get_access_token`, which [`roles/iam.service-account-token-creator`](roles.md#rolesiamservice-account-token-creator) grants, and `roles/owner` holds. Grant it on the one service account the person should impersonate, or org-wide. A project-scoped grant lets its holder impersonate no account.
+
+- **On one service account**: its holder impersonates that account and no other. Prefer this one: it is how you hand a tool, such as an AI agent, one account's narrow roles without letting it reach every other account. See [Grant impersonation of one service account](#grant-impersonation-of-one-service-account).
+- **Org-wide**: its holder impersonates every active service account of the organization, `EXTERNAL` and `WORKLOAD` alike, including ones created later. Grant it only to people you would trust with each of them.
 
 ```sh
 origin iam create-role-binding --organization <org-id> \
   --member //iam.origincloudapis.eu/users/<user-id> \
   --role //iam.origincloudapis.eu/roles/iam.service-account-token-creator
 ```
+
+#### Grant impersonation of one service account
+
+Name the account with `--service-account`, its full name, from CLI version 3.1.0:
+
+```sh
+origin iam create-role-binding --organization <org-id> \
+  --member //iam.origincloudapis.eu/users/<user-id> \
+  --role //iam.origincloudapis.eu/roles/iam.service-account-token-creator \
+  --service-account //iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>
+```
+
+In the REST API, the binding names the account in `serviceAccount`:
+
+```sh
+curl -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  https://iam.origincloudapis.eu/v1beta1/organizations/<org-id>/roleBindings \
+  -d '{
+    "member": "//iam.origincloudapis.eu/users/<user-id>",
+    "role": "//iam.origincloudapis.eu/roles/iam.service-account-token-creator",
+    "serviceAccount": "//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>"
+  }'
+```
+
+It needs `iam.role.assign` on the organization, and you must hold the role's permission yourself, as for any binding; see [Who can assign a role](access-model.md#who-can-assign-a-role). The binding grants nothing on the organization or its projects: its holder can't list, change or launch with the account, only get its token.
+
+It is refused, and nothing is bound, when:
+
+- the account isn't one of the organization's, or doesn't exist: [`NOT_FOUND`](../platform/reference/errors.md#not_found);
+- the account is revoked: [`BAD_REQUEST`](../platform/reference/errors.md#bad_request) on `roleBinding.serviceAccount`;
+- the role has a permission that doesn't act on one service account, such as `roles/viewer`: `BAD_REQUEST` on `roleBinding.role`. Only `roles/iam.service-account-token-creator` can be bound on one account;
+- `project` is set too, or the member is a `user:<email>` address without an account: `BAD_REQUEST` on `roleBinding.serviceAccount`. The CLI refuses `--project` with `--service-account` itself, before sending anything.
+
+To list the bindings on one account, filter by it. The table's `SERVICE ACCOUNT` column shows the account a binding is limited to:
+
+```sh
+origin iam list-role-bindings --organization <org-id> \
+  --service-account //iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>
+```
+
+In the REST API, that is the `serviceAccount` query parameter of `ListRoleBindings`:
+
+```sh
+curl -H "Authorization: Bearer $TOKEN" \
+  "https://iam.origincloudapis.eu/v1beta1/organizations/<org-id>/roleBindings?serviceAccount=//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>"
+```
+
+Delete the binding by its name, as any other: [Revoke a role](assign-roles.md#revoke-a-role). Revoking the service account deletes the bindings on it.
+
+To restrict an AI agent or another tool this way, give it a service account with only the roles it needs, bind the token creator on that account alone to the person who runs the tool, and have the tool [impersonate the account](#with-the-cli) with that person's login.
 
 It is a different right from [`roles/iam.service-account-user`](roles.md#rolesiamservice-account-user):
 
@@ -381,22 +434,14 @@ origin iam create-federated-credential \
 
 ## Using the API
 
-In the REST API, these are `CreateServiceAccount`, `ListServiceAccounts`, `GetServiceAccount` and `DeleteServiceAccount`; for keys `CreateServiceAccountKey`, `ListServiceAccountKeys`, `GetServiceAccountKey` and `DeleteServiceAccountKey`; and for federated credentials `CreateFederatedCredential`, `ListFederatedCredentials`, `GetFederatedCredential` and `DeleteFederatedCredential`; see the [IAM reference](reference/index.md#rest-api). The GraphQL mutations are `createServiceAccount`, `revokeServiceAccount`, which takes the account's full name as `serviceAccount`, `createServiceAccountKey`, whose `credentialsFile` is the one-time credentials file, and `deleteServiceAccountKey`; an account's `id` is its member; the queries are `serviceAccounts` and `serviceAccountKeys`, all in the `iam` namespace. No response but a key's create carries its private key.
+In the REST API, these are `CreateServiceAccount`, `ListServiceAccounts`, `GetServiceAccount` and `DeleteServiceAccount`; for keys `CreateServiceAccountKey`, `ListServiceAccountKeys`, `GetServiceAccountKey` and `DeleteServiceAccountKey`; and for federated credentials `CreateFederatedCredential`, `ListFederatedCredentials`, `GetFederatedCredential` and `DeleteFederatedCredential`; see the [IAM reference](reference/index.md#rest-api). No response but a key's create carries its private key.
 
-The type is the service account's `type` field in both APIs: set it in the create to make a `WORKLOAD` service account.
+The type is the service account's `type` field: set it in the create to make a `WORKLOAD` service account.
 
-```graphql
-mutation {
-  iam {
-    createServiceAccount(input: {
-      organisation: "//resourcemanager.origincloudapis.eu/organizations/<org-id>"
-      name: "nightly-backup"
-      type: EXTERNAL
-    }) {
-      id
-    }
-  }
-}
+```sh
+curl -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  https://iam.origincloudapis.eu/v1beta1/organizations/<org-id>/serviceAccounts \
+  -d '{"displayName": "nightly-backup", "type": "EXTERNAL"}'
 ```
 
 ## Related
@@ -406,6 +451,6 @@ mutation {
 - [Restrict the hosted MCP server's agent to a service account](../platform/access/hosted-mcp.md#restrict-the-agent-to-a-service-accounts-roles)
 - [Workload identity federation](workload-identity-federation.md)
 - [Authenticate from GitHub Actions](github-actions.md)
-- [API access](../platform/access/api.md)
+- [Use the REST APIs](../platform/access/api.md)
 - [`create-service-account`](reference/cli.md#create-service-account) and [`delete-service-account`](reference/cli.md#delete-service-account) commands
 - [Audit log](audit-log.md) – creation and revocation are recorded, and so is the removal of a revoked account's role assignments; so are the creation and deletion of federated credentials and keys, and every exchange through either

@@ -7,7 +7,7 @@ page_type: overview
 parent: null
 nav_order: 0
 tags: [overview, compute, instances]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-25
 ---
 
 # What is Origin Cloud Compute?
@@ -52,8 +52,8 @@ Recipes for instances kept under a name in a project, as numbered versions that 
 **CLI**  
 The `origin compute` command group. See [Use the CLI](../platform/access/cli.md) to install and log in, and [`origin compute` commands](reference/cli.md) for every command.
 
-**GraphQL API**  
-Instances, images, image families, instance types and key pairs live under the `compute` namespace of the API, for both queries and mutations. See [API access](../platform/access/api.md).
+**REST API**  
+Instances, images, image families, instance types, key pairs and volume attachments at `https://compute.origincloudapis.eu`. See [Use the REST APIs](../platform/access/api.md) and the [Compute reference](reference/index.md).
 
 ## When to use Compute
 

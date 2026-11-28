@@ -7,12 +7,12 @@ page_type: reference
 parent: billing
 nav_order: 30
 tags: [billing, api, reference]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-25
 ---
 
 # Billing REST API
 
-The billing REST API answers at `https://billing.origincloudapis.eu`, the host the [price list](../../pricing/index.md) is on. It's a preview (`v1beta1`): names and fields may still change. Every request carries an access token, as for the GraphQL API, except the price list's and the legal documents'; see [Use the GraphQL API](../access/api.md#authenticate).
+The billing REST API answers at `https://billing.origincloudapis.eu`, the host the [price list](../../pricing/index.md) is on. It's a preview (`v1beta1`): names and fields may still change. Every request carries an access token, as for every REST API, except the price list's and the legal documents'; see [Use the REST APIs](../access/api.md#authenticate).
 
 - A change's response carries an `Origin-Consistency-Token` header. Send it back with your next reads and they show the change; see [Read what you just changed](../access/api.md#read-what-you-just-changed).
 - `CreateBillingAccount` takes an optional `requestId`, a UUID. A retry with the same `requestId` within 24 hours returns the account the first request created instead of creating another. The same `requestId` with a different request is refused with `CONFLICT`.
@@ -50,7 +50,7 @@ Billing accounts need the billing permissions, which the Owner role doesn't incl
 | `ListLegalAcceptances`, `GetLegalAcceptance` | `GET /v1beta1/organizations/<org-id>/billingAccounts/<id>/legalAcceptances`, `GET .../legalAcceptances/<id>` | The billing account's acceptances, the latest first: the version and its `sha256`, who accepted (`accepter`) and when, `method` (`SIGNUP`, `CHANGE` or `MIGRATION`), and the legal entity as it was then (organization name, billing address, VAT ID). An acceptance never changes, and is kept after the billing account and the organization are deleted. Needs `admin.billing_account.get`. |
 | `DownloadLegalDocumentVersion` | `GET /v1beta1/legalDocuments/<document>/versions/<version>:download` | The version as a PDF, the file itself rather than JSON; the version's `pdfUri`. Needs no access token. |
 
-A billing account's `paymentMethod.state` is `MISSING`, `VERIFIED` or `NOT_REQUIRED`, the REST names of the GraphQL API's `NONE`, `VERIFIED` and `NOT_REQUIRED`; see [Add a payment method](payment-method.md#when-a-payment-method-is-needed). In the REST API a billing address names its country as `regionCode`.
+A billing account's `paymentMethod.state` is `MISSING`, `VERIFIED` or `NOT_REQUIRED`; see [Add a payment method](payment-method.md#when-a-payment-method-is-needed). A billing address names its country as `regionCode`.
 
 A repeated `ConfirmPaymentMethodSetup` after one that succeeded is refused with `INVALID_ARGUMENT`, because no setup is in progress any more. Read the billing account to see whether it's `VERIFIED`.
 

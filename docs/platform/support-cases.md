@@ -7,7 +7,7 @@ parent: home
 nav_order: 45
 tags: [organizations, api]
 related: [access-api, reference-errors]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-25
 ---
 
 # Support cases
@@ -61,7 +61,7 @@ Cases are governed by the `admin.support_case` permissions on the organization. 
 
 ## In the REST API
 
-The support REST API answers at `https://support.origincloudapis.eu`. It's a preview (`v1beta1`): names and fields may still change. Every request carries an access token, as for the GraphQL API; see [Use the GraphQL API](access/api.md#authenticate).
+The support REST API answers at `https://support.origincloudapis.eu`. It's a preview (`v1beta1`): names and fields may still change. Every request carries an access token, as for every REST API; see [Use the REST APIs](access/api.md#authenticate).
 
 A case is named `organizations/<org-id>/cases/<case-id>`, and a message `organizations/<org-id>/cases/<case-id>/messages/<message-id>`. A case about one project names it in `project` by its full name, `//resourcemanager.origincloudapis.eu/projects/<project-id>`; the project has to be one of the organization's, and a name without the host is refused with `INVALID_ARGUMENT`. Who opened a case (`creator`) and who wrote a message (`author`) is the principal's full name on iam, such as `//iam.origincloudapis.eu/users/<user-id>` or `//iam.origincloudapis.eu/organizations/<org-id>/serviceAccounts/<service-account-id>`.
 
@@ -82,6 +82,6 @@ Setting a case to `IN_PROGRESS` or `RESOLVED` is support's, so the REST API has 
 
 ## Related
 
-- [Use the GraphQL API](access/api.md)
+- [Use the REST APIs](access/api.md)
 - [Error codes](reference/errors.md)
 - [Limits](reference/limits.md)

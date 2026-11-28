@@ -8,28 +8,22 @@ parent: instances
 nav_order: 30
 tags: [compute, instances]
 related: [instances-lifecycle, instances-host-failure]
-last_reviewed: 2026-10-19
+last_reviewed: 2026-11-25
 ---
 
 # Instance health checks
 
-`status` tells you what was asked for or confirmed. Health checks tell you what the platform can observe right now. You need both: an instance whose machine has become unreachable is still `RUNNING`, because nothing stopped it. Read `healthChecks` on an instance for a result per check and an `availability` summary.
+`state` tells you what was asked for or confirmed. Health checks tell you what the platform can observe right now. You need both: an instance whose machine has become unreachable is still `RUNNING`, because nothing stopped it. Read `health` on an instance for a result per check and an `availability` summary.
 
-```graphql
-query {
-  compute {
-    instance(id: "//compute.origincloudapis.eu/projects/<project-id>/zones/<zone>/instances/<instance-id>") {
-      status
-      healthChecks {
-        availability
-        checks { kind category status since }
-      }
-    }
-  }
-}
+```sh
+curl -sS \
+  https://compute.origincloudapis.eu/v1beta1/projects/<project-id>/zones/<zone>/instances/<instance-id> \
+  -H "$(origin id token --as-header --raw)"
 ```
 
-`since` is when the check entered its current result. It's `null` while nothing has observed the check.
+The response's `state` and `health` hold what this page describes. `health` carries `availability` and, in `checks`, each check's `kind`, `category`, `outcome` and `changeTime`.
+
+`changeTime` is when the check entered its current result. It's absent while nothing has observed the check.
 
 ## Checks
 
@@ -98,7 +92,7 @@ The check tells you the guest's operating system and network stack are up. It do
 
 When the platform loses contact with the machine carrying your instance, `HOST_REACHABLE` reads `IMPAIRED`. The instance-level checks stop being refreshed and read `INSUFFICIENT_DATA` within 120 seconds. Once the reachability result itself ages out, every check reads `INSUFFICIENT_DATA` and `availability` reads `UNKNOWN`.
 
-Read that as "the platform has lost sight of this instance", not "this instance has stopped". The platform can't tell which, and it doesn't claim either. The instance's `status` stays `RUNNING`. For what happens if the machine has failed, see [When the machine under an instance fails](host-failure.md).
+Read that as "the platform has lost sight of this instance", not "this instance has stopped". The platform can't tell which, and it doesn't claim either. The instance's `state` stays `RUNNING`. For what happens if the machine has failed, see [When the machine under an instance fails](host-failure.md).
 
 ## When GUEST_PRESENT is IMPAIRED
 
@@ -106,7 +100,7 @@ Read that as "the platform has lost sight of this instance", not "this instance 
 
 The platform reports it only after the machine has given a complete account of what it runs and left your instance out for 60 seconds. A machine that's merely unreachable never produces it. In the same state, `HOST_REACHABLE` reads `OK`.
 
-This is the one check that asks you to act. The instance's `status` stays `RUNNING`, because nobody asked for anything else. Stop the instance and start it again. The stop completes quickly, since there is nothing left to shut down. The start can place the instance on any machine, with its volumes, network interface and addresses unchanged. To automate this, poll `healthChecks` and act on `GUEST_PRESENT: IMPAIRED`.
+This is the one check that asks you to act. The instance's `state` stays `RUNNING`, because nobody asked for anything else. Stop the instance and start it again. The stop completes quickly, since there is nothing left to shut down. The start can place the instance on any machine, with its volumes, network interface and addresses unchanged. To automate this, poll `health` and act on `GUEST_PRESENT: IMPAIRED`.
 
 ## Related
 

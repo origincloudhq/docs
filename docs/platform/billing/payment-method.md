@@ -1,12 +1,12 @@
 ---
 id: billing-payment-method
 title: Add a payment method
-description: Add a card to a billing account on the payment provider's hosted page, confirm it, and check paymentMethodStatus so the account's projects can create billable resources.
+description: Add a card to a billing account on the payment provider's hosted page, confirm it, and check the payment method state so the account's projects can create billable resources.
 page_type: task
 parent: billing
 nav_order: 10
 tags: [billing, api]
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-25
 ---
 
 # Add a payment method
@@ -17,19 +17,19 @@ A project can create billable resources only once its billing account has a veri
 
 - The organization ID and the ID of the project you want to unblock.
 - The `roles/billing.administrator` or `roles/billing.user` role on the organization. Whoever created the organization has the first one. The Owner role alone isn't enough. See [Billing access](billing-access.md). To look up which billing account a project is charged to, you also need read access to the project, such as `roles/viewer`.
-- A way to call the GraphQL API, for example `curl` with your CLI token. See [Use the GraphQL API](../access/api.md).
+- A way to call the billing REST API, for example `curl` with your CLI token. See [Use the REST APIs](../access/api.md).
 
 ## When a payment method is needed
 
-A billing account's `paymentMethodStatus` is one of three values:
+A billing account's `paymentMethod.state` is one of three values:
 
-| `paymentMethodStatus` | Meaning |
+| `paymentMethod.state` | Meaning |
 |---|---|
-| `NONE` | No verified payment method. Billable resources are refused. |
+| `MISSING` | No verified payment method. Billable resources are refused. |
 | `VERIFIED` | A payment method is on file and verified. |
 | `NOT_REQUIRED` | Billing is arranged with Origin Cloud directly, and no payment method is needed. |
 
-While the status is `NONE`, these operations in the account's projects are refused with [`PAYMENT_METHOD_REQUIRED`](../reference/errors.md#payment_method_required):
+While the state is `MISSING`, these operations in the account's projects are refused with [`PAYMENT_METHOD_REQUIRED`](../reference/errors.md#payment_method_required):
 
 - Launch an instance
 - Create, import or grow a volume
@@ -41,69 +41,61 @@ Creating VPCs, subnets, security groups and other network configuration doesn't 
 
 ## Add the payment method
 
-The steps send GraphQL requests with `curl`. Each request uses this pattern, with the request body on standard input:
+The steps call the [billing REST API](rest-api.md) with `curl`. `origin id token --as-header --raw` prints the `Authorization` header with your CLI token.
 
-```sh
-curl -sS https://graph.origincloudapis.eu/graphql \
-  -H "$(origin id token --as-header --raw)" \
-  -H "Content-Type: application/json" \
-  --data @- <<'EOF'
-<request-body>
-EOF
-```
+1. Find the billing account the project is charged to:
 
-1. Find the billing account the project is charged to, and its current status:
-
-   ```json
-   {
-     "query": "query($org: ID!, $p: ID!) { admin { project(id: $p) { billingAccount } billingAccounts(input: {organisation: $org}) { id displayName paymentMethodStatus } } }",
-     "variables": {
-       "org": "//resourcemanager.origincloudapis.eu/organizations/<org-id>",
-       "p": "//resourcemanager.origincloudapis.eu/projects/<project-id>"
-     }
-   }
+   ```sh
+   curl -sS https://billing.origincloudapis.eu/v1beta1/projects/<project-id>/billingInfo \
+     -H "$(origin id token --as-header --raw)"
    ```
 
-   The project's account is the one whose `id` equals the project's `billingAccount`. Note that full resource name. If its status is `VERIFIED` or `NOT_REQUIRED`, you're done.
+   The response's `billingAccount` is the account's full name, `//billing.origincloudapis.eu/organizations/<org-id>/billingAccounts/<billing-account-id>`. Its path part, `organizations/<org-id>/billingAccounts/<billing-account-id>`, is what the next requests take. Read the account to see its state:
+
+   ```sh
+   curl -sS https://billing.origincloudapis.eu/v1beta1/organizations/<org-id>/billingAccounts/<billing-account-id> \
+     -H "$(origin id token --as-header --raw)"
+   ```
+
+   If `paymentMethod.state` is `VERIFIED` or `NOT_REQUIRED`, you're done.
 
 2. Start the setup on that billing account:
 
-   ```json
-   {
-     "query": "mutation($ba: ID!) { admin { startPaymentMethodSetup(input: {billingAccount: $ba}) { redirectUrl } } }",
-     "variables": { "ba": "//billing.origincloudapis.eu/organizations/<org-id>/billingAccounts/<billing-account-id>" }
-   }
+   ```sh
+   curl -sS -X POST \
+     https://billing.origincloudapis.eu/v1beta1/organizations/<org-id>/billingAccounts/<billing-account-id>:startPaymentMethodSetup \
+     -H "$(origin id token --as-header --raw)" \
+     -H "Content-Type: application/json" \
+     -d '{}'
    ```
 
-   The response contains a `redirectUrl`.
+   The response contains a `redirectUri`.
 
-3. Open the `redirectUrl` in your browser and enter the card details. When you finish, the page returns you to the Origin Cloud console.
+3. Open the `redirectUri` in your browser and enter the card details. When you finish, the page returns you to the Origin Cloud console.
 
 4. Confirm the setup:
 
-   ```json
-   {
-     "query": "mutation($ba: ID!) { admin { confirmPaymentMethodSetup(input: {billingAccount: $ba}) { paymentMethodStatus paymentMethodBrand paymentMethodLast4 } } }",
-     "variables": { "ba": "//billing.origincloudapis.eu/organizations/<org-id>/billingAccounts/<billing-account-id>" }
-   }
+   ```sh
+   curl -sS -X POST \
+     https://billing.origincloudapis.eu/v1beta1/organizations/<org-id>/billingAccounts/<billing-account-id>:confirmPaymentMethodSetup \
+     -H "$(origin id token --as-header --raw)" \
+     -H "Content-Type: application/json" \
+     -d '{}'
    ```
 
-   The platform checks the result with the payment provider. Returning to the console alone proves nothing.
+   The platform checks the result with the payment provider. Returning to the console alone proves nothing. The response is the billing account.
 
-5. Verify that `paymentMethodStatus` is `VERIFIED`. The response also shows the card brand and its last four digits.
+5. Verify that `paymentMethod.state` is `VERIFIED`. The response also shows the card brand and its last four digits.
 
-   Example output (illustrative):
+   Example output (illustrative, other fields left out):
 
    ```json
    {
-     "data": {
-       "admin": {
-         "confirmPaymentMethodSetup": {
-           "paymentMethodStatus": "VERIFIED",
-           "paymentMethodBrand": "visa",
-           "paymentMethodLast4": "4242"
-         }
-       }
+     "name": "organizations/<org-id>/billingAccounts/<billing-account-id>",
+     "paymentMethod": {
+       "state": "VERIFIED",
+       "cardBrand": "visa",
+       "cardLast4": "4242"
      }
    }
    ```
@@ -112,11 +104,11 @@ Every project charged to this billing account can now create billable resources.
 
 ## If the confirmation fails
 
-Both mutations fail with [`BAD_REQUEST`](../reference/errors.md#bad_request) naming `billing_account_id` in these cases:
+Both calls fail with [`BAD_REQUEST`](../reference/errors.md#bad_request) in these cases, naming the billing account:
 
 - **The checkout wasn't completed.** You left the hosted page before finishing, or the card was declined. Finish the hosted page, or start again from step 2.
-- **No setup is in progress.** Nothing was started, or the setup was already confirmed. Check `paymentMethodStatus`: if it's `VERIFIED`, you're done.
-- **The account needs no payment method.** Its status is `NOT_REQUIRED`.
+- **No setup is in progress.** Nothing was started, or the setup was already confirmed. Read the billing account: if `paymentMethod.state` is `VERIFIED`, you're done.
+- **The account needs no payment method.** Its state is `NOT_REQUIRED`.
 
 Starting again always works and replaces any unfinished setup.
 

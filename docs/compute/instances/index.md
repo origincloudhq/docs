@@ -6,12 +6,12 @@ page_type: overview
 parent: home
 nav_order: 10
 tags: [overview, compute, instances]
-last_reviewed: 2026-10-19
+last_reviewed: 2026-11-26
 ---
 
 # Instances
 
-An instance is a virtual machine. It boots from an image, runs with the vCPU and memory of its instance type, and keeps its identity, addresses and volumes for its whole life, across stops and starts. You decide when it runs. The platform reports both what was asked for or confirmed (`status`) and what it can observe (`healthChecks`).
+An instance is a virtual machine. It boots from an image, runs with the vCPU and memory of its instance type, and keeps its identity, addresses and volumes for its whole life, across stops and starts. You decide when it runs. The platform reports both what was asked for or confirmed (`state`) and what it can observe (`health`).
 
 The following diagram shows the main path through an instance's life.
 
@@ -54,6 +54,7 @@ What the platform sets up inside the guest: the login user, time synchronization
 
 - [Launch an instance](launch.md)
 - [Stop and start an instance](stop-start.md)
+- [Choose what a guest shutdown does](shutdown-behavior.md): stop the instance, or terminate it
 - [Change an instance's type](change-type.md)
 - [Run an instance as a service account](service-account.md)
 - [Terminate an instance](terminate.md)

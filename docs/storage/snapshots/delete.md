@@ -6,7 +6,7 @@ page_type: task
 parent: snapshots
 nav_order: 30
 tags: [storage, snapshots, cli, api]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-25
 ---
 
 # Delete a snapshot
@@ -36,17 +36,13 @@ Skip this section if the snapshot reports `protectionState: UNPROTECTED`.
 
    The command waits until the snapshot reports `protectionState: UNPROTECTED`.
 
-   With the API, use the `unprotectSnapshot` mutation, and read the snapshot until it reports `protectionStatus: UNPROTECTED`:
+   With the REST API, call the snapshot's `:unprotect` method, and read the snapshot until it reports `protectionState: UNPROTECTED`:
 
-   ```graphql
-   mutation {
-     pvs {
-       unprotectSnapshot(input: { snapshot: "//pvs.origincloudapis.eu/projects/<project-id>/zones/<zone>/snapshots/<snapshot-id>" }) {
-         accepted
-         message
-       }
-     }
-   }
+   ```sh
+   curl -sS -X POST \
+     https://pvs.origincloudapis.eu/v1beta1/projects/<project-id>/zones/<zone>/snapshots/<snapshot-id>:unprotect \
+     -H "$(origin id token --as-header --raw)" \
+     -H "Content-Type: application/json" -d '{}'
    ```
 
 ## Delete the snapshot
@@ -59,17 +55,12 @@ Skip this section if the snapshot reports `protectionState: UNPROTECTED`.
 
    The command waits until the snapshot reports `DELETED`. To return at once instead, add `--no-wait`. See [Wait for long-running operations](../../platform/access/cli.md#wait-for-long-running-operations).
 
-   With the API, use the `deleteSnapshot` mutation, and read the snapshot until it reports `status: DELETED`:
+   With the REST API, send a `DELETE` for the snapshot, and read the snapshot until it reports `state: DELETED`:
 
-   ```graphql
-   mutation {
-     pvs {
-       deleteSnapshot(input: { snapshot: "//pvs.origincloudapis.eu/projects/<project-id>/zones/<zone>/snapshots/<snapshot-id>" }) {
-         accepted
-         message
-       }
-     }
-   }
+   ```sh
+   curl -sS -X DELETE \
+     https://pvs.origincloudapis.eu/v1beta1/projects/<project-id>/zones/<zone>/snapshots/<snapshot-id> \
+     -H "$(origin id token --as-header --raw)"
    ```
 
    A delete request for a snapshot that isn't `UNPROTECTED` is refused with the message `snapshot must be unprotected before it can be deleted`. A delete request for a snapshot an image is built from is refused with a `CONFLICT` naming the image.

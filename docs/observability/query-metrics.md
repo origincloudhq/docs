@@ -1,23 +1,23 @@
 ---
 id: query-metrics
 title: Query metrics
-description: Query the CPU, network, or volume metrics of one resource over a time window with the REST or GraphQL API, and choose the period and statistic.
+description: Query the CPU, network, or volume metrics of one resource over a time window with the REST API, and choose the period and statistic.
 page_type: task
 parent: home
 nav_order: 20
 tags: [observability, metrics, api]
-last_reviewed: 2026-11-21
+last_reviewed: 2026-11-25
 ---
 
 # Query metrics
 
-Get a series of data points for one compute instance, volume, or network interface, with the REST API's `QueryTimeSeries` method or the GraphQL API's `observability.metrics` query. You choose the metrics, the time window, the length of each period, and whether each data point is a per-second rate or a total increase. Both return the same data and share the same limits.
+Get a series of data points for one compute instance, volume, or network interface, with the REST API's `QueryTimeSeries` method. You choose the metrics, the time window, the length of each period, and whether each data point is a per-second rate or a total increase. The limits are in the [Metrics reference](reference/metrics.md#limits).
 
 ## Before you begin
 
 - The `origin` CLI, logged in, with a default project: the project that holds the resource you want metrics for. See [Use the CLI](../platform/access/cli.md#set-a-default-project-zone-and-region).
 - Permission `observability.metric.get` on the resource. The built-in Owner and Viewer roles include it. See [Roles](../iam/roles.md).
-- An access token for the API. The examples get one from the `origin` CLI with `origin id token`. See [Use the API](../platform/access/api.md).
+- An access token for the API. The examples get one from the `origin` CLI with `origin id token`. See [Use the REST APIs](../platform/access/api.md).
 
 ## Choose the window and the period
 
@@ -79,95 +79,14 @@ Pick the metric names for the resource's type: an instance has `oc_compute_insta
 
 If the request fails, look up its HTTP status and `error.status` in [REST errors](reference/metrics.md#rest-errors). Every field is described in [REST request fields](reference/metrics.md#rest-request-fields).
 
-## Query metrics with the GraphQL API
-
-1. Find the full resource name of the resource, such as `//compute.origincloudapis.eu/projects/<project-id>/zones/eu-central1-az1/instances/<instance-id>`: the `id` of the instance, volume or network interface in the GraphQL API, or its `name` in the output of the same commands with the host `//compute.origincloudapis.eu/`, `//pvs.origincloudapis.eu/` or `//network.origincloudapis.eu/` put in front. A name without its host or a bare ID is refused.
-
-2. Pick the metric names and the window, as [above](#choose-the-window-and-the-period). In the GraphQL API, the window is `from` to `to` and the period is `periodSeconds`.
-
-3. Save the request as `metrics-query.json`. This example asks for the CPU use of an instance as a per-second rate, in 5-minute periods, over 15 minutes:
-
-   ```json
-   {
-     "query": "query Metrics($input: MetricQueryInput!) { observability { metrics(input: $input) { metricName resource unit dataPoints { timestamp value } } } }",
-     "variables": {
-       "input": {
-         "resource": "//compute.origincloudapis.eu/projects/<project-id>/zones/eu-central1-az1/instances/<instance-id>",
-         "metricNames": ["oc_compute_instance_cpu_seconds_total"],
-         "from": "2026-10-03T10:00:00Z",
-         "to": "2026-10-03T10:15:00Z",
-         "periodSeconds": 300,
-         "statistic": "RATE"
-       }
-     }
-   }
-   ```
-
-   Formatted, the GraphQL query in the `query` field reads:
-
-   ```graphql
-   query Metrics($input: MetricQueryInput!) {
-     observability {
-       metrics(input: $input) {
-         metricName
-         resource
-         unit
-         dataPoints {
-           timestamp
-           value
-         }
-       }
-     }
-   }
-   ```
-
-4. Send the request:
-
-   ```sh
-   curl -s https://graph.origincloudapis.eu/graphql \
-     -H "$(origin id token --as-header --raw)" \
-     -H "Content-Type: application/json" \
-     --data @metrics-query.json
-   ```
-
-5. Check the response. It contains one series per metric name you asked for, in the same order. For `RATE` on `oc_compute_instance_cpu_seconds_total`, a value of `0.5` means the instance used half a vCPU on average during that period.
-
-   Example output (illustrative):
-
-   ```json
-   {
-     "data": {
-       "observability": {
-         "metrics": [
-           {
-             "metricName": "oc_compute_instance_cpu_seconds_total",
-             "resource": "//compute.origincloudapis.eu/projects/<project-id>/zones/eu-central1-az1/instances/<instance-id>",
-             "unit": "seconds",
-             "dataPoints": [
-               { "timestamp": "2026-10-03T10:00:00+00:00", "value": 0.12 },
-               { "timestamp": "2026-10-03T10:05:00+00:00", "value": 0.48 },
-               { "timestamp": "2026-10-03T10:10:00+00:00", "value": 1.73 },
-               { "timestamp": "2026-10-03T10:15:00+00:00", "value": 0.51 }
-             ]
-           }
-         ]
-       }
-     }
-   }
-   ```
-
-   Each data point covers the period that ends at its `timestamp`. The `unit` is the unit of the counter, so a `RATE` of a `seconds` counter is seconds per second.
-
 ## Empty series and billing
 
 A series with no data points means the platform has no values for that resource and metric in the window. Common reasons are an instance that was stopped, a volume or network interface that wasn't attached to a running instance, a metric name that belongs to another resource type, or a window older than the 90 days the platform keeps metrics.
 
 > **Note:** Each successful query is billed as one request, however many metrics or data points it returns. A rejected query isn't billed. See [observability_api_request](../pricing/reference/price-list-api.md#observability_api_request).
 
-If a GraphQL query returns an error, look up its `extensions.code` in [Errors](reference/metrics.md#errors).
-
 ## Related
 
-- [Metrics reference](reference/metrics.md) – every metric, argument, limit, and error.
+- [Metrics reference](reference/metrics.md) – every metric, field, limit, and error.
 - [What is Origin Cloud Observability?](index.md) – how counters, `RATE`, and `INCREASE` work.
-- [Use the API](../platform/access/api.md) – authenticating against the API.
+- [Use the REST APIs](../platform/access/api.md) – authenticating against the API.

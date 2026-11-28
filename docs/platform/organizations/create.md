@@ -1,37 +1,25 @@
 ---
 id: organizations-create
 title: Create an organization
-description: Register an organization with its billing details in the console or the API, or create it from its name alone with the CLI and add the billing details later.
+description: Create an organization in the console, with the CLI or with the resource manager REST API, and add its billing details to its default billing account.
 page_type: task
 parent: organizations
 nav_order: 10
 tags: [organizations, billing, cli, api]
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-25
 ---
 
 # Create an organization
 
-Create an organization to get an account your company's projects, members and billing live in. You can register it with its billing details in one step, or create it from its name alone and add the billing details afterwards.
+Create an organization to get an account your company's projects, members and billing live in. Create it from its name, then add the billing details so it can be invoiced.
 
 ## Before you begin
 
 - An Origin Cloud user account. Any signed-in user can create an organization.
-- To register with billing details: the postal address, the email address invoices go to, the person they're addressed to and, if the organization has one, a VAT identification number.
+- For the billing details: the postal address, the email address invoices go to, the person they're addressed to and, if the organization has one, a VAT identification number.
 - The billing address's country is one of the 27 EU member states, given as an ISO 3166-1 alpha-2 code such as `DE` or `AT`. Outside Germany, invoicing is business to business only, so a VAT identification number is required for every country except `DE`.
 
-## Register an organization
-
-Registering creates the organization and stores the billing details on its default billing account, so it can be invoiced from the start. Register in the console, or with the `registerOrganisation` mutation in the `admin` namespace of the [GraphQL API](../access/api.md). The CLI has no command that takes billing details.
-
-The mutation takes the organization's name, the billing address as a `billingAddress` object, the invoice email, the contact person and, where required, the VAT identification number. It answers with the organization, including its `id`, its full resource name, and its `status`, `ACTIVE` or `PENDING_REVIEW`. For what each status means, see [Organization review status](review-status.md).
-
-Once a version of Origin Cloud's legal documents is in force, registering also accepts them: `legalAcceptance` names every version in force with its `sha256` and sets `actsAsBusiness: true`. See [Legal documents and acceptance](../billing/legal-documents.md).
-
-The request is refused, and nothing is created, if the invoice email isn't a valid email address, the country isn't supported, a required VAT identification number is missing, or a version in force isn't accepted. The error is [`BAD_REQUEST`](../reference/errors.md#bad_request) and names the field: `invoice_email`, `country`, `vat_id`, `legal_acceptance`, `version`, `sha256` or `acts_as_business`.
-
-## Create an organization from its name alone
-
-Use this path if someone else adds the billing details later.
+## Create an organization
 
 1. Log in with the CLI. See [Use the CLI](../access/cli.md#log-in).
 
@@ -63,14 +51,40 @@ Use this path if someone else adds the billing details later.
 
    `state` is `ACTIVE` or `PENDING_REVIEW`. See [Organization review status](review-status.md).
 
-5. Add the billing details to its default billing account with the `updateBillingAccountProfile` mutation. Until then, the organization can't be invoiced. See [Billing](../billing/index.md#billing-details).
+   With the REST API, the same call is `POST https://resourcemanager.origincloudapis.eu/v1beta1/organizations` with the body `{"displayName": "Example GmbH"}`. It returns the organization, as above. A retry with the same `requestId` (a UUID) in the body returns the organization the first request created.
 
-Both paths end in the same state; registering does it in one call.
+5. Find the organization's default billing account: `ListBillingAccounts` lists the organization's accounts, and the default one has `defaultAccount: true`. Its `name` is `organizations/<org-id>/billingAccounts/<billing-account-id>`:
+
+   ```sh
+   curl -sS "https://billing.origincloudapis.eu/v1beta1/organizations/<org-id>/billingAccounts" \
+     -H "$(origin id token --as-header --raw)"
+   ```
+
+6. Add the billing details to that account with the billing REST API's `UpdateBillingAccount`. Until then, the organization can't be invoiced. The billing address, invoice email, contact person and, outside Germany, the VAT identification number must all be set:
+
+   ```sh
+   curl -sS -X PATCH \
+     "https://billing.origincloudapis.eu/v1beta1/organizations/<org-id>/billingAccounts/<billing-account-id>?updateMask=billingAddress,invoiceEmail,contactPerson,vatId" \
+     -H "$(origin id token --as-header --raw)" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "billingAddress": {
+         "street": "Example Street 1",
+         "city": "Berlin",
+         "postalCode": "10115",
+         "regionCode": "DE"
+       },
+       "invoiceEmail": "invoices@example.com",
+       "contactPerson": "Example Person"
+     }'
+   ```
+
+   The request is refused with [`BAD_REQUEST`](../reference/errors.md#bad_request), and nothing changes, if the invoice email isn't a valid email address, the country isn't supported or a required VAT identification number is missing. See [Billing](../billing/index.md#billing-details). Once a version of Origin Cloud's legal documents is in force, the default account accepts them with `AcceptLegalDocuments`; see [Legal documents and acceptance](../billing/legal-documents.md#when-you-accept).
 
 ## What happens when you create an organization
 
 - You become the organization's Owner (`roles/owner`) and its billing administrator (`roles/billing.administrator`), both organization-wide. See [Billing access](../billing/billing-access.md).
-- The organization gets a default billing account named `default`. When you register, it carries your billing details.
+- The organization gets a default billing account named `default`, without billing details until you set them.
 - The organization is either activated immediately or placed under review. You get an email that the registration was received, and another when it's approved or rejected. See [Organization review status](review-status.md).
 
 ## Next steps
@@ -81,4 +95,4 @@ Both paths end in the same state; registering does it in one call.
 ## Related
 
 - [`create-organization` reference](../reference/cli.md#create-organization)
-- [Use the GraphQL API](../access/api.md)
+- [Use the REST APIs](../access/api.md)
